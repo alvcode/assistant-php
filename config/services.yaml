@@ -18,6 +18,29 @@ services:
     # this creates a service per class whose id is the fully-qualified class name
     App\:
         resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Layer/Domain/Entity/'
+            - '../src/Kernel.php'
+            - '../src/Exception/ExceptionNormalizer.php'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+
+    App\EventListener\LocaleListener:
+        arguments:
+            $defaultLocale: '%kernel.default_locale%'
+        tags:
+            - { name: kernel.event_listener, event: kernel.request, priority: 16 }
+
+    App\EventListener\LangListener:
+        arguments:
+            $symfonyTranslator: '@translator'
+        tags:
+            - { name: kernel.event_listener, event: kernel.request, priority: 16 }
+
+    App\EventListener\ValidationExceptionListener:
+        arguments:
+            $isDebug: '%kernel.debug%'
+        tags:
+            - { name: kernel.event_listener, event: kernel.exception, priority: 10 }
