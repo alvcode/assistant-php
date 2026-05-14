@@ -9,7 +9,7 @@ use App\Layer\Domain\Service\Utils\HasherServiceInterface;
 use DateTime;
 use DateTimeImmutable;
 
-final readonly class CreateUserFactory
+final readonly class UserFactory
 {
     public function __construct(
         private HasherServiceInterface $hasherService,
