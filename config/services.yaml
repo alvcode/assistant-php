@@ -42,7 +42,7 @@ services:
 
     App\EventListener\RateLimiterListener:
         tags:
-            - { name: kernel.event_listener, event: kernel.request, priority: 16 }
+            - { name: kernel.event_listener, event: kernel.request, priority: 15 }
 
     App\EventListener\ValidationExceptionListener:
         arguments:

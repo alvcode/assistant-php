@@ -14,4 +14,5 @@ return [
     'error_refresh_token_not_found' => 'Refresh Token is not found',
     'error_base64_image' => 'Image verification error',
     'error_file_not_found' => 'File not found',
+    'error_too_many_requests' => 'Too many requests',
 ];

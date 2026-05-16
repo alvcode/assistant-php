@@ -14,4 +14,5 @@ return [
     'error_refresh_token_not_found' => 'Refresh Token не найден',
     'error_base64_image' => 'Ошибка валидации изображения',
     'error_file_not_found' => 'Файл не найден',
+    'error_too_many_requests' => 'Слишком много запросов',
 ];
