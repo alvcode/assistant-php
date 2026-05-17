@@ -31,4 +31,34 @@ final readonly class UserTokenRepository implements UserTokenRepositoryInterface
 
         return $userToken;
     }
+
+    public function getByTokenAndRefreshToken(string $token, string $refreshToken): ?UserTokenEntity
+    {
+        $query = "
+            select * from user_tokens where token = :token and refresh_token = :refresh_token
+        ";
+
+        $conn = $this->entityManager->getConnection();
+        $result = $conn->executeQuery($query, [
+            'token' => $token,
+            'refresh_token' => $refreshToken,
+        ]);
+
+        $row = $result->fetchAssociative();
+        if (!$row) {
+            return null;
+        }
+
+        return $this->getEntityFromRaw($row);
+    }
+
+    private function getEntityFromRaw(array $row): UserTokenEntity
+    {
+        return new UserTokenEntity(
+            userId: $row['user_id'],
+            token: $row['token'],
+            refreshToken: $row['refresh_token'],
+            expiredTo: $row['expired_to'],
+        );
+    }
 }

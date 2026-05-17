@@ -6,9 +6,12 @@ namespace App\Controller;
 
 use App\Infrastructure\Lang;
 use App\Layer\Application\DTO\User\LoginAndPasswordDTO;
+use App\Layer\Application\DTO\User\RefreshTokenDTO;
 use App\Layer\Application\UseCase\User\LoginUserUseCase;
+use App\Layer\Application\UseCase\User\RefreshTokenUseCase;
 use App\Layer\Application\UseCase\User\RegisterByLoginUseCase;
 use App\Layer\Domain\Exception\AbstractLogicException;
+use App\Request\Auth\RefreshTokenRequest;
 use App\Request\Auth\UserLoginAndPasswordRequest;
 use App\Response\User\UserResponse;
 use App\Response\User\UserTokenResponse;
@@ -23,9 +26,9 @@ final class AuthController extends AbstractController
 {
     #[Route(path: '/api/auth/register', name: 'auth.register', methods: ['POST'])]
     public function register(
-        Request $request,
+        Request                     $request,
         UserLoginAndPasswordRequest $requestModel,
-        RegisterByLoginUseCase $useCase,
+        RegisterByLoginUseCase      $useCase,
     ): JsonResponse
     {
         if (!$requestModel->populateByRequest($request)->validate()) {
@@ -57,6 +60,31 @@ final class AuthController extends AbstractController
         try {
             $userTokenEntity = $useCase->handle(
                 new LoginAndPasswordDTO(login: $requestModel->login, password: $requestModel->password)
+            );
+
+            return new JsonResponse(
+                UserTokenResponse::fromUserTokenEntity($userTokenEntity),
+                Response::HTTP_CREATED
+            );
+        } catch (AbstractLogicException $e) {
+            throw new UnprocessableEntityHttpException(Lang::t($e->getErrorKey()));
+        }
+    }
+
+    #[Route(path: '/api/auth/refresh-token', name: 'auth.refresh_token', methods: ['POST'])]
+    public function refreshToken(
+        Request $request,
+        RefreshTokenRequest $requestModel,
+        RefreshTokenUseCase $useCase,
+    ): JsonResponse
+    {
+        if (!$requestModel->populateByRequest($request)->validate()) {
+            throw new UnprocessableEntityHttpException($requestModel->getFirstError());
+        }
+
+        try {
+            $userTokenEntity = $useCase->handle(
+                new RefreshTokenDTO(token: $requestModel->token, refreshToken: $requestModel->refresh_token)
             );
 
             return new JsonResponse(
