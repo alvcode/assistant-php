@@ -8,13 +8,18 @@ security:
         users_in_memory: { memory: null }
 
     firewalls:
+        main:
+            pattern: ^/api
+            stateless: true
+            custom_authenticators:
+                - App\Security\BearerTokenAuthenticator
         dev:
             # Ensure dev tools and static assets are always allowed
             pattern: ^/(_profiler|_wdt|assets|build)/
             security: false
-        main:
-            lazy: true
-            provider: users_in_memory
+#        main:
+#            lazy: true
+#            provider: users_in_memory
 
             # Activate different ways to authenticate:
             # https://symfony.com/doc/current/security.html#the-firewall

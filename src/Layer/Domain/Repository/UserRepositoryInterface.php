@@ -11,4 +11,8 @@ interface UserRepositoryInterface
     public function existsByLogin(string $login): bool;
 
     public function save(UserEntity $user): UserEntity;
+
+    public function getByToken(string $token, int $unixTime): ?UserEntity;
+
+    public function getByLogin(string $login): ?UserEntity;
 }

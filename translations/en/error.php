@@ -15,4 +15,5 @@ return [
     'error_base64_image' => 'Image verification error',
     'error_file_not_found' => 'File not found',
     'error_too_many_requests' => 'Too many requests',
+    'error_unable_to_determine_ip_address' => 'Unable to determine IP address',
 ];

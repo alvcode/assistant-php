@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\EventListener;
 
 use App\Infrastructure\Lang;
@@ -27,7 +29,8 @@ class ValidationExceptionListener
 
         $message = $exception->getMessage();
 
-        $status = method_exists($exception, 'getStatusCode') ? $exception->getStatusCode() : Response::HTTP_INTERNAL_SERVER_ERROR;
+        $status = method_exists($exception, 'getStatusCode')
+            ? $exception->getStatusCode() : Response::HTTP_INTERNAL_SERVER_ERROR;
 
         if ($exception instanceof AccessDeniedException || $exception instanceof UnauthorizedHttpException) {
             $event->setResponse(new JsonResponse(

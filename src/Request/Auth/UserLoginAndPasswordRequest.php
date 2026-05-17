@@ -12,10 +12,10 @@ final class UserLoginAndPasswordRequest extends BaseRequest
     #[Assert\Type('string')]
     #[Assert\NotBlank()]
     #[Assert\Length(max: 100)]
-    public $login;
+    public mixed $login;
 
     #[Assert\Type('string')]
     #[Assert\NotBlank()]
     #[Assert\Length(max: 200)]
-    public $password;
+    public mixed $password;
 }
