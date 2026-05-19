@@ -14,6 +14,7 @@ use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Throwable;
@@ -80,14 +81,19 @@ final class ValidationExceptionListener
      */
     private function handleBlockEvents(ExceptionEvent $event): void
     {
-        if ($event->getThrowable() instanceof AccessDeniedHttpException) {
+        $exception = $event->getThrowable();
+        if ($exception instanceof AccessDeniedHttpException) {
             return;
         }
-        if ($event->getThrowable() instanceof BadRequestHttpException) {
-            $this->blockEventService->setEvent($event->getRequest(), BlockEventTypeEnum::DecodeBody);
-        }
-        if ($event->getThrowable() instanceof UnauthorizedHttpException) {
-            $this->blockEventService->setEvent($event->getRequest(), BlockEventTypeEnum::Unauthorized);
+
+        $type = match (true) {
+            $exception instanceof NotFoundHttpException => BlockEventTypeEnum::NotFound,
+            $exception instanceof BadRequestHttpException => BlockEventTypeEnum::DecodeBody,
+            $exception instanceof UnauthorizedHttpException => BlockEventTypeEnum::Unauthorized,
+            default => null
+        };
+        if ($type) {
+            $this->blockEventService->setEvent($event->getRequest(), $type);
         }
         $this->blockEventService->setEvent($event->getRequest(), BlockEventTypeEnum::Other);
     }
