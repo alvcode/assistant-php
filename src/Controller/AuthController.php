@@ -7,6 +7,8 @@ namespace App\Controller;
 use App\Infrastructure\Lang;
 use App\Layer\Application\DTO\User\LoginAndPasswordDTO;
 use App\Layer\Application\DTO\User\RefreshTokenDTO;
+use App\Layer\Application\Exception\User\InvalidCredentialsException;
+use App\Layer\Application\Exception\User\RefreshTokenNotFoundException;
 use App\Layer\Application\UseCase\User\LoginUserUseCase;
 use App\Layer\Application\UseCase\User\RefreshTokenUseCase;
 use App\Layer\Application\UseCase\User\RegisterByLoginUseCase;
@@ -15,6 +17,9 @@ use App\Request\Auth\RefreshTokenRequest;
 use App\Request\Auth\UserLoginAndPasswordRequest;
 use App\Response\User\UserResponse;
 use App\Response\User\UserTokenResponse;
+use App\Security\BlockEvent\BlockEventService;
+use App\Security\BlockEvent\BlockEventTypeEnum;
+use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -24,14 +29,22 @@ use Symfony\Component\HttpFoundation\Request;
 
 final class AuthController extends AbstractController
 {
+    public function __construct(
+        private BlockEventService $blockEventService,
+    ) {}
+
+    /**
+     * @throws Exception
+     */
     #[Route(path: '/api/auth/register', name: 'auth.register', methods: ['POST'])]
     public function register(
-        Request                     $request,
+        Request $request,
         UserLoginAndPasswordRequest $requestModel,
-        RegisterByLoginUseCase      $useCase,
+        RegisterByLoginUseCase $useCase,
     ): JsonResponse
     {
         if (!$requestModel->populateByRequest($request)->validate()) {
+            $this->blockEventService->setEvent($request, BlockEventTypeEnum::Validation);
             throw new UnprocessableEntityHttpException($requestModel->getFirstError());
         }
 
@@ -46,6 +59,9 @@ final class AuthController extends AbstractController
         }
     }
 
+    /**
+     * @throws Exception
+     */
     #[Route(path: '/api/auth/login', name: 'auth.login', methods: ['POST'])]
     public function login(
         Request $request,
@@ -54,6 +70,7 @@ final class AuthController extends AbstractController
     ): JsonResponse
     {
         if (!$requestModel->populateByRequest($request)->validate()) {
+            $this->blockEventService->setEvent($request, BlockEventTypeEnum::Validation);
             throw new UnprocessableEntityHttpException($requestModel->getFirstError());
         }
 
@@ -67,10 +84,16 @@ final class AuthController extends AbstractController
                 Response::HTTP_CREATED
             );
         } catch (AbstractLogicException $e) {
+            if ($e instanceof InvalidCredentialsException) {
+                $this->blockEventService->setEvent($request, BlockEventTypeEnum::SignIn);
+            }
             throw new UnprocessableEntityHttpException(Lang::t($e->getErrorKey()));
         }
     }
 
+    /**
+     * @throws Exception
+     */
     #[Route(path: '/api/auth/refresh-token', name: 'auth.refresh_token', methods: ['POST'])]
     public function refreshToken(
         Request $request,
@@ -79,6 +102,7 @@ final class AuthController extends AbstractController
     ): JsonResponse
     {
         if (!$requestModel->populateByRequest($request)->validate()) {
+            $this->blockEventService->setEvent($request, BlockEventTypeEnum::Validation);
             throw new UnprocessableEntityHttpException($requestModel->getFirstError());
         }
 
@@ -92,6 +116,9 @@ final class AuthController extends AbstractController
                 Response::HTTP_CREATED
             );
         } catch (AbstractLogicException $e) {
+            if ($e instanceof RefreshTokenNotFoundException) {
+                $this->blockEventService->setEvent($request, BlockEventTypeEnum::RefreshToken);
+            }
             throw new UnprocessableEntityHttpException(Lang::t($e->getErrorKey()));
         }
     }
