@@ -8,7 +8,7 @@ use App\Layer\Domain\Entity\UserTokenEntity;
 
 interface UserTokenRepositoryInterface
 {
-    public function save(UserTokenEntity $userToken): UserTokenEntity;
+    public function create(UserTokenEntity $userToken): UserTokenEntity;
 
     public function getByTokenAndRefreshToken(string $token, string $refreshToken): ?UserTokenEntity;
 }

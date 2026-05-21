@@ -36,6 +36,6 @@ final readonly class LoginUserUseCase
             throw new InvalidCredentialsException('Неверный пароль');
         }
 
-        return $this->userTokenRepository->save($this->userFactory->getNewToken($userEntity->getId()));
+        return $this->userTokenRepository->create($this->userFactory->getNewToken($userEntity->getId()));
     }
 }

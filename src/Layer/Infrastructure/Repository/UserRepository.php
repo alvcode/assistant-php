@@ -35,7 +35,8 @@ final readonly class UserRepository implements UserRepositoryInterface
             'created_at' => $user->getCreatedAt()->format('Y-m-d H:i:s'),
             'updated_at' => $user->getUpdatedAt()->format('Y-m-d H:i:s'),
         ];
-        if (is_null($user->getId())) {
+        $isNew = is_null($user->getId());
+        if ($isNew) {
             $query = "
                 insert into users (login, password, created_at, updated_at)
                 values (:login, :password, :created_at, :updated_at) RETURNING id
@@ -51,7 +52,9 @@ final readonly class UserRepository implements UserRepositoryInterface
         $conn = $this->entityManager->getConnection();
         $stmt = $conn->executeQuery($query, $params);
 
-        $user->setId($stmt->fetchOne());
+        if ($isNew) {
+            $user->setId($stmt->fetchOne());
+        }
         return $user;
     }
 

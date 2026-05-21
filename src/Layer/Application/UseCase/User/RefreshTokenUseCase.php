@@ -27,6 +27,6 @@ final readonly class RefreshTokenUseCase
             throw new RefreshTokenNotFoundException('Токен не найден');
         }
 
-        return $this->userTokenRepository->save($this->userFactory->getNewToken($userTokenEntity->getUserId()));
+        return $this->userTokenRepository->create($this->userFactory->getNewToken($userTokenEntity->getUserId()));
     }
 }

@@ -14,7 +14,7 @@ final readonly class UserTokenRepository implements UserTokenRepositoryInterface
         private EntityManagerInterface $entityManager
     ) {}
 
-    public function save(UserTokenEntity $userToken): UserTokenEntity
+    public function create(UserTokenEntity $userToken): UserTokenEntity
     {
         $query = "
             insert into user_tokens (user_id, token, refresh_token, expired_to)
