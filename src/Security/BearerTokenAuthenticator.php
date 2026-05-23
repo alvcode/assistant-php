@@ -6,7 +6,7 @@ namespace App\Security;
 
 use App\Attribute\NeedAuth;
 use App\Infrastructure\Lang;
-use App\Layer\Domain\Entity\UserEntity;
+use App\Entity\UserEntity;
 use App\Layer\Domain\Repository\UserRepositoryInterface;
 use App\Request\Auth\TokenRequest;
 use Symfony\Component\HttpFoundation\Request;
@@ -59,7 +59,10 @@ final class BearerTokenAuthenticator extends AbstractAuthenticator
                     throw new UnauthorizedHttpException('Bearer', Lang::t('error_you_are_unauthorized'));
                 }
 
-                return $user;
+                return new UserEntity(
+                    id: $user->getId(),
+                    login: $user->getLogin(),
+                );
             })
         );
     }

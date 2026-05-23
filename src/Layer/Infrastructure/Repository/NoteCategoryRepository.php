@@ -67,6 +67,34 @@ final readonly class NoteCategoryRepository implements NoteCategoryRepositoryInt
         return $this->getEntityFromRaw($row);
     }
 
+    public function getMaxPosition(int $userId, ?int $parentId): int
+    {
+        $params = ['user_id' => $userId];
+        $query = "SELECT coalesce(max(position), 0) FROM note_categories WHERE user_id = :user_id";
+
+        if ($parentId !== null) {
+            $params['parent_id'] = $parentId;
+            $query .= " AND parent_id = :parent_id";
+        }
+
+        $conn = $this->entityManager->getConnection();
+        return $conn->executeQuery($query, $params)->fetchOne();
+    }
+
+    /** @inheritDoc */
+    public function getAllByUserId(int $userId): array
+    {
+        $query = "SELECT * FROM note_categories WHERE user_id = :user_id";
+        $conn = $this->entityManager->getConnection();
+
+        $stmt = $conn->executeQuery($query, ['user_id' => $userId]);
+        $result = [];
+        foreach ($stmt->fetchAllAssociative() as $row) {
+            $result[] = $this->getEntityFromRaw($row);
+        }
+        return $result;
+    }
+
     private function getEntityFromRaw(array $row): NoteCategoryEntity
     {
         return new NoteCategoryEntity(

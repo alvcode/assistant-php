@@ -16,4 +16,5 @@ return [
     'error_file_not_found' => 'Файл не найден',
     'error_too_many_requests' => 'Слишком много запросов',
     'error_unable_to_determine_ip_address' => 'Не удалось определить IP адрес',
+    'parent_id_of_the_category_not_found' => 'Родительская категория не найдена',
 ];
