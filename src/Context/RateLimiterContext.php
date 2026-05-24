@@ -6,8 +6,8 @@ namespace App\Context;
 
 final class RateLimiterContext
 {
-    public int $limit;
-    public int $remaining;
+    public ?int $limit = null;
+    public ?int $remaining = null;
 
     public function getLimit(): int
     {

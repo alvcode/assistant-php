@@ -19,11 +19,11 @@ use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Throwable;
 
-final class ValidationExceptionListener
+final readonly class ValidationExceptionListener
 {
     public function __construct(
-        private readonly bool $isDebug,
-        private readonly BlockEventService $blockEventService,
+        private bool $isDebug,
+        private BlockEventService $blockEventService,
     )
     {
     }
