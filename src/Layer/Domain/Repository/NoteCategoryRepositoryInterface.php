@@ -16,4 +16,12 @@ interface NoteCategoryRepositoryInterface
 
     /** @return NoteCategoryEntity[] */
     public function getAllByUserId(int $userId): array;
+
+    /** @return NoteCategoryEntity[] */
+    public function getByIDAndUserWithChildren(int $id, int $userId): array;
+
+    /**
+     * @param int[] $ids
+     */
+    public function deleteByIDs(array $ids): void;
 }

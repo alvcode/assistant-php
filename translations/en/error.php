@@ -17,4 +17,7 @@ return [
     'error_too_many_requests' => 'Too many requests',
     'error_unable_to_determine_ip_address' => 'Unable to determine IP address',
     'parent_id_of_the_category_not_found' => 'Parent category not found',
+    'error_category_not_found' => 'Category not found',
+    'error_category_has_notes' => 'The category has notes. You must first move them to another category or delete them',
+    'error_category_already_in_1_position' => 'Category is already in position 1',
 ];

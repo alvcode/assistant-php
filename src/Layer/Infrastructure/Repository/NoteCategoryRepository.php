@@ -6,6 +6,7 @@ namespace App\Layer\Infrastructure\Repository;
 
 use App\Layer\Domain\Entity\NoteCategoryEntity;
 use App\Layer\Domain\Repository\NoteCategoryRepositoryInterface;
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\ORM\EntityManagerInterface;
 
 final readonly class NoteCategoryRepository implements NoteCategoryRepositoryInterface
@@ -93,6 +94,42 @@ final readonly class NoteCategoryRepository implements NoteCategoryRepositoryInt
             $result[] = $this->getEntityFromRaw($row);
         }
         return $result;
+    }
+
+    /** @inheritDoc */
+    public function getByIDAndUserWithChildren(int $id, int $userId): array
+    {
+        $query = "
+            WITH RECURSIVE subcategories AS (
+                SELECT id, user_id, name, parent_id, position
+                FROM note_categories
+                WHERE id = :id and user_id = :user_id
+
+                UNION ALL
+
+                SELECT c.id, c.user_id, c.name, c.parent_id, c.position
+                FROM note_categories c
+                INNER JOIN subcategories s ON c.parent_id = s.id
+            )
+            SELECT id, user_id, name, parent_id, position FROM subcategories
+        ";
+
+        $conn = $this->entityManager->getConnection();
+
+        $stmt = $conn->executeQuery($query, ['id' => $id, 'user_id' => $userId]);
+        $result = [];
+        foreach ($stmt->fetchAllAssociative() as $row) {
+            $result[] = $this->getEntityFromRaw($row);
+        }
+        return $result;
+    }
+
+    /** @inheritDoc */
+    public function deleteByIDs(array $ids): void
+    {
+        $query = "DELETE FROM note_categories WHERE id in (:ids)";
+        $conn = $this->entityManager->getConnection();
+        $conn->executeQuery($query, ['ids' => $ids], ['ids' => ArrayParameterType::INTEGER]);
     }
 
     private function getEntityFromRaw(array $row): NoteCategoryEntity
