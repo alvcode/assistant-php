@@ -35,6 +35,7 @@ final readonly class CreateNoteUseCase
             $this->noteFactory->getNewNote($in->categoryId, $in->noteBlocks, $in->title)
         );
 
+        // TODO: дыра. нужно проверять ID файлов на принадлежность юзеру
         $this->fileNoteLinkRepository->upsert($note->getId(), $note->getAttachedFileIDs());
 
         return $note;

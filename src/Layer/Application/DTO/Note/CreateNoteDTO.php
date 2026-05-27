@@ -9,6 +9,6 @@ final readonly class CreateNoteDTO
     public function __construct(
         public int $categoryId,
         public ?string $title,
-        public ?array $noteBlocks,
+        public array $noteBlocks,
     ) {}
 }

@@ -30,11 +30,6 @@ final readonly class NoteCategoryPositionService
             return;
         }
 
-//        usort(
-//            $categories,
-//            static fn(NoteCategoryEntity $a, NoteCategoryEntity $b) => $a->getId() <=> $b->getId()
-//        );
-
         /** @var array<int,array<int,NoteCategoryEntity>> $grouped */
         $grouped = [];
         $needUpCategoryKey = 0;

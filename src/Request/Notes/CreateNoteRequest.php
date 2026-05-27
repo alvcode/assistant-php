@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Request\Notes;
 
 use App\Request\BaseRequest;
+use App\Validator\NoteBlocks;
 use Symfony\Component\Validator\Constraints as Assert;
 
 class CreateNoteRequest extends BaseRequest
@@ -17,6 +18,6 @@ class CreateNoteRequest extends BaseRequest
     #[Assert\Length(max: 150)]
     public mixed $title = null;
 
-    #[Assert\NotBlank()]
+    #[NoteBlocks]
     public array $note_blocks;
 }

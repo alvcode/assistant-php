@@ -12,6 +12,7 @@ use App\Layer\Application\Exception\NoteCategory\NoteCategoryNotFoundException;
 use App\Layer\Application\UseCase\Note\CreateNoteUseCase;
 use App\Layer\Domain\Exception\AbstractLogicException;
 use App\Request\Notes\CreateNoteRequest;
+use App\Request\Notes\GetAllNotesRequest;
 use App\Response\Note\NoteResponse;
 use App\Security\BlockEvent\BlockEventService;
 use App\Security\BlockEvent\BlockEventTypeEnum;
@@ -64,5 +65,20 @@ final class NotesController extends AbstractController
             }
             throw new UnprocessableEntityHttpException(Lang::t($e->getErrorKey()));
         }
+    }
+
+    #[Route(path: '/api/notes', name: 'notes.get_all', methods: ['GET'])]
+    #[NeedAuth]
+    public function listByCategory(
+        Request $request,
+        GetAllNotesRequest $requestModel,
+    )
+    {
+        if (!$requestModel->populateByRequest($request)->validate()) {
+            $this->blockEventService->setEvent($request, BlockEventTypeEnum::Validation);
+            throw new UnprocessableEntityHttpException($requestModel->getFirstError());
+        }
+
+        dd($requestModel->categoryId);
     }
 }

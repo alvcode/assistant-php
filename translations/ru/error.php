@@ -20,4 +20,5 @@ return [
     'error_category_not_found' => 'Категория не найдена',
     'error_category_has_notes' => 'У категории существуют заметки. Необходимо сначала переместить их в другую категорию или удалить',
     'error_category_already_in_1_position' => 'Категория уже находится на 1 позиции',
+    'error_invalid_field_format' => 'Некорректный формат поля',
 ];
