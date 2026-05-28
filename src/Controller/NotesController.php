@@ -10,9 +10,11 @@ use App\Infrastructure\Lang;
 use App\Layer\Application\DTO\Note\CreateNoteDTO;
 use App\Layer\Application\Exception\NoteCategory\NoteCategoryNotFoundException;
 use App\Layer\Application\UseCase\Note\CreateNoteUseCase;
+use App\Layer\Application\UseCase\Note\GetAllNotesByCategoryUseCase;
 use App\Layer\Domain\Exception\AbstractLogicException;
 use App\Request\Notes\CreateNoteRequest;
 use App\Request\Notes\GetAllNotesRequest;
+use App\Response\Note\NoteListResponse;
 use App\Response\Note\NoteResponse;
 use App\Security\BlockEvent\BlockEventService;
 use App\Security\BlockEvent\BlockEventTypeEnum;
@@ -72,13 +74,29 @@ final class NotesController extends AbstractController
     public function listByCategory(
         Request $request,
         GetAllNotesRequest $requestModel,
-    )
+        GetAllNotesByCategoryUseCase $useCase,
+    ): JsonResponse
     {
         if (!$requestModel->populateByRequest($request)->validate()) {
             $this->blockEventService->setEvent($request, BlockEventTypeEnum::Validation);
             throw new UnprocessableEntityHttpException($requestModel->getFirstError());
         }
 
-        dd($requestModel->categoryId);
+        /** @var UserEntity $user */
+        $user = $this->getUser();
+
+        try {
+            $noteListAggregates = $useCase->handle((int)$requestModel->categoryId, $user->id);
+
+            return new JsonResponse(
+                NoteListResponse::fromNoteListAggregates($noteListAggregates),
+                Response::HTTP_OK
+            );
+        } catch (AbstractLogicException $e) {
+            if ($e instanceof NoteCategoryNotFoundException) {
+                $this->blockEventService->setEvent($request, BlockEventTypeEnum::BruteForce);
+            }
+            throw new UnprocessableEntityHttpException(Lang::t($e->getErrorKey()));
+        }
     }
 }

@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 namespace App\Layer\Infrastructure\Repository;
 
+use App\Layer\Domain\Entity\Aggregate\NoteListAggregate;
 use App\Layer\Domain\Entity\NoteEntity;
 use App\Layer\Domain\Repository\NoteRepositoryInterface;
+use DateTime;
+use DateTimeImmutable;
+use DateTimeZone;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\ParameterType;
 use Doctrine\ORM\EntityManagerInterface;
@@ -63,5 +67,52 @@ final readonly class NoteRepository implements NoteRepositoryInterface
             $entity->setId($stmt->fetchOne());
         }
         return $entity;
+    }
+
+    /** @inheritDoc */
+    public function getListByCategoryIds(array $categoryIDs): array
+    {
+        $query = "
+            select
+                n.id,
+                n.category_id,
+                n.created_at,
+                n.updated_at,
+                n.title,
+                n.pinned,
+                (SELECT EXISTS(SELECT 1 FROM note_share_hashes WHERE note_id = n.id)) as shared
+            from notes n
+            where n.category_id in (:ids)
+        ";
+
+        $conn = $this->entityManager->getConnection();
+        $stmt = $conn->executeQuery($query, ['ids' => $categoryIDs], ['ids' => ArrayParameterType::INTEGER]);
+
+        $result = [];
+        foreach ($stmt->fetchAllAssociative() as $raw) {
+            $result[] = new NoteListAggregate(
+                id: $raw['id'],
+                categoryId: $raw['category_id'],
+                createdAt: new DateTimeImmutable($raw['created_at'], new DateTimeZone('UTC')),
+                updatedAt: new DateTime($raw['updated_at'], new DateTimeZone('UTC')),
+                title: $raw['title'],
+                pinned: $raw['pinned'],
+                shared: $raw['shared']
+            );
+        }
+        return $result;
+    }
+
+    private function getEntityFromRaw(array $raw): NoteEntity
+    {
+        return new NoteEntity(
+            id: $raw['id'],
+            categoryId: $raw['category_id'],
+            noteBlocks: json_decode($raw['note_blocks'], true, 512, JSON_THROW_ON_ERROR),
+            createdAt: new DateTimeImmutable($raw['created_at'], new DateTimeZone('UTC')),
+            updatedAt: new DateTime($raw['updated_at'], new DateTimeZone('UTC')),
+            title: $raw['title'],
+            pinned: $raw['pinned'],
+        );
     }
 }
