@@ -14,6 +14,8 @@ interface NoteRepositoryInterface
      */
     public function checkExistsByCategoryIDs(array $catIDs): bool;
 
+    public function getByID(int $id): ?NoteEntity;
+
     public function save(NoteEntity $entity): NoteEntity;
 
     /**

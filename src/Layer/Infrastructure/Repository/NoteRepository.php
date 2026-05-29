@@ -33,6 +33,19 @@ final readonly class NoteRepository implements NoteRepositoryInterface
         )->fetchOne();
     }
 
+    public function getByID(int $id): ?NoteEntity
+    {
+        $query = "select * from notes where id = :id";
+        $conn = $this->entityManager->getConnection();
+        $result = $conn->executeQuery($query, ['id' => $id]);
+
+        $row = $result->fetchAssociative();
+        if (!$row) {
+            return null;
+        }
+        return $this->getEntityFromRaw($row);
+    }
+
     public function save(NoteEntity $entity): NoteEntity
     {
         $params = [

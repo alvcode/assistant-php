@@ -28,6 +28,15 @@ final readonly class NoteFactory
         );
     }
 
+    public function getUpdatedNote(NoteEntity $entity, array $noteBlocks, int $categoryID, ?string $title): NoteEntity
+    {
+        $entity->setNoteBlocks($noteBlocks);
+        $entity->setCategoryId($categoryID);
+        $entity->setTitle($this->getTitle($noteBlocks, $title));
+        $entity->setUpdatedAt(DateTime::createNowUtc());
+        return $entity;
+    }
+
     private function getTitle(array $noteBlocks, ?string $title): ?string
     {
         $result = '';
