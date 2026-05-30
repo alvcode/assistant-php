@@ -18,6 +18,8 @@ interface NoteRepositoryInterface
 
     public function save(NoteEntity $entity): NoteEntity;
 
+    public function delete(NoteEntity $entity): void;
+
     /**
      * @param int[] $categoryIDs
      * @return NoteListAggregate[]

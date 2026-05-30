@@ -82,6 +82,13 @@ final readonly class NoteRepository implements NoteRepositoryInterface
         return $entity;
     }
 
+    public function delete(NoteEntity $entity): void
+    {
+        $query = "DELETE FROM notes WHERE id = :id";
+        $conn = $this->entityManager->getConnection();
+        $conn->executeQuery($query, ['id' => $entity->getId()]);
+    }
+
     /** @inheritDoc */
     public function getListByCategoryIds(array $categoryIDs): array
     {
