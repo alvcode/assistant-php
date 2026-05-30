@@ -14,7 +14,10 @@ use App\Layer\Application\Exception\NoteCategory\NoteCategoryNotFoundException;
 use App\Layer\Application\UseCase\Note\CreateNoteUseCase;
 use App\Layer\Application\UseCase\Note\DeleteNoteUseCase;
 use App\Layer\Application\UseCase\Note\GetAllNotesByCategoryUseCase;
+use App\Layer\Application\UseCase\Note\GetOneNoteByHashUseCase;
 use App\Layer\Application\UseCase\Note\GetOneNoteUseCase;
+use App\Layer\Application\UseCase\Note\PinNoteUseCase;
+use App\Layer\Application\UseCase\Note\ShareNoteUseCase;
 use App\Layer\Application\UseCase\Note\UpdateNoteUseCase;
 use App\Layer\Domain\Exception\AbstractLogicException;
 use App\Request\Notes\CreateNoteRequest;
@@ -39,11 +42,7 @@ final class NotesController extends AbstractController
 
     #[Route(path: '/api/notes', name: 'notes.create', methods: ['POST'])]
     #[NeedAuth]
-    public function create(
-        Request $request,
-        CreateNoteRequest $requestModel,
-        CreateNoteUseCase $useCase,
-    ): JsonResponse
+    public function create(Request $request, CreateNoteRequest $requestModel, CreateNoteUseCase $useCase): JsonResponse
     {
         if (!$requestModel->populateByRequest($request)->validate()) {
             $this->blockEventService->setEvent($request, BlockEventTypeEnum::Validation);
@@ -108,11 +107,7 @@ final class NotesController extends AbstractController
 
     #[Route(path: '/api/notes', name: 'notes.update', methods: ['PATCH'])]
     #[NeedAuth]
-    public function update(
-        Request $request,
-        UpdateNoteRequest $requestModel,
-        UpdateNoteUseCase $useCase,
-    ): JsonResponse
+    public function update(Request $request, UpdateNoteRequest $requestModel, UpdateNoteUseCase $useCase): JsonResponse
     {
         if (!$requestModel->populateByRequest($request)->validate()) {
             $this->blockEventService->setEvent($request, BlockEventTypeEnum::Validation);
@@ -157,7 +152,7 @@ final class NotesController extends AbstractController
 
             return new JsonResponse(
                 NoteResponse::fromNoteEntity($noteEntity),
-                Response::HTTP_CREATED
+                Response::HTTP_OK
             );
         } catch (AbstractLogicException $e) {
             if ($e instanceof NoteNotFoundException) {
@@ -185,9 +180,67 @@ final class NotesController extends AbstractController
         }
     }
 
-    #[Route(path: '/api/notes-share/{hash}/one', name: 'notes.get_hash_one', methods: ['GET'])]
-    public function getByHash(string $hash, Request $request)
+    #[Route(path: '/api/notes/{id}/pin', name: 'notes.pin', methods: ['POST'])]
+    #[NeedAuth]
+    public function pin(int $id, Request $request, PinNoteUseCase $useCase): Response
     {
+        /** @var UserEntity $user */
+        $user = $this->getUser();
 
+        try {
+            $useCase->handle($id, $user->id, true);
+            return new Response(null, Response::HTTP_NO_CONTENT);
+        } catch (AbstractLogicException $e) {
+            if ($e instanceof NoteNotFoundException) {
+                $this->blockEventService->setEvent($request, BlockEventTypeEnum::BruteForce);
+            }
+            throw new UnprocessableEntityHttpException(Lang::t($e->getErrorKey()));
+        }
+    }
+
+    #[Route(path: '/api/notes/{id}/unpin', name: 'notes.unpin', methods: ['POST'])]
+    #[NeedAuth]
+    public function unpin(int $id, Request $request, PinNoteUseCase $useCase): Response
+    {
+        /** @var UserEntity $user */
+        $user = $this->getUser();
+
+        try {
+            $useCase->handle($id, $user->id, false);
+            return new Response(null, Response::HTTP_NO_CONTENT);
+        } catch (AbstractLogicException $e) {
+            if ($e instanceof NoteNotFoundException) {
+                $this->blockEventService->setEvent($request, BlockEventTypeEnum::BruteForce);
+            }
+            throw new UnprocessableEntityHttpException(Lang::t($e->getErrorKey()));
+        }
+    }
+
+    #[Route(path: '/api/notes/{id}/share', name: 'notes.share_create', methods: ['POST'])]
+    #[NeedAuth]
+    public function share(int $id, Request $request, ShareNoteUseCase $useCase)
+    {
+        /** @var UserEntity $user */
+        $user = $this->getUser();
+
+
+    }
+
+    #[Route(path: '/api/notes-share/{hash}/one', name: 'notes.get_one_by_hash', methods: ['GET'])]
+    public function getOneByHash(string $hash, Request $request, GetOneNoteByHashUseCase $useCase): JsonResponse
+    {
+        try {
+            $noteEntity = $useCase->handle($hash);
+
+            return new JsonResponse(
+                NoteResponse::fromNoteEntity($noteEntity),
+                Response::HTTP_OK
+            );
+        } catch (AbstractLogicException $e) {
+            if ($e instanceof NoteNotFoundException) {
+                $this->blockEventService->setEvent($request, BlockEventTypeEnum::BruteForce);
+            }
+            throw new UnprocessableEntityHttpException(Lang::t($e->getErrorKey()));
+        }
     }
 }

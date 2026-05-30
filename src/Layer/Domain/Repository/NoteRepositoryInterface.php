@@ -25,4 +25,8 @@ interface NoteRepositoryInterface
      * @return NoteListAggregate[]
      */
     public function getListByCategoryIds(array $categoryIDs): array;
+
+    public function getByShareHash(string $hash): ?NoteEntity;
+
+    public function isBelongToUser(int $noteID, int $userID): bool;
 }

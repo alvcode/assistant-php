@@ -84,9 +84,14 @@ final class NoteEntity
         return $this->pinned;
     }
 
-    public function setPinned(bool $pinned): void
+    public function setPin(): void
     {
-        $this->pinned = $pinned;
+        $this->pinned = true;
+    }
+
+    public function setUnPin(): void
+    {
+        $this->pinned = false;
     }
 
     /**

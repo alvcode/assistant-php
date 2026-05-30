@@ -123,6 +123,37 @@ final readonly class NoteRepository implements NoteRepositoryInterface
         return $result;
     }
 
+    public function getByShareHash(string $hash): ?NoteEntity
+    {
+        $query = "select * from notes where id = (select nsh.note_id from note_share_hashes nsh where nsh.hash = :hash)";
+        $conn = $this->entityManager->getConnection();
+        $result = $conn->executeQuery($query, ['hash' => $hash]);
+
+        $row = $result->fetchAssociative();
+        if (!$row) {
+            return null;
+        }
+        return $this->getEntityFromRaw($row);
+    }
+
+    public function isBelongToUser(int $noteID, int $userID): bool
+    {
+        $query = "
+            select EXISTS(
+                select 1 from note_categories nc
+                left join notes n on n.category_id = nc.id
+                where
+                n.id = :note_id and nc.user_id = :user_id
+            )
+        ";
+
+        $conn = $this->entityManager->getConnection();
+        return (bool) $conn->executeQuery(
+            $query,
+            ['note_id' => $noteID, 'user_id' => $userID],
+        )->fetchOne();
+    }
+
     private function getEntityFromRaw(array $raw): NoteEntity
     {
         return new NoteEntity(
