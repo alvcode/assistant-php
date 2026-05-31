@@ -21,5 +21,7 @@ return [
     'error_category_has_notes' => 'У категории существуют заметки. Необходимо сначала переместить их в другую категорию или удалить',
     'error_category_already_in_1_position' => 'Категория уже находится на 1 позиции',
     'error_invalid_field_format' => 'Некорректный формат поля',
-    "error_note_not_found" => 'Заметка не найдена',
+    'error_note_not_found' => 'Заметка не найдена',
+    'error_note_share_exists' => 'Вы уже поделились данной заметкой',
+    'error_note_share_not_found' => 'Share-ссылка не найдена',
 ];

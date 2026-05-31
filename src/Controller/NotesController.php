@@ -10,6 +10,7 @@ use App\Infrastructure\Lang;
 use App\Layer\Application\DTO\Note\CreateNoteDTO;
 use App\Layer\Application\DTO\Note\UpdateNoteDTO;
 use App\Layer\Application\Exception\Note\NoteNotFoundException;
+use App\Layer\Application\Exception\Note\NoteShareNotFoundException;
 use App\Layer\Application\Exception\NoteCategory\NoteCategoryNotFoundException;
 use App\Layer\Application\UseCase\Note\CreateNoteUseCase;
 use App\Layer\Application\UseCase\Note\DeleteNoteUseCase;
@@ -25,6 +26,7 @@ use App\Request\Notes\GetAllNotesRequest;
 use App\Request\Notes\UpdateNoteRequest;
 use App\Response\Note\NoteListResponse;
 use App\Response\Note\NoteResponse;
+use App\Response\Note\NoteShareResponse;
 use App\Security\BlockEvent\BlockEventService;
 use App\Security\BlockEvent\BlockEventTypeEnum;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -218,12 +220,44 @@ final class NotesController extends AbstractController
 
     #[Route(path: '/api/notes/{id}/share', name: 'notes.share_create', methods: ['POST'])]
     #[NeedAuth]
-    public function share(int $id, Request $request, ShareNoteUseCase $useCase)
+    public function share(int $id, Request $request, ShareNoteUseCase $useCase): JsonResponse
     {
         /** @var UserEntity $user */
         $user = $this->getUser();
 
+        try {
+            $noteShareEntity = $useCase->create($id, $user->id);
+            return new JsonResponse(
+                NoteShareResponse::fromNoteShareEntity($noteShareEntity),
+                Response::HTTP_CREATED
+            );
+        } catch (AbstractLogicException $e) {
+            if ($e instanceof NoteNotFoundException) {
+                $this->blockEventService->setEvent($request, BlockEventTypeEnum::BruteForce);
+            }
+            throw new UnprocessableEntityHttpException(Lang::t($e->getErrorKey()));
+        }
+    }
 
+    #[Route(path: '/api/notes/{id}/share', name: 'notes.share_get', methods: ['GET'])]
+    #[NeedAuth]
+    public function getShare(int $id, Request $request, ShareNoteUseCase $useCase): JsonResponse
+    {
+        /** @var UserEntity $user */
+        $user = $this->getUser();
+
+        try {
+            $noteShareEntity = $useCase->getOne($id, $user->id);
+            return new JsonResponse(
+                NoteShareResponse::fromNoteShareEntity($noteShareEntity),
+                Response::HTTP_CREATED
+            );
+        } catch (AbstractLogicException $e) {
+            if ($e instanceof NoteNotFoundException || $e instanceof NoteShareNotFoundException) {
+                $this->blockEventService->setEvent($request, BlockEventTypeEnum::BruteForce);
+            }
+            throw new UnprocessableEntityHttpException(Lang::t($e->getErrorKey()));
+        }
     }
 
     #[Route(path: '/api/notes-share/{hash}/one', name: 'notes.get_one_by_hash', methods: ['GET'])]

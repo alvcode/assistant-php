@@ -21,5 +21,7 @@ return [
     'error_category_has_notes' => 'The category has notes. You must first move them to another category or delete them',
     'error_category_already_in_1_position' => 'Category is already in position 1',
     'error_invalid_field_format' => 'Invalid field format',
-    "error_note_not_found" => 'Note not found',
+    'error_note_not_found' => 'Note not found',
+    'error_note_share_exists' => 'You have already shared this note',
+    'error_note_share_not_found' => 'Share link not found',
 ];
