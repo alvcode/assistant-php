@@ -9,7 +9,10 @@
 parameters:
     rateLimiter.allowance: '%env(RATE_LIMITER_ALLOWANCE_REQUESTS)%'
     rateLimiter.durationSeconds: '%env(RATE_LIMITER_TIME_DURATION_SECONDS)%'
+
     app.blockingParanoia: '%env(BLOCKING_PARANOIA)%'
+
+    file.uploadMaxSize: '%env(FILE_UPLOAD_MAX_SIZE)%'
 services:
     # default configuration for services in *this* file
     _defaults:
