@@ -82,4 +82,11 @@ final readonly class NoteShareHashesRepository implements NoteShareHashesReposit
         }
         return $entity;
     }
+
+    public function deleteByNoteID(int $noteID): void
+    {
+        $query = "DELETE FROM note_share_hashes WHERE note_id = :note_id";
+        $conn = $this->entityManager->getConnection();
+        $conn->executeQuery($query, ['note_id' => $noteID]);
+    }
 }

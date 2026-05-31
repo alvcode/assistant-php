@@ -15,4 +15,6 @@ interface NoteShareHashesRepositoryInterface
     public function existsByHash(string $hash): bool;
 
     public function save(NoteShareEntity $entity): NoteShareEntity;
+
+    public function deleteByNoteID(int $noteID): void;
 }

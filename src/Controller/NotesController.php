@@ -260,6 +260,24 @@ final class NotesController extends AbstractController
         }
     }
 
+    #[Route(path: '/api/notes/{id}/share', name: 'notes.share_delete', methods: ['DELETE'])]
+    #[NeedAuth]
+    public function deleteShare(int $id, Request $request, ShareNoteUseCase $useCase): Response
+    {
+        /** @var UserEntity $user */
+        $user = $this->getUser();
+
+        try {
+            $useCase->delete($id, $user->id);
+            return new Response(null, Response::HTTP_CREATED);
+        } catch (AbstractLogicException $e) {
+            if ($e instanceof NoteNotFoundException || $e instanceof NoteShareNotFoundException) {
+                $this->blockEventService->setEvent($request, BlockEventTypeEnum::BruteForce);
+            }
+            throw new UnprocessableEntityHttpException(Lang::t($e->getErrorKey()));
+        }
+    }
+
     #[Route(path: '/api/notes-share/{hash}/one', name: 'notes.get_one_by_hash', methods: ['GET'])]
     public function getOneByHash(string $hash, Request $request, GetOneNoteByHashUseCase $useCase): JsonResponse
     {

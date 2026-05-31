@@ -28,10 +28,7 @@ final readonly class ShareNoteUseCase
      */
     public function create(int $noteID, int $userID): NoteShareEntity
     {
-        $noteBelongsUser = $this->noteRepository->isBelongToUser($noteID, $userID);
-        if (!$noteBelongsUser) {
-            throw new NoteNotFoundException('Заметка не найдена');
-        }
+        $this->assertBelongToUser($noteID, $userID);
 
         $existsShare = $this->noteShareHashesRepository->existsByNoteID($noteID);
         if ($existsShare) {
@@ -63,15 +60,32 @@ final readonly class ShareNoteUseCase
      */
     public function getOne(int $noteID, int $userID): NoteShareEntity
     {
-        $noteBelongsUser = $this->noteRepository->isBelongToUser($noteID, $userID);
-        if (!$noteBelongsUser) {
-            throw new NoteNotFoundException('Заметка не найдена');
-        }
+        $this->assertBelongToUser($noteID, $userID);
 
         $noteShareEntity = $this->noteShareHashesRepository->getByNoteID($noteID);
         if (!$noteShareEntity) {
             throw new NoteShareNotFoundException('share-ссылка не найдена');
         }
         return $noteShareEntity;
+    }
+
+    /**
+     * @throws NoteNotFoundException
+     */
+    public function delete(int $noteID, int $userID): void
+    {
+        $this->assertBelongToUser($noteID, $userID);
+        $this->noteShareHashesRepository->deleteByNoteID($noteID);
+    }
+
+    /**
+     * @throws NoteNotFoundException
+     */
+    private function assertBelongToUser(int $noteID, int $userID): void
+    {
+        $noteBelongsUser = $this->noteRepository->isBelongToUser($noteID, $userID);
+        if (!$noteBelongsUser) {
+            throw new NoteNotFoundException('Заметка не найдена');
+        }
     }
 }
