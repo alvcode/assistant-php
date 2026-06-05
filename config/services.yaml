@@ -13,6 +13,7 @@ parameters:
     app.blockingParanoia: '%env(BLOCKING_PARANOIA)%'
 
     file.uploadMaxSize: '%env(FILE_UPLOAD_MAX_SIZE)%'
+    file.limitStoragePerUser: '%env(FILE_LIMIT_STORAGE_PER_USER)%'
 services:
     # default configuration for services in *this* file
     _defaults:
