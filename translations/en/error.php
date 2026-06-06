@@ -24,4 +24,6 @@ return [
     'error_note_not_found' => 'Note not found',
     'error_note_share_exists' => 'You have already shared this note',
     'error_note_share_not_found' => 'Share link not found',
+    'error_file_system_is_full' => 'File system is full',
+    'error_file_not_safe_filename' => 'Unsafe file name',
 ];

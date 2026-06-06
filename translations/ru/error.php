@@ -24,4 +24,6 @@ return [
     'error_note_not_found' => 'Заметка не найдена',
     'error_note_share_exists' => 'Вы уже поделились данной заметкой',
     'error_note_share_not_found' => 'Share-ссылка не найдена',
+    'error_file_system_is_full' => 'Файловая система переполнена',
+    'error_file_not_safe_filename' => 'Небезопасное имя файла',
 ];

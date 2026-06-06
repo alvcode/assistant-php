@@ -9,4 +9,6 @@ use App\Layer\Domain\ValueObject\FileSizeVO;
 interface NoteFileRepositoryInterface
 {
     public function getUsedSpaceByUserID(int $userID): FileSizeVO;
+
+    public function getLastID(): int;
 }

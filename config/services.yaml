@@ -14,6 +14,7 @@ parameters:
 
     file.uploadMaxSize: '%env(FILE_UPLOAD_MAX_SIZE)%'
     file.limitStoragePerUser: '%env(FILE_LIMIT_STORAGE_PER_USER)%'
+    file.savePath: '%env(FILE_SAVE_PATH)%'
 services:
     # default configuration for services in *this* file
     _defaults:

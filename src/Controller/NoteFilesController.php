@@ -7,6 +7,7 @@ namespace App\Controller;
 use App\Attribute\NeedAuth;
 use App\Entity\UserEntity;
 use App\Infrastructure\Lang;
+use App\Layer\Application\DTO\Common\FileDTO;
 use App\Layer\Application\Exception\NoteCategory\NoteCategoryNotFoundException;
 use App\Layer\Application\UseCase\NoteFile\UploadNoteFileUseCase;
 use App\Layer\Domain\Exception\AbstractLogicException;
@@ -39,7 +40,13 @@ final class NoteFilesController extends AbstractController
         $user = $this->getUser();
 
         try {
-
+            $useCase->handle(
+                new FileDTO(
+                    $requestModel->file,
+                    $requestModel->file->getClientOriginalExtension()
+                ),
+                $user->id
+            );
         } catch (AbstractLogicException $e) {
             if ($e instanceof NoteCategoryNotFoundException) {
                 $this->blockEventService->setEvent($request, BlockEventTypeEnum::BruteForce);

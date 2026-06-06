@@ -45,6 +45,9 @@ back-bash:
 pgs-bash:
 	docker exec -it ast-db bash;
 
+test:
+	docker exec ast-app vendor/bin/phpunit
+
 # ========================================================= PRODUCTION COMMANDS ==========================================
 clear-cache-prod:
 	docker exec -it ast-app bin/console cache:clear --env=prod

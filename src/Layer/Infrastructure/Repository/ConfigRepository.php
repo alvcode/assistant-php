@@ -13,9 +13,15 @@ final readonly class ConfigRepository implements ConfigRepositoryInterface
         private ParameterBagInterface $parameterBag,
     ) {}
 
+    /** @inheritDoc */
     public function getNoteFileStorageLimitPerUser(): int
     {
         $config = $this->parameterBag->get('file.limitStoragePerUser');
         return $config * 1000000;
+    }
+
+    public function getNoteFileSavePath(): string
+    {
+        return $this->parameterBag->get('file.savePath');
     }
 }

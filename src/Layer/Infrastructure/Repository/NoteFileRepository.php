@@ -28,4 +28,12 @@ final readonly class NoteFileRepository implements NoteFileRepositoryInterface
 
         return new FileSizeVO((float)$row['all_size'], FileSizeTypeEnum::Bytes);
     }
+
+    public function getLastID(): int
+    {
+        $query = "SELECT coalesce(max(id), 0) FROM files";
+        $conn = $this->entityManager->getConnection();
+        $result = $conn->executeQuery($query);
+        return $result->fetchOne();
+    }
 }

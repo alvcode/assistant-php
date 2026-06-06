@@ -8,4 +8,6 @@ interface ConfigRepositoryInterface
 {
     /** @return int in bytes */
     public function getNoteFileStorageLimitPerUser(): int;
+
+    public function getNoteFileSavePath(): string;
 }
