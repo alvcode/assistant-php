@@ -6,6 +6,8 @@ namespace App\Layer\Domain\Repository;
 
 interface ConfigRepositoryInterface
 {
+    public function getProjectDir(): string;
+
     /** @return int in bytes */
     public function getNoteFileStorageLimitPerUser(): int;
 

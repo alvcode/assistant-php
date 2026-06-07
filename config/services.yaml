@@ -11,6 +11,7 @@ parameters:
     rateLimiter.durationSeconds: '%env(RATE_LIMITER_TIME_DURATION_SECONDS)%'
 
     app.blockingParanoia: '%env(BLOCKING_PARANOIA)%'
+    app.defaultUri: '%env(DEFAULT_URI)%'
 
     file.uploadMaxSize: '%env(FILE_UPLOAD_MAX_SIZE)%'
     file.limitStoragePerUser: '%env(FILE_LIMIT_STORAGE_PER_USER)%'

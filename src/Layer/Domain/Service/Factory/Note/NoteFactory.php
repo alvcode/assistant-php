@@ -4,15 +4,20 @@ declare(strict_types=1);
 
 namespace App\Layer\Domain\Service\Factory\Note;
 
+use App\Layer\Domain\Dict\Common\FileSizeTypeEnum;
 use App\Layer\Domain\Entity\NoteEntity;
+use App\Layer\Domain\Entity\NoteFileEntity;
 use App\Layer\Domain\Service\Utils\DateTime;
 use App\Layer\Domain\Service\Utils\DateTimeImmutable;
+use App\Layer\Domain\Service\Utils\HasherServiceInterface;
 use App\Layer\Domain\Service\Utils\StringUtilsInterface;
+use App\Layer\Domain\ValueObject\FileSizeVO;
 
 final readonly class NoteFactory
 {
     public function __construct(
         private StringUtilsInterface $stringUtils,
+        private HasherServiceInterface $hasherService,
     ) {}
 
     public function getNewNote(int $categoryId, array $noteBlocks, ?string $title): NoteEntity
@@ -59,5 +64,25 @@ final readonly class NoteFactory
         }
 
         return !empty($result) ? $result : null;
+    }
+
+    public function getNewNoteFile(
+        int $userID,
+        string $originalFilename,
+        string $filePath,
+        string $ext,
+        int $sizeInBytes
+    ): NoteFileEntity
+    {
+        return new NoteFileEntity(
+            id: null,
+            userID: $userID,
+            originalFilename: $originalFilename,
+            filePath: $filePath,
+            ext: $ext,
+            size: new FileSizeVO(size: (float)$sizeInBytes, sizeType: FileSizeTypeEnum::Bytes),
+            hash: $this->hasherService->generateRandomStringWithoutSymbols(80),
+            createdAt: DateTimeImmutable::createNowUtc(),
+        );
     }
 }

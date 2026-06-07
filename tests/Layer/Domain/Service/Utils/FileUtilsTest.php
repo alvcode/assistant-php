@@ -54,7 +54,7 @@ final class FileUtilsTest extends KernelTestCase
 
     public function testPathJoin()
     {
-        $testCases = [
+        $relativeTestCases = [
             ['path1' => 'folder', 'path2' => 'folder1', 'expected' => 'folder/folder1'],
             ['path1' => 'folder/', 'path2' => 'folder1', 'expected' => 'folder/folder1'],
             ['path1' => 'folder//', 'path2' => 'folder1', 'expected' => 'folder/folder1'],
@@ -63,12 +63,35 @@ final class FileUtilsTest extends KernelTestCase
             ['path1' => 'folder///', 'path2' => 'folder1//', 'expected' => 'folder/folder1'],
             ['path1' => '/folder///', 'path2' => '/folder1//', 'expected' => 'folder/folder1'],
         ];
+        $absoluteTestCases = [
+            ['path1' => 'folder', 'path2' => 'folder1', 'expected' => '/folder/folder1'],
+            ['path1' => 'folder/', 'path2' => 'folder1', 'expected' => '/folder/folder1'],
+            ['path1' => 'folder//', 'path2' => 'folder1', 'expected' => '/folder/folder1'],
+            ['path1' => 'folder///', 'path2' => 'folder1', 'expected' => '/folder/folder1'],
+            ['path1' => 'folder///', 'path2' => 'folder1/', 'expected' => '/folder/folder1'],
+            ['path1' => 'folder///', 'path2' => 'folder1//', 'expected' => '/folder/folder1'],
+            ['path1' => '/folder///', 'path2' => '/folder1//', 'expected' => '/folder/folder1'],
+        ];
 
         /** @var FileUtils $fileUtils */
         $fileUtils = self::getContainer()->get(FileUtils::class);
 
-        foreach ($testCases as $case) {
-            $result = $fileUtils->pathJoin($case['path1'], $case['path2']);
+        foreach ($relativeTestCases as $case) {
+            $result = $fileUtils->pathJoin([$case['path1'], $case['path2']]);
+            $this->assertSame(
+                $case['expected'],
+                $result,
+                sprintf(
+                    "Case path1-path2: %s-%s / Expected: %s / Fact: %s",
+                    $case['path1'],
+                    $case['path2'],
+                    $case['expected'],
+                    $result
+                )
+            );
+        }
+        foreach ($absoluteTestCases as $case) {
+            $result = $fileUtils->pathJoin([$case['path1'], $case['path2']], true);
             $this->assertSame(
                 $case['expected'],
                 $result,

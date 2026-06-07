@@ -13,6 +13,11 @@ final readonly class ConfigRepository implements ConfigRepositoryInterface
         private ParameterBagInterface $parameterBag,
     ) {}
 
+    public function getProjectDir(): string
+    {
+        return '/' . $this->parameterBag->get('kernel.project_dir');
+    }
+
     /** @inheritDoc */
     public function getNoteFileStorageLimitPerUser(): int
     {

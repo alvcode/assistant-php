@@ -27,12 +27,16 @@ final readonly class FileUtils
         return sprintf("%d/%d/", $dirLevel1+1, $dirLevel2+1);
     }
 
-    function pathJoin(string ...$parts): string
+    function pathJoin(array $parts, $isAbsolute = false): string
     {
         $parts = array_map(
             static fn(string $part): string => trim($part, '/\\'),
             $parts
         );
-        return implode(DIRECTORY_SEPARATOR, $parts);
+        $res = implode(DIRECTORY_SEPARATOR, $parts);
+        if ($isAbsolute) {
+            $res = '/' . $res;
+        }
+        return $res;
     }
 }

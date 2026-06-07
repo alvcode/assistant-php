@@ -11,6 +11,7 @@ final readonly class FileDTO
     public function __construct(
         private SplFileInfo $file,
         private string $originalExtension,
+        private string $originalName,
     ) {}
 
     public function getFile(): SplFileInfo
@@ -21,5 +22,10 @@ final readonly class FileDTO
     public function getOriginalExtension(): string
     {
         return $this->originalExtension;
+    }
+
+    public function getOriginalName(): string
+    {
+        return $this->originalName;
     }
 }
