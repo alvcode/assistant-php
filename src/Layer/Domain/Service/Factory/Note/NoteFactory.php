@@ -20,6 +20,7 @@ final readonly class NoteFactory
         private HasherServiceInterface $hasherService,
     ) {}
 
+    /** @param array<int,array<string,mixed>> $noteBlocks */
     public function getNewNote(int $categoryId, array $noteBlocks, ?string $title): NoteEntity
     {
         return new NoteEntity(
@@ -33,6 +34,7 @@ final readonly class NoteFactory
         );
     }
 
+    /** @param array<int,array<string,mixed>> $noteBlocks */
     public function getUpdatedNote(NoteEntity $entity, array $noteBlocks, int $categoryID, ?string $title): NoteEntity
     {
         $entity->setNoteBlocks($noteBlocks);
@@ -42,6 +44,7 @@ final readonly class NoteFactory
         return $entity;
     }
 
+    /** @param array<int,array<string,mixed>> $noteBlocks */
     private function getTitle(array $noteBlocks, ?string $title): ?string
     {
         $result = '';

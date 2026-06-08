@@ -52,6 +52,7 @@ final readonly class UserTokenRepository implements UserTokenRepositoryInterface
         return $this->getEntityFromRaw($row);
     }
 
+    /** @param array<string,mixed> $row */
     private function getEntityFromRaw(array $row): UserTokenEntity
     {
         return new UserTokenEntity(

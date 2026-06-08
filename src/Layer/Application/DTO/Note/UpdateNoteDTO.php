@@ -6,6 +6,7 @@ namespace App\Layer\Application\DTO\Note;
 
 final readonly class UpdateNoteDTO
 {
+    /** @param array<int,array<string,mixed>> $noteBlocks */
     public function __construct(
         public int $id,
         public int $categoryId,

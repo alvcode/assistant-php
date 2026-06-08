@@ -132,6 +132,7 @@ final readonly class NoteCategoryRepository implements NoteCategoryRepositoryInt
         $conn->executeQuery($query, ['ids' => $ids], ['ids' => ArrayParameterType::INTEGER]);
     }
 
+    /** @param array<string,mixed> $row */
     private function getEntityFromRaw(array $row): NoteCategoryEntity
     {
         return new NoteCategoryEntity(

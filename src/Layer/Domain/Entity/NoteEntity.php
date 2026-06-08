@@ -9,6 +9,7 @@ use DateTimeImmutable;
 
 final class NoteEntity
 {
+    /** @param array<int,array<string,mixed>> $noteBlocks */
     public function __construct(
         private ?int $id,
         private int $categoryId,
@@ -39,11 +40,13 @@ final class NoteEntity
         $this->categoryId = $categoryId;
     }
 
+    /** @return array<int,array<string,mixed>> */
     public function getNoteBlocks(): array
     {
         return $this->noteBlocks;
     }
 
+    /** @param array<int,array<string,mixed>> $noteBlocks */
     public function setNoteBlocks(array $noteBlocks): void
     {
         $this->noteBlocks = $noteBlocks;

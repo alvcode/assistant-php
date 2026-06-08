@@ -1,0 +1,4 @@
+parameters:
+	parallel:
+		maximumNumberOfProcesses: 3
+	tmpDir: .cache-and-results

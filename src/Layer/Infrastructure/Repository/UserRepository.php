@@ -101,6 +101,7 @@ final readonly class UserRepository implements UserRepositoryInterface
         return $this->getEntityFromRaw($row);
     }
 
+    /** @param array<string,mixed> $raw */
     private function getEntityFromRaw(array $raw): UserEntity
     {
         return new UserEntity(

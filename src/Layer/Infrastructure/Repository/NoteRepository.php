@@ -154,6 +154,7 @@ final readonly class NoteRepository implements NoteRepositoryInterface
         )->fetchOne();
     }
 
+    /** @param array<string,mixed> $raw */
     private function getEntityFromRaw(array $raw): NoteEntity
     {
         return new NoteEntity(

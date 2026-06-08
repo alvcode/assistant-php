@@ -48,6 +48,9 @@ pgs-bash:
 test:
 	docker exec ast-app vendor/bin/phpunit
 
+stan:
+	docker exec -it ast-app vendor/bin/phpstan analyse --memory-limit 2G -c phpstan/level-6.neon
+
 # ========================================================= PRODUCTION COMMANDS ==========================================
 clear-cache-prod:
 	docker exec -it ast-app bin/console cache:clear --env=prod

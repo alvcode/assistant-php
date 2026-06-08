@@ -1,0 +1,7 @@
+includes:
+    - shared-config.neon
+parameters:
+    level: 6
+    paths:
+        - ../src/Layer
+    resultCachePath: %tmpDir%/result-cache-lvl-6.php
