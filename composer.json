@@ -25,7 +25,8 @@
         "symfony/serializer": "8.0.*",
         "symfony/translation": "8.0.*",
         "symfony/validator": "8.0.*",
-        "symfony/yaml": "8.0.*"
+        "symfony/yaml": "8.0.*",
+        "ext-openssl": "*"
     },
     "config": {
         "allow-plugins": {

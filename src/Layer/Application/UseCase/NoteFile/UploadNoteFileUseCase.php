@@ -6,15 +6,16 @@ namespace App\Layer\Application\UseCase\NoteFile;
 
 use App\Layer\Application\DTO\Common\FileDTO;
 use App\Layer\Application\Exception\NoteFile\NoteFilesystemIsFullException;
-use App\Layer\Domain\Dict\Common\FileSizeTypeEnum;
 use App\Layer\Domain\Entity\NoteFileEntity;
+use App\Layer\Domain\Exception\Utils\FailedEncryptionFileException;
 use App\Layer\Domain\Repository\ConfigRepositoryInterface;
 use App\Layer\Domain\Repository\DTO\Storage\SaveFileDTO;
 use App\Layer\Domain\Repository\NoteFileRepositoryInterface;
 use App\Layer\Domain\Repository\StorageRepositoryInterface;
 use App\Layer\Domain\Service\Factory\NoteFile\NoteFileFactory;
 use App\Layer\Domain\Service\Utils\FileUtils;
-use App\Layer\Domain\ValueObject\FileSizeVO;
+use App\Layer\Domain\ValueObject\FileContentVO;
+use Random\RandomException;
 
 final readonly class UploadNoteFileUseCase
 {
@@ -28,6 +29,8 @@ final readonly class UploadNoteFileUseCase
 
     /**
      * @throws NoteFilesystemIsFullException
+     * @throws FailedEncryptionFileException
+     * @throws RandomException
      */
     public function handle(FileDTO $file, int $userID): NoteFileEntity
     {
@@ -50,11 +53,22 @@ final readonly class UploadNoteFileUseCase
             $middleFilePath
         ]);
 
+        if ($this->configRepository->useFileEncryption()) {
+            $fileContentVO = $this->fileUtils->encryptFile(
+                content: file_get_contents($file->getFile()->getRealPath()),
+                key: $this->configRepository->getFileEncryptionKey()
+            );
+        } else {
+            $fileContentVO = new FileContentVO(file_get_contents($file->getFile()->getRealPath()));
+        }
+
         $this->storageRepository->save(
             new SaveFileDTO(
-               file: $file->getFile(),
-               savePath: $this->fileUtils->pathJoin([$this->configRepository->getProjectDir(), $fullFilePath], true),
-               fileSize: new FileSizeVO(size: (float)$file->getFile()->getSize(), sizeType: FileSizeTypeEnum::Bytes)
+                file: $fileContentVO,
+                savePath: $this->fileUtils->pathJoin(
+                    [$this->configRepository->getProjectDir(), $fullFilePath],
+                    true
+                )
             )
         );
 
@@ -64,7 +78,7 @@ final readonly class UploadNoteFileUseCase
                 originalFilename: $file->getOriginalName(),
                 filePath: $middleFilePath,
                 ext: $file->getOriginalExtension(),
-                sizeInBytes: $file->getFile()->getSize()
+                sizeInBytes: $fileContentVO->getFileSize()->getBytes()
             )
         );
     }

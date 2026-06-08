@@ -42,7 +42,7 @@ class UploadedNoteFileValidator extends ConstraintValidator
             $value,
             [
                 new File(
-                    maxSize: $this->params->get('file.uploadMaxSize') . 'M',
+                    maxSize: $this->params->get('noteFile.uploadMaxSize') . 'M',
                     extensions: ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'zip', 'doc', 'docx', 'xls', 'xlsx'],
                 ),
             ]

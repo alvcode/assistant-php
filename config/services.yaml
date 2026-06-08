@@ -13,9 +13,12 @@ parameters:
     app.blockingParanoia: '%env(BLOCKING_PARANOIA)%'
     app.defaultUri: '%env(DEFAULT_URI)%'
 
-    file.uploadMaxSize: '%env(FILE_UPLOAD_MAX_SIZE)%'
-    file.limitStoragePerUser: '%env(FILE_LIMIT_STORAGE_PER_USER)%'
-    file.savePath: '%env(FILE_SAVE_PATH)%'
+    file.useFileEncryption: '%env(FILE_USE_ENCRYPTION)%'
+    file.encryptionKey: '%env(FILE_ENCRYPTION_KEY)%'
+
+    noteFile.uploadMaxSize: '%env(NOTE_FILE_UPLOAD_MAX_SIZE)%'
+    noteFile.limitStoragePerUser: '%env(NOTE_FILE_LIMIT_STORAGE_PER_USER)%'
+    noteFile.savePath: '%env(NOTE_FILE_SAVE_PATH)%'
 services:
     # default configuration for services in *this* file
     _defaults:

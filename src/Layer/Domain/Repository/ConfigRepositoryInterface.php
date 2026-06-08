@@ -12,4 +12,8 @@ interface ConfigRepositoryInterface
     public function getNoteFileStorageLimitPerUser(): int;
 
     public function getNoteFileSavePath(): string;
+
+    public function useFileEncryption(): bool;
+
+    public function getFileEncryptionKey(): string;
 }

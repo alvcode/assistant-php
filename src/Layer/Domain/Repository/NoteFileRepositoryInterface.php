@@ -14,4 +14,6 @@ interface NoteFileRepositoryInterface
     public function getLastID(): int;
 
     public function save(NoteFileEntity $entity): NoteFileEntity;
+
+    public function getByHash(string $hash): ?NoteFileEntity;
 }

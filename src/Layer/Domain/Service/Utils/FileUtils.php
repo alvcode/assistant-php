@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace App\Layer\Domain\Service\Utils;
 
+use App\Layer\Domain\Exception\Utils\FailedDecryptionFileException;
+use App\Layer\Domain\Exception\Utils\FailedEncryptionFileException;
+use App\Layer\Domain\ValueObject\FileContentVO;
+use Random\RandomException;
+
 final readonly class FileUtils
 {
     public function __construct(
@@ -28,7 +33,7 @@ final readonly class FileUtils
     }
 
     /** @param string[] $parts */
-    function pathJoin(array $parts, bool $isAbsolute = false): string
+    public function pathJoin(array $parts, bool $isAbsolute = false): string
     {
         $parts = array_map(
             static fn(string $part): string => trim($part, '/\\'),
@@ -39,5 +44,57 @@ final readonly class FileUtils
             $res = '/' . $res;
         }
         return $res;
+    }
+
+    /**
+     * @throws RandomException
+     * @throws FailedEncryptionFileException
+     */
+    public function encryptFile(string $content, string $key): FileContentVO
+    {
+        $key = hash('sha256', $key, true);
+        $nonce = random_bytes(12);
+
+        $ciphertext = openssl_encrypt(
+            $content,
+            'aes-256-gcm',
+            $key,
+            OPENSSL_RAW_DATA,
+            $nonce,
+            $tag
+        );
+
+        if ($ciphertext === false) {
+            throw new FailedEncryptionFileException('Ошибка шифрования файла');
+        }
+
+        return new FileContentVO($nonce . $tag . $ciphertext);
+    }
+
+    /**
+     * @throws FailedDecryptionFileException
+     */
+    function decryptFile(string $content, string $key): FileContentVO
+    {
+        $key = hash('sha256', $key, true);
+
+        $nonce = substr($content, 0, 12);
+        $tag = substr($content, 12, 16);
+        $ciphertext = substr($content, 28);
+
+        $plaintext = openssl_decrypt(
+            $ciphertext,
+            'aes-256-gcm',
+            $key,
+            OPENSSL_RAW_DATA,
+            $nonce,
+            $tag
+        );
+
+        if ($plaintext === false) {
+            throw new FailedDecryptionFileException('Ошибка дешифровки файла');
+        }
+
+        return new FileContentVO($plaintext);
     }
 }

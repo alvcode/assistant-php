@@ -7,7 +7,9 @@ namespace App\Layer\Infrastructure\Repository;
 use App\Layer\Domain\Dict\Common\FileSizeTypeEnum;
 use App\Layer\Domain\Entity\NoteFileEntity;
 use App\Layer\Domain\Repository\NoteFileRepositoryInterface;
+use App\Layer\Domain\Service\Utils\DateTimeImmutable;
 use App\Layer\Domain\ValueObject\FileSizeVO;
+use DateTimeZone;
 use Doctrine\ORM\EntityManagerInterface;
 
 final readonly class NoteFileRepository implements NoteFileRepositoryInterface
@@ -73,5 +75,33 @@ final readonly class NoteFileRepository implements NoteFileRepositoryInterface
             $entity->setId($stmt->fetchOne());
         }
         return $entity;
+    }
+
+    public function getByHash(string $hash): ?NoteFileEntity
+    {
+        $query = "select * from files where hash = :hash";
+        $conn = $this->entityManager->getConnection();
+        $result = $conn->executeQuery($query, ['hash' => $hash]);
+
+        $row = $result->fetchAssociative();
+        if (!$row) {
+            return null;
+        }
+        return $this->getEntityFromRaw($row);
+    }
+
+    /** @param array<string,mixed> $raw */
+    private function getEntityFromRaw(array $raw): NoteFileEntity
+    {
+        return new NoteFileEntity(
+            id: $raw['id'],
+            userID: $raw['user_id'],
+            originalFilename: $raw['original_filename'],
+            filePath: $raw['file_path'],
+            ext: $raw['ext'],
+            size: new FileSizeVO(size: $raw['size'], sizeType: FileSizeTypeEnum::Bytes),
+            hash: $raw['hash'],
+            createdAt: new DateTimeImmutable($raw['created_at'], new DateTimeZone('UTC')),
+        );
     }
 }
