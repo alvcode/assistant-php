@@ -12,6 +12,7 @@ use App\Layer\Application\DTO\Note\UpdateNoteDTO;
 use App\Layer\Application\Exception\Note\NoteNotFoundException;
 use App\Layer\Application\Exception\Note\NoteShareNotFoundException;
 use App\Layer\Application\Exception\NoteCategory\NoteCategoryNotFoundException;
+use App\Layer\Application\Exception\NoteFile\NoteFileDoesntBelongToUserException;
 use App\Layer\Application\UseCase\Note\CreateNoteUseCase;
 use App\Layer\Application\UseCase\Note\DeleteNoteUseCase;
 use App\Layer\Application\UseCase\Note\GetAllNotesByCategoryUseCase;
@@ -69,7 +70,7 @@ final class NotesController extends AbstractController
                 Response::HTTP_CREATED
             );
         } catch (AbstractLogicException $e) {
-            if ($e instanceof NoteCategoryNotFoundException) {
+            if ($e instanceof NoteCategoryNotFoundException || $e instanceof NoteFileDoesntBelongToUserException) {
                 $this->blockEventService->setEvent($request, BlockEventTypeEnum::BruteForce);
             }
             throw new UnprocessableEntityHttpException(Lang::t($e->getErrorKey()));
@@ -135,7 +136,11 @@ final class NotesController extends AbstractController
                 Response::HTTP_CREATED
             );
         } catch (AbstractLogicException $e) {
-            if ($e instanceof NoteNotFoundException || $e instanceof NoteCategoryNotFoundException) {
+            if (
+                $e instanceof NoteNotFoundException
+                || $e instanceof NoteCategoryNotFoundException
+                || $e instanceof NoteFileDoesntBelongToUserException
+            ) {
                 $this->blockEventService->setEvent($request, BlockEventTypeEnum::BruteForce);
             }
             throw new UnprocessableEntityHttpException(Lang::t($e->getErrorKey()));

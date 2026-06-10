@@ -7,9 +7,11 @@ namespace App\Layer\Application\UseCase\Note;
 use App\Layer\Application\DTO\Note\UpdateNoteDTO;
 use App\Layer\Application\Exception\Note\NoteNotFoundException;
 use App\Layer\Application\Exception\NoteCategory\NoteCategoryNotFoundException;
+use App\Layer\Application\Exception\NoteFile\NoteFileDoesntBelongToUserException;
 use App\Layer\Domain\Entity\NoteEntity;
 use App\Layer\Domain\Repository\FileNoteLinkRepositoryInterface;
 use App\Layer\Domain\Repository\NoteCategoryRepositoryInterface;
+use App\Layer\Domain\Repository\NoteFileRepositoryInterface;
 use App\Layer\Domain\Repository\NoteRepositoryInterface;
 use App\Layer\Domain\Service\Factory\Note\NoteFactory;
 
@@ -20,11 +22,13 @@ final readonly class UpdateNoteUseCase
         private NoteCategoryRepositoryInterface $noteCategoryRepository,
         private FileNoteLinkRepositoryInterface $fileNoteLinkRepository,
         private NoteFactory $noteFactory,
+        private NoteFileRepositoryInterface $noteFileRepository,
     ) {}
 
     /**
      * @throws NoteNotFoundException
      * @throws NoteCategoryNotFoundException
+     * @throws NoteFileDoesntBelongToUserException
      */
     public function handle(UpdateNoteDTO $in, int $userID): NoteEntity
     {
@@ -45,13 +49,17 @@ final readonly class UpdateNoteUseCase
             }
         }
 
+        $attachedFileIDs = $noteEntity->getAttachedFileIDs();
+        $checkFileCount = $this->noteFileRepository->getCountByUserAndIDs($userID, $attachedFileIDs);
+        if ($checkFileCount !== count($attachedFileIDs)) {
+            throw new NoteFileDoesntBelongToUserException('Файл(-ы) в заметке не принадлежат пользователю');
+        }
+
         $noteEntity = $this->noteRepository->save(
             $this->noteFactory->getUpdatedNote($noteEntity, $in->noteBlocks, $in->categoryId, $in->title)
         );
 
-        // TODO: дыра. нужно проверять ID файлов на принадлежность юзеру
         $this->fileNoteLinkRepository->upsert($noteEntity->getId(), $noteEntity->getAttachedFileIDs());
-
         return $noteEntity;
     }
 }

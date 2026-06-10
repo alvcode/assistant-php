@@ -98,7 +98,6 @@ final class NoteEntity
     }
 
     /**
-     * TODO: протестировать, когда будет реализована загрузка файлов
      * @return int[]
      */
     public function getAttachedFileIDs(): array
@@ -106,7 +105,7 @@ final class NoteEntity
         $result = [];
         foreach ($this->noteBlocks as $noteBlock) {
             if (isset($noteBlock['type']) && ($noteBlock['type'] === 'attaches' || $noteBlock['type'] === 'image')) {
-                $fileID = $noteBlock['data']['file']['id'];
+                $fileID = $noteBlock['data']['file']['id'] ?? null;
                 if ($fileID) {
                     $result[] = (int)$fileID;
                 }

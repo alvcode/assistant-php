@@ -10,6 +10,7 @@ use App\Layer\Domain\Repository\NoteFileRepositoryInterface;
 use App\Layer\Domain\Service\Utils\DateTimeImmutable;
 use App\Layer\Domain\ValueObject\FileSizeVO;
 use DateTimeZone;
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\ORM\EntityManagerInterface;
 
 final readonly class NoteFileRepository implements NoteFileRepositoryInterface
@@ -88,6 +89,18 @@ final readonly class NoteFileRepository implements NoteFileRepositoryInterface
             return null;
         }
         return $this->getEntityFromRaw($row);
+    }
+
+    /** @inheritDoc */
+    public function getCountByUserAndIDs(int $userID, array $fileIDs): int
+    {
+        $query = "SELECT coalesce(count(id), 0) FROM files where user_id = :user_id and id in (:file_ids)";
+        $conn = $this->entityManager->getConnection();
+        return $conn->executeQuery(
+            $query,
+            ['user_id' => $userID, 'file_ids' => $fileIDs],
+            ['file_ids' => ArrayParameterType::INTEGER]
+        )->fetchOne();
     }
 
     /** @param array<string,mixed> $raw */
