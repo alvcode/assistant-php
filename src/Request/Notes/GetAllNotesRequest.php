@@ -11,5 +11,6 @@ class GetAllNotesRequest extends BaseRequest
 {
     #[Assert\Type('digit')]
     #[Assert\NotBlank()]
+    #[Assert\Range(max: self::INT_4_MAX)]
     public mixed $categoryId;
 }

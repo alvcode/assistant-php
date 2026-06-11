@@ -9,6 +9,10 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class BaseRequest
 {
+    protected const INT_2_MAX = 32_767;
+    protected const INT_4_MAX = 2_147_483_647;
+    protected const INT_8_MAX = 9_223_372_036_854_775_807;
+
     protected array $validation_errors = [];
 
     public function __construct(

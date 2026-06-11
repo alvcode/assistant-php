@@ -15,5 +15,6 @@ class CreateNoteCategoryRequest extends BaseRequest
     public mixed $name;
 
     #[Assert\Type('integer')]
+    #[Assert\Range(max: self::INT_4_MAX)]
     public mixed $parent_id = null;
 }

@@ -12,6 +12,7 @@ class CreateNoteRequest extends BaseRequest
 {
     #[Assert\Type('integer')]
     #[Assert\NotBlank()]
+    #[Assert\Range(max: self::INT_4_MAX)]
     public mixed $category_id;
 
     #[Assert\Type('string')]
