@@ -14,7 +14,6 @@ use App\Layer\Domain\Repository\NoteFileRepositoryInterface;
 use App\Layer\Domain\Repository\StorageRepositoryInterface;
 use App\Layer\Domain\Service\Factory\NoteFile\NoteFileFactory;
 use App\Layer\Domain\Service\Utils\FileUtils;
-use App\Layer\Domain\ValueObject\FileContentVO;
 use Random\RandomException;
 
 final readonly class UploadNoteFileUseCase
@@ -54,17 +53,17 @@ final readonly class UploadNoteFileUseCase
         ]);
 
         if ($this->configRepository->useFileEncryption()) {
-            $fileContentVO = $this->fileUtils->encryptFile(
-                content: file_get_contents($file->getFile()->getRealPath()),
+            $fileForSave = $this->fileUtils->encryptFile(
+                source: $file->getFile(),
                 key: $this->configRepository->getFileEncryptionKey()
             );
         } else {
-            $fileContentVO = new FileContentVO(file_get_contents($file->getFile()->getRealPath()));
+            $fileForSave = $file->getFile();
         }
 
         $this->storageRepository->save(
             new SaveFileDTO(
-                file: $fileContentVO,
+                file: $fileForSave,
                 savePath: $this->fileUtils->pathJoin(
                     [$this->configRepository->getProjectDir(), $fullFilePath],
                     true
@@ -78,7 +77,7 @@ final readonly class UploadNoteFileUseCase
                 originalFilename: $file->getOriginalName(),
                 filePath: $middleFilePath,
                 ext: $file->getOriginalExtension(),
-                sizeInBytes: $fileContentVO->getFileSize()->getBytes()
+                sizeInBytes: $fileForSave->getSize(),
             )
         );
     }

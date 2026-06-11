@@ -6,7 +6,7 @@ namespace App\Layer\Infrastructure\Repository;
 
 use App\Layer\Domain\Repository\DTO\Storage\SaveFileDTO;
 use App\Layer\Domain\Repository\StorageRepositoryInterface;
-use App\Layer\Domain\ValueObject\FileContentVO;
+use SplFileInfo;
 use Symfony\Component\Filesystem\Filesystem;
 
 final readonly class LocalStorageRepository implements StorageRepositoryInterface
@@ -17,14 +17,14 @@ final readonly class LocalStorageRepository implements StorageRepositoryInterfac
 
     public function save(SaveFileDTO $in): void
     {
-        $this->filesystem->dumpFile(
+        $this->filesystem->copy(
+            $in->getFile()->getRealPath(),
             $in->getSavePath(),
-            $in->getFile()->getContent(),
         );
     }
 
-    public function getFile(string $path): FileContentVO
+    public function getFile(string $path): SplFileInfo
     {
-        return new FileContentVO(file_get_contents($path));
+        return new SplFileInfo($path);
     }
 }

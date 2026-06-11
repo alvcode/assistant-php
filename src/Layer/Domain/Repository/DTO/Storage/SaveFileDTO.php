@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace App\Layer\Domain\Repository\DTO\Storage;
 
-use App\Layer\Domain\ValueObject\FileContentVO;
+use SplFileInfo;
 
 final readonly class SaveFileDTO
 {
     public function __construct(
-        private FileContentVO $file,
+        private SplFileInfo $file,
         private string $savePath,
     ) {}
 
-    public function getFile(): FileContentVO
+    public function getFile(): SplFileInfo
     {
         return $this->file;
     }

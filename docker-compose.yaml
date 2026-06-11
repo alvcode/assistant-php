@@ -1,13 +1,24 @@
 services:
+    ast-nginx:
+        image: nginx:latest
+        container_name: ast-nginx
+        volumes:
+            - ./:/var/www
+            - ./_docker/dev/fpm/nginx/conf.d:/etc/nginx/conf.d
+        ports:
+            - "8083:80"
+        networks:
+            - ast-network
+        depends_on:
+            - ast-app
+
     ast-app:
         build:
             context: .
-            dockerfile: _docker/dev/app/Dockerfile
+            dockerfile: _docker/dev/fpm/Dockerfile
         container_name: ast-app
-        ports:
-            - "8083:80"
         volumes:
-            - ./:/app
+            - ./:/var/www
         networks:
             - ast-network
 

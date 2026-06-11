@@ -17,9 +17,11 @@ use App\Response\NoteFile\UploadNoteFileResponse;
 use App\Security\BlockEvent\BlockEventService;
 use App\Security\BlockEvent\BlockEventTypeEnum;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -76,17 +78,12 @@ final class NoteFilesController extends AbstractController
         try {
             $fileDTO = $useCase->handle($hash);
 
-            return new Response(
-                content: $fileDTO->fileContent->getContent(),
-                status: Response::HTTP_OK,
-                headers: [
-                    'Content-Type' => 'application/octet-stream',
-                    'Content-Disposition' => sprintf(
-                        'attachment; filename="%s"',
-                        $fileDTO->originalFileName
-                    ),
-                ]
+            $response = new BinaryFileResponse($fileDTO->file);
+            $response->setContentDisposition(
+                ResponseHeaderBag::DISPOSITION_ATTACHMENT,
+                $fileDTO->originalFileName
             );
+            return $response;
         } catch (AbstractLogicException $e) {
             if ($e instanceof NoteFileNotFoundByHashException) {
                 $this->blockEventService->setEvent($request, BlockEventTypeEnum::BruteForce);

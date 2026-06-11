@@ -39,16 +39,16 @@ final readonly class GetNoteFileByHashUseCase
         ], true);
 
         if ($this->configRepository->useFileEncryption()) {
-            $fileContent = $this->fileUtils->decryptFile(
-                $this->storageRepository->getFile($fullFilePath)->getContent(),
-                $this->configRepository->getFileEncryptionKey()
+            $file = $this->fileUtils->decryptFile(
+                source: $this->storageRepository->getFile($fullFilePath),
+                key: $this->configRepository->getFileEncryptionKey()
             );
         } else {
-            $fileContent = $this->storageRepository->getFile($fullFilePath);
+            $file = $this->storageRepository->getFile($fullFilePath);
         }
 
         return new GetNoteFileDTO(
-            fileContent: $fileContent,
+            file: $file,
             originalFileName: $noteFileEntity->getOriginalFilename(),
         );
     }
