@@ -39,4 +39,14 @@ final readonly class ConfigRepository implements ConfigRepositoryInterface
     {
         return $this->parameterBag->get('file.encryptionKey');
     }
+
+    public function getFileStorage(): string
+    {
+        return $this->parameterBag->get('file.storage');
+    }
+
+    public function getS3SecretAccessKey(): string
+    {
+        return $this->parameterBag->get('s3.secretAccessKey');
+    }
 }

@@ -7,6 +7,9 @@
         "php": ">=8.4",
         "ext-ctype": "*",
         "ext-iconv": "*",
+        "ext-openssl": "*",
+        "ext-sodium": "*",
+        "aws/aws-sdk-php": "^3.384",
         "doctrine/doctrine-bundle": "^3.2",
         "doctrine/doctrine-migrations-bundle": "^4.0",
         "doctrine/orm": "^3.6",
@@ -25,9 +28,7 @@
         "symfony/serializer": "8.0.*",
         "symfony/translation": "8.0.*",
         "symfony/validator": "8.0.*",
-        "symfony/yaml": "8.0.*",
-        "ext-openssl": "*",
-        "ext-sodium": "*"
+        "symfony/yaml": "8.0.*"
     },
     "config": {
         "allow-plugins": {

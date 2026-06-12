@@ -7,14 +7,14 @@ namespace App\Layer\Application\UseCase\NoteFile;
 use App\Layer\Application\DTO\Common\FileDTO;
 use App\Layer\Application\Exception\NoteFile\NoteFilesystemIsFullException;
 use App\Layer\Domain\Entity\NoteFileEntity;
+use App\Layer\Domain\Exception\Storage\FailedStorageConfigurationException;
 use App\Layer\Domain\Exception\Utils\FailedEncryptionFileException;
 use App\Layer\Domain\Repository\ConfigRepositoryInterface;
 use App\Layer\Domain\Repository\DTO\Storage\SaveFileDTO;
 use App\Layer\Domain\Repository\NoteFileRepositoryInterface;
-use App\Layer\Domain\Repository\StorageRepositoryInterface;
 use App\Layer\Domain\Service\Factory\NoteFile\NoteFileFactory;
+use App\Layer\Domain\Service\Factory\Storage\StorageRepositoryFactoryInterface;
 use App\Layer\Domain\Service\Utils\FileUtils;
-use Random\RandomException;
 
 final readonly class UploadNoteFileUseCase
 {
@@ -22,14 +22,14 @@ final readonly class UploadNoteFileUseCase
         private NoteFileRepositoryInterface $noteFileRepository,
         private ConfigRepositoryInterface $configRepository,
         private FileUtils $fileUtils,
-        private StorageRepositoryInterface $storageRepository,
+        private StorageRepositoryFactoryInterface $storageRepositoryFactory,
         private NoteFileFactory $noteFileFactory,
     ) {}
 
     /**
      * @throws NoteFilesystemIsFullException
      * @throws FailedEncryptionFileException
-     * @throws RandomException
+     * @throws FailedStorageConfigurationException|\SodiumException
      */
     public function handle(FileDTO $file, int $userID): NoteFileEntity
     {
@@ -61,13 +61,10 @@ final readonly class UploadNoteFileUseCase
             $fileForSave = $file->getFile();
         }
 
-        $this->storageRepository->save(
+        $this->storageRepositoryFactory->getRepository()->save(
             new SaveFileDTO(
                 file: $fileForSave,
-                savePath: $this->fileUtils->pathJoin(
-                    [$this->configRepository->getProjectDir(), $fullFilePath],
-                    true
-                )
+                savePath: $fullFilePath
             )
         );
 

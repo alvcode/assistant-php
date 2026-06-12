@@ -6,9 +6,6 @@ namespace App\Layer\Domain\Service\Utils;
 
 use App\Layer\Domain\Exception\Utils\FailedDecryptionFileException;
 use App\Layer\Domain\Exception\Utils\FailedEncryptionFileException;
-use App\Layer\Domain\ValueObject\FileContentVO;
-use Exception;
-use Random\RandomException;
 use SodiumException;
 use SplFileInfo;
 
@@ -51,7 +48,7 @@ final readonly class FileUtils
 
     /**
      * @throws SodiumException
-     * @throws Exception
+     * @throws FailedEncryptionFileException
      */
     public function encryptFile(
         SplFileInfo $source,
@@ -65,15 +62,21 @@ final readonly class FileUtils
 
         $destinationPath = tempnam(sys_get_temp_dir(), 'enc_');
 
+        register_shutdown_function(function() use ($destinationPath) {
+            if (file_exists($destinationPath)) {
+                unlink($destinationPath);
+            }
+        });
+
         if ($destinationPath === false) {
-            throw new Exception('Failed create temp file');
+            throw new FailedEncryptionFileException('Ошибка создания temp файла');
         }
 
         $input = fopen($source->getPathname(), 'rb');
         $output = fopen($destinationPath, 'wb');
 
         if ($input === false || $output === false) {
-            throw new Exception('Failed open file');
+            throw new FailedEncryptionFileException('Ошибка открытия файла');
         }
 
         try {
@@ -87,7 +90,7 @@ final readonly class FileUtils
                 $chunk = fread($input, $chunkSize);
 
                 if ($chunk === false) {
-                    throw new Exception('Failed read file');
+                    throw new FailedEncryptionFileException('Ошибка чтения файла');
                 }
 
                 $isLastChunk = feof($input);
@@ -116,7 +119,7 @@ final readonly class FileUtils
 
     /**
      * @throws SodiumException
-     * @throws Exception
+     * @throws FailedDecryptionFileException
      */
     public function decryptFile(
         SplFileInfo $source,
@@ -130,15 +133,21 @@ final readonly class FileUtils
 
         $destinationPath = tempnam(sys_get_temp_dir(), 'dec_');
 
+        register_shutdown_function(function() use ($destinationPath) {
+            if (file_exists($destinationPath)) {
+                unlink($destinationPath);
+            }
+        });
+
         if ($destinationPath === false) {
-            throw new Exception('Failed create temp file');
+            throw new FailedDecryptionFileException('Ошибка создания temp файла');
         }
 
         $input = fopen($source->getPathname(), 'rb');
         $output = fopen($destinationPath, 'wb');
 
         if ($input === false || $output === false) {
-            throw new Exception('Failed open file');
+            throw new FailedDecryptionFileException('Ошибка открытия файла');
         }
 
         try {
@@ -151,7 +160,7 @@ final readonly class FileUtils
                 $header === false
                 || strlen($header) !== SODIUM_CRYPTO_SECRETSTREAM_XCHACHA20POLY1305_HEADERBYTES
             ) {
-                throw new Exception('Invalid encrypted file header');
+                throw new FailedDecryptionFileException('Ошибка шифрования заголовка файла');
             }
 
             $state = sodium_crypto_secretstream_xchacha20poly1305_init_pull(
@@ -172,7 +181,7 @@ final readonly class FileUtils
                     $lengthBytes === false
                     || strlen($lengthBytes) !== 4
                 ) {
-                    throw new Exception('Invalid encrypted chunk length');
+                    throw new FailedDecryptionFileException('Ошибка шифрования длины чанка');
                 }
 
                 $length = unpack('N', $lengthBytes)[1];
@@ -183,7 +192,7 @@ final readonly class FileUtils
                     $encryptedChunk === false
                     || strlen($encryptedChunk) !== $length
                 ) {
-                    throw new Exception('Invalid encrypted chunk');
+                    throw new FailedDecryptionFileException('Ошибка шифрования чанка');
                 }
 
                 [$plaintext, $tag] = sodium_crypto_secretstream_xchacha20poly1305_pull(
@@ -203,7 +212,7 @@ final readonly class FileUtils
             }
 
             if (!$finalTagReceived) {
-                throw new Exception('Final tag not found');
+                throw new FailedDecryptionFileException('Финальный тэг не найден');
             }
         } finally {
             fclose($input);

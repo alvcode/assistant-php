@@ -16,4 +16,8 @@ interface ConfigRepositoryInterface
     public function useFileEncryption(): bool;
 
     public function getFileEncryptionKey(): string;
+
+    public function getFileStorage(): string;
+
+    public function getS3SecretAccessKey(): string;
 }

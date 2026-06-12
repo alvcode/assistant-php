@@ -6,6 +6,11 @@ start:
 stop:
 	docker compose down;
 
+create-needed:
+	sudo mkdir uploads
+	sudo chown -R www-data:www-data uploads
+	sudo chmod -R 755 uploads
+
 # ========================================================= migrations / entity ==========================================
 mc:
 	docker exec -it ast-app bin/console doctrine:migrations:generate
