@@ -6,6 +6,7 @@ namespace App\Layer\Infrastructure\Repository;
 
 use App\Layer\Domain\Repository\DTO\Storage\SaveFileDTO;
 use App\Layer\Domain\Repository\StorageRepositoryInterface;
+use App\Layer\Domain\Service\Utils\FileUtilsInterface;
 use Aws\S3\S3Client;
 use Exception;
 use SplFileInfo;
@@ -17,6 +18,7 @@ final readonly class S3StorageRepository implements StorageRepositoryInterface
 
     public function __construct(
         private ParameterBagInterface $parameterBag,
+        private FileUtilsInterface $fileUtils,
     ) {
         $this->client = new S3Client([
             'version' => 'latest',
@@ -44,8 +46,12 @@ final readonly class S3StorageRepository implements StorageRepositoryInterface
      */
     public function getFile(string $path): SplFileInfo
     {
+        $tempFile = null;
+        $handle = null;
+        $bodyStream = null;
+
         try {
-            $tempFile = tempnam(sys_get_temp_dir(), 's3_');
+            $tempFile = $this->fileUtils->createTempFile();
             $handle = fopen($tempFile, 'wb');
 
             if ($handle === false) {
@@ -65,18 +71,16 @@ final readonly class S3StorageRepository implements StorageRepositoryInterface
                 fwrite($handle, $chunk);
             }
 
-            fclose($handle);
-            $bodyStream->close();
-
-            register_shutdown_function(function() use ($tempFile) {
-                if (file_exists($tempFile)) {
-                    unlink($tempFile);
-                }
-            });
-
             return new SplFileInfo($tempFile);
         } catch (Exception $e) {
             throw new Exception(sprintf('Failed to get file from S3: %s', $e->getMessage()), $e->getCode(), $e);
+        } finally {
+            if ($handle !== null) {
+                fclose($handle);
+            }
+            if ($bodyStream !== null) {
+                $bodyStream->close();
+            }
         }
     }
 }

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Layer\Domain\Service\Utils;
 
-use App\Layer\Domain\Service\Utils\FileUtils;
+use App\Layer\Infrastructure\Service\Utils\FileUtils;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 final class FileUtilsTest extends KernelTestCase
@@ -50,6 +50,33 @@ final class FileUtilsTest extends KernelTestCase
                 )
             );
         }
+    }
+
+    public function testEncryptDecryptFile()
+    {
+        $content = "Текст, который будет зашифрован в файле";
+
+        /** @var FileUtils $fileUtils */
+        $fileUtils = self::getContainer()->get(FileUtils::class);
+
+        $tempPath = $fileUtils->createTempFile();
+        file_put_contents($tempPath, $content);
+
+        $encryptedFile = $fileUtils->encryptFile(new \SplFileInfo($tempPath), 'key');
+
+        $this->assertFileExists($encryptedFile->getPathname());
+
+        $this->assertNotEquals(
+            $content,
+            file_get_contents($encryptedFile->getPathname())
+        );
+
+        $decryptedFile = $fileUtils->decryptFile($encryptedFile, 'key');
+        $this->assertFileExists($decryptedFile->getPathname());
+        $this->assertEquals(
+            $content,
+            file_get_contents($decryptedFile->getPathname())
+        );
     }
 
     public function testPathJoin()

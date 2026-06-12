@@ -7,7 +7,7 @@ namespace App\Layer\Infrastructure\Repository;
 use App\Layer\Domain\Repository\ConfigRepositoryInterface;
 use App\Layer\Domain\Repository\DTO\Storage\SaveFileDTO;
 use App\Layer\Domain\Repository\StorageRepositoryInterface;
-use App\Layer\Domain\Service\Utils\FileUtils;
+use App\Layer\Domain\Service\Utils\FileUtilsInterface;
 use SplFileInfo;
 use Symfony\Component\Filesystem\Filesystem;
 
@@ -15,7 +15,7 @@ final readonly class LocalStorageRepository implements StorageRepositoryInterfac
 {
     public function __construct(
         private Filesystem $filesystem,
-        private FileUtils $fileUtils,
+        private FileUtilsInterface $fileUtils,
         private ConfigRepositoryInterface $configRepository,
     ) {}
 

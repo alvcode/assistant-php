@@ -11,21 +11,21 @@ use App\Layer\Domain\Exception\Utils\FailedDecryptionFileException;
 use App\Layer\Domain\Repository\ConfigRepositoryInterface;
 use App\Layer\Domain\Repository\NoteFileRepositoryInterface;
 use App\Layer\Domain\Service\Factory\Storage\StorageRepositoryFactoryInterface;
-use App\Layer\Domain\Service\Utils\FileUtils;
+use App\Layer\Domain\Service\Utils\FileUtilsInterface;
 
 final readonly class GetNoteFileByHashUseCase
 {
     public function __construct(
         private NoteFileRepositoryInterface $noteFileRepository,
         private ConfigRepositoryInterface $configRepository,
-        private FileUtils $fileUtils,
+        private FileUtilsInterface $fileUtils,
         private StorageRepositoryFactoryInterface $storageRepositoryFactory,
     ) {}
 
     /**
      * @throws NoteFileNotFoundByHashException
      * @throws FailedDecryptionFileException
-     * @throws FailedStorageConfigurationException|\SodiumException
+     * @throws FailedStorageConfigurationException
      */
     public function handle(string $hash): GetNoteFileDTO
     {

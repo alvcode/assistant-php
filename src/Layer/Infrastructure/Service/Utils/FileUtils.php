@@ -2,14 +2,18 @@
 
 declare(strict_types=1);
 
-namespace App\Layer\Domain\Service\Utils;
+namespace App\Layer\Infrastructure\Service\Utils;
 
+use App\Layer\Domain\Exception\Utils\FailedCreateTempFileException;
 use App\Layer\Domain\Exception\Utils\FailedDecryptionFileException;
 use App\Layer\Domain\Exception\Utils\FailedEncryptionFileException;
+use App\Layer\Domain\Service\Utils\FileUtilsInterface;
+use App\Layer\Domain\Service\Utils\HasherServiceInterface;
+use Exception;
 use SodiumException;
 use SplFileInfo;
 
-final readonly class FileUtils
+final readonly class FileUtils implements FileUtilsInterface
 {
     public function __construct(
         private HasherServiceInterface $hasherService,
@@ -49,6 +53,7 @@ final readonly class FileUtils
     /**
      * @throws SodiumException
      * @throws FailedEncryptionFileException
+     * @throws Exception
      */
     public function encryptFile(
         SplFileInfo $source,
@@ -60,17 +65,7 @@ final readonly class FileUtils
             SODIUM_CRYPTO_SECRETSTREAM_XCHACHA20POLY1305_KEYBYTES
         );
 
-        $destinationPath = tempnam(sys_get_temp_dir(), 'enc_');
-
-        register_shutdown_function(function() use ($destinationPath) {
-            if (file_exists($destinationPath)) {
-                unlink($destinationPath);
-            }
-        });
-
-        if ($destinationPath === false) {
-            throw new FailedEncryptionFileException('Ошибка создания temp файла');
-        }
+        $destinationPath = $this->createTempFile();
 
         $input = fopen($source->getPathname(), 'rb');
         $output = fopen($destinationPath, 'wb');
@@ -120,6 +115,7 @@ final readonly class FileUtils
     /**
      * @throws SodiumException
      * @throws FailedDecryptionFileException
+     * @throws Exception
      */
     public function decryptFile(
         SplFileInfo $source,
@@ -131,17 +127,7 @@ final readonly class FileUtils
             SODIUM_CRYPTO_SECRETSTREAM_XCHACHA20POLY1305_KEYBYTES
         );
 
-        $destinationPath = tempnam(sys_get_temp_dir(), 'dec_');
-
-        register_shutdown_function(function() use ($destinationPath) {
-            if (file_exists($destinationPath)) {
-                unlink($destinationPath);
-            }
-        });
-
-        if ($destinationPath === false) {
-            throw new FailedDecryptionFileException('Ошибка создания temp файла');
-        }
+        $destinationPath = $this->createTempFile();
 
         $input = fopen($source->getPathname(), 'rb');
         $output = fopen($destinationPath, 'wb');
@@ -220,5 +206,22 @@ final readonly class FileUtils
         }
 
         return new SplFileInfo($destinationPath);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function createTempFile(): string
+    {
+        $path = tempnam(sys_get_temp_dir(), 'file_utils_');
+        register_shutdown_function(function() use ($path) {
+            if (file_exists($path)) {
+                unlink($path);
+            }
+        });
+        if ($path === false) {
+            throw new FailedCreateTempFileException('Не удалось создать временный файл');
+        }
+        return $path;
     }
 }

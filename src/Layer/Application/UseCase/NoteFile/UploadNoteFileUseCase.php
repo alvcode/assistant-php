@@ -14,22 +14,22 @@ use App\Layer\Domain\Repository\DTO\Storage\SaveFileDTO;
 use App\Layer\Domain\Repository\NoteFileRepositoryInterface;
 use App\Layer\Domain\Service\Factory\NoteFile\NoteFileFactory;
 use App\Layer\Domain\Service\Factory\Storage\StorageRepositoryFactoryInterface;
-use App\Layer\Domain\Service\Utils\FileUtils;
+use App\Layer\Domain\Service\Utils\FileUtilsInterface;
 
 final readonly class UploadNoteFileUseCase
 {
     public function __construct(
         private NoteFileRepositoryInterface $noteFileRepository,
         private ConfigRepositoryInterface $configRepository,
-        private FileUtils $fileUtils,
+        private FileUtilsInterface $fileUtils,
         private StorageRepositoryFactoryInterface $storageRepositoryFactory,
         private NoteFileFactory $noteFileFactory,
     ) {}
 
     /**
      * @throws NoteFilesystemIsFullException
+     * @throws FailedStorageConfigurationException
      * @throws FailedEncryptionFileException
-     * @throws FailedStorageConfigurationException|\SodiumException
      */
     public function handle(FileDTO $file, int $userID): NoteFileEntity
     {
