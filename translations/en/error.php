@@ -26,4 +26,5 @@ return [
     'error_note_share_not_found' => 'Share link not found',
     'error_file_system_is_full' => 'File system is full',
     'error_file_not_safe_filename' => 'Unsafe file name',
+    'error_drive_dir_exists' => 'The directory already exists',
 ];

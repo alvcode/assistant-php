@@ -7,6 +7,8 @@ namespace App\Controller;
 use App\Attribute\NeedAuth;
 use App\Entity\UserEntity;
 use App\Infrastructure\Lang;
+use App\Layer\Application\DTO\Drive\DriveCreateDirectoryDTO;
+use App\Layer\Application\UseCase\Drive\DriveCreateDirectoryUseCase;
 use App\Layer\Application\UseCase\Drive\DriveGetTreeUseCase;
 use App\Layer\Domain\Exception\AbstractLogicException;
 use App\Request\Drive\DriveCreateDirectoryRequest;
@@ -33,15 +35,42 @@ final class DriveController extends AbstractController
      */
     #[Route(path: '/api/drive/directories', name: 'drive.create_directory', methods: ['POST'])]
     #[NeedAuth]
-    public function createDirectory(Request $request, DriveCreateDirectoryRequest $requestModel)
+    public function createDirectory(
+        Request $request, 
+        DriveCreateDirectoryRequest $requestModel, 
+        DriveCreateDirectoryUseCase $useCase,
+        DriveGetTreeUseCase $getTreeUseCase
+    ): JsonResponse
     {
         if (!$requestModel->populateByRequest($request)->validate()) {
             $this->blockEventService->setEvent($request, BlockEventTypeEnum::Validation);
             throw new UnprocessableEntityHttpException($requestModel->getFirstError());
         }
 
-        var_dump($requestModel->name, $requestModel->parent_id);
-        exit();
+        /** @var UserEntity $user */
+        $user = $this->getUser();
+
+        try {
+            $useCase->handle(
+                new DriveCreateDirectoryDTO(
+                    name: $requestModel->name,
+                    parentId: $requestModel->parent_id
+                ),
+                userId: $user->id
+            );
+
+            $driveTree = $getTreeUseCase->handle(
+                $user->id,
+                $requestModel->parent_id ? (int)$requestModel->parent_id : null
+            );
+
+            return new JsonResponse(
+                DriveTreeResponse::fromDriveTreeDTOs($driveTree),
+                Response::HTTP_OK
+            );
+        } catch (AbstractLogicException $e) {
+            throw new UnprocessableEntityHttpException(Lang::t($e->getErrorKey()));
+        }
     }
 
     /**

@@ -4,10 +4,21 @@ declare(strict_types=1);
 
 namespace App\Layer\Domain\Repository;
 
+use App\Layer\Domain\Dict\Drive\DriveStructTypeEnum;
+use App\Layer\Domain\Entity\DriveStructEntity;
 use App\Layer\Infrastructure\DTO\Drive\DriveTreeDTO;
 
 interface DriveStructRepositoryInterface
 {
     /** @return DriveTreeDTO[] */
     public function getTreeByUserID(int $userID, ?int $parentID): array;
+
+    public function findRow(
+        int $userId,
+        string $name,
+        DriveStructTypeEnum $type,
+        ?int $parentId = null,
+    ): ?DriveStructEntity;
+
+    public function save(DriveStructEntity $entity): DriveStructEntity;
 }

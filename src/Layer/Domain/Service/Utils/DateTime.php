@@ -17,4 +17,12 @@ class DateTime extends BaseDateTime
     {
         return new self('now', new DateTimeZone('UTC'));
     }
+
+    /**
+     * @throws DateMalformedStringException
+     */
+    public static function createUTCFromString(string $dateTime): self
+    {
+        return new self($dateTime, new DateTimeZone('UTC'));
+    }
 }

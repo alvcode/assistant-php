@@ -26,4 +26,5 @@ return [
     'error_note_share_not_found' => 'Share-ссылка не найдена',
     'error_file_system_is_full' => 'Файловая система переполнена',
     'error_file_not_safe_filename' => 'Небезопасное имя файла',
+    'error_drive_dir_exists' => 'Директория уже существует',
 ];
