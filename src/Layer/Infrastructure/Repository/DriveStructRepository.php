@@ -143,6 +143,29 @@ final readonly class DriveStructRepository implements DriveStructRepositoryInter
         return $this->getEntityFromRaw($row);
     }
 
+    public function deleteRecursive(int $structId, int $userId): void 
+    {
+        $query = "
+            DELETE FROM drive_structs
+            WHERE id in (
+                WITH RECURSIVE structs AS (
+                    SELECT *
+                    FROM drive_structs 
+                    WHERE id = :struct_id and user_id = :user_id
+                
+                    UNION ALL
+                
+                    SELECT ds.*
+                    FROM drive_structs ds
+                    INNER JOIN structs s ON ds.parent_id = s.id
+                )
+                SELECT id FROM structs
+            )
+        ";
+        $conn = $this->entityManager->getConnection();
+        $conn->executeQuery($query, ['struct_id' => $structId, 'user_id' => $userId]);
+    }
+
     /** @param array<string,mixed> $raw */
     private function getEntityFromRaw(array $raw): DriveStructEntity
     {

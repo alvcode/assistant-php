@@ -15,6 +15,7 @@ use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 final readonly class S3StorageRepository implements StorageRepositoryInterface
 {
     private S3Client $client;
+    
 
     public function __construct(
         private ParameterBagInterface $parameterBag,
@@ -81,6 +82,38 @@ final readonly class S3StorageRepository implements StorageRepositoryInterface
             if ($bodyStream !== null) {
                 $bodyStream->close();
             }
+        }
+    }
+
+    public function delete(string $path): void
+    {
+        $this->client->deleteObject([
+            'Bucket' => $this->parameterBag->get('s3.bucketName'),
+            'Key' => $path,
+        ]);
+    }
+
+    /** @inheritDoc */
+    public function deleteAll(array $paths): void
+    {
+        $result = $this->client->deleteObjects([
+            'Bucket' => $this->parameterBag->get('s3.bucketName'),
+            'Delete' => [
+                'Objects' => \array_map(
+                    static fn(string $key): array => ['Key' => $key],
+                    $paths
+                ),
+            ],
+        ]);
+        $errors = $result['Errors'] ?? [];
+        if (!empty($errors)) {
+            throw new Exception(
+                sprintf(
+                    'Failed to delete %d object(s): %s',
+                    count($result['Errors']),
+                    json_encode($result['Errors'], JSON_THROW_ON_ERROR),
+                )
+            );
         }
     }
 }

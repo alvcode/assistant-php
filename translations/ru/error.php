@@ -29,4 +29,5 @@ return [
     'error_drive_dir_exists' => 'Директория уже существует',
     'error_drive_filename_exists' => 'Файл с таким именем уже существует в директории',
     'error_drive_method_unavailable_for_chunks' => 'Нельзя получить чанки данным методом',
+    'error_drive_struct_not_found' => 'Структура диска не найдена',
 ];

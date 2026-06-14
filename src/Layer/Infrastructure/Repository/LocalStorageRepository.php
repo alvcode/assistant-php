@@ -39,4 +39,22 @@ final readonly class LocalStorageRepository implements StorageRepositoryInterfac
             ),
         );
     }
+
+    public function delete(string $path): void 
+    {
+        $this->filesystem->remove(
+            $this->fileUtils->pathJoin(
+                [$this->configRepository->getProjectDir(), $path],
+                true
+            )
+        );
+    }
+
+    /** @inheritDoc */
+    public function deleteAll(array $paths): void 
+    {
+        foreach ($paths as $path) {
+            $this->delete($path);
+        }
+    }
 }

@@ -23,4 +23,6 @@ interface DriveStructRepositoryInterface
     public function save(DriveStructEntity $entity): DriveStructEntity;
 
     public function getById(int $id): ?DriveStructEntity;
+
+    public function deleteRecursive(int $structId, int $userId): void;
 }

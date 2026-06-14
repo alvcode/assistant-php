@@ -11,6 +11,7 @@ use App\Layer\Application\DTO\Common\FileDTO;
 use App\Layer\Application\DTO\Drive\DriveCreateDirectoryDTO;
 use App\Layer\Application\DTO\Drive\DriveUploadFileDTO;
 use App\Layer\Application\UseCase\Drive\DriveCreateDirectoryUseCase;
+use App\Layer\Application\UseCase\Drive\DriveDeleteStructUseCase;
 use App\Layer\Application\UseCase\Drive\DriveGetFileUseCase;
 use App\Layer\Application\UseCase\Drive\DriveGetTreeUseCase;
 use App\Layer\Application\UseCase\Drive\DriveUploadFileUseCase;
@@ -174,6 +175,22 @@ final class DriveController extends AbstractController
                 $fileDTO->getOriginalName()
             );
             return $response;
+        } catch (AbstractLogicException $e) {
+            throw new UnprocessableEntityHttpException(Lang::t($e->getErrorKey()));
+        }
+    }
+
+    #[Route(path: '/api/drive/{id}', name: 'drive.delete_file', methods: ['DELETE'])]
+    #[NeedAuth]
+    public function deleteFile(int $id, DriveDeleteStructUseCase $useCase): Response
+    {
+        /** @var UserEntity $user */
+        $user = $this->getUser();
+
+        try {
+            $useCase->handle($id, $user->id);
+
+            return new Response(null, Response::HTTP_NO_CONTENT);
         } catch (AbstractLogicException $e) {
             throw new UnprocessableEntityHttpException(Lang::t($e->getErrorKey()));
         }

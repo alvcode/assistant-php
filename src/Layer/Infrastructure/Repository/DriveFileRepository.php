@@ -97,6 +97,36 @@ final readonly class DriveFileRepository implements DriveFileRepositoryInterface
         return $this->getEntityFromRaw($row);
     }
 
+    /** @inheritDoc */
+    public function getAllRecursive(int $structId, int $userId): array 
+    {
+        $query = "
+            select * from drive_files df 
+            where 
+            df.drive_struct_id in (
+                WITH RECURSIVE structs AS (
+                    SELECT id
+                    FROM drive_structs 
+                    WHERE id = :struct_id and user_id = :user_id
+                
+                    UNION ALL
+                
+                    SELECT ds.id
+                    FROM drive_structs ds
+                    INNER JOIN structs s ON ds.parent_id = s.id
+                )
+                SELECT id FROM structs
+            )
+        ";
+        $conn = $this->entityManager->getConnection();
+        $stmt = $conn->executeQuery($query, ['struct_id' => $structId, 'user_id' => $userId]);
+        $result = [];
+        foreach ($stmt->fetchAllAssociative() as $raw) {
+            $result[] = $this->getEntityFromRaw($raw);
+        }
+        return $result;
+    }
+
     /** @param array<string,mixed> $raw */
     private function getEntityFromRaw(array $raw): DriveFileEntity
     {

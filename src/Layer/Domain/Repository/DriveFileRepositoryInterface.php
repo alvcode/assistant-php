@@ -16,4 +16,7 @@ interface DriveFileRepositoryInterface
     public function save(DriveFileEntity $entity): DriveFileEntity;
 
     public function getByStructId(int $structId): ?DriveFileEntity;
+
+    /** @return DriveFileEntity[] */
+    public function getAllRecursive(int $structId, int $userId): array;
 }

@@ -10,13 +10,15 @@ use App\Layer\Domain\Repository\StorageRepositoryInterface;
 use App\Layer\Domain\Service\Factory\Storage\StorageRepositoryFactoryInterface;
 use App\Layer\Infrastructure\Repository\LocalStorageRepository;
 use App\Layer\Infrastructure\Repository\S3StorageRepository;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 final readonly class StorageRepositoryFactory implements StorageRepositoryFactoryInterface
 {
     public function __construct(
         private ConfigRepositoryInterface $configRepository,
-        private LocalStorageRepository $localStorageRepository,
-        private S3StorageRepository $s3StorageRepository,
+        private ContainerInterface $container,
+        //private LocalStorageRepository $localStorageRepository,
+        //private S3StorageRepository $s3StorageRepository,
     ) {}
 
     /** @inheritDoc */
@@ -25,11 +27,13 @@ final readonly class StorageRepositoryFactory implements StorageRepositoryFactor
         $driver = $this->configRepository->getFileStorage();
 
         if ($driver === 'local') {
-            return $this->localStorageRepository;
+            return $this->container->get(LocalStorageRepository::class);
+            //return $this->localStorageRepository;
         }
 
         if ($driver === 's3' && !empty($this->configRepository->getS3SecretAccessKey())) {
-            return $this->s3StorageRepository;
+            return $this->container->get(S3StorageRepository::class);
+            //return $this->s3StorageRepository;
         }
 
         throw new FailedStorageConfigurationException('Не удалось определить storage');
