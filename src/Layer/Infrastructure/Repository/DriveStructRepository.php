@@ -129,6 +129,7 @@ final readonly class DriveStructRepository implements DriveStructRepositoryInter
         return $entity;
     }
 
+    /** @param array<string,mixed> $raw */
     private function getEntityFromRaw(array $raw): DriveStructEntity
     {
         return new DriveStructEntity(

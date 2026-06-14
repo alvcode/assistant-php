@@ -15,7 +15,7 @@ use Symfony\Component\HttpFoundation\Request;
 
 final readonly class BlockEventService
 {
-    private const int checkMinutes = 40;
+    private const checkMinutes = 40;
 
     public function __construct(
         private ParameterBagInterface $parameterBag,

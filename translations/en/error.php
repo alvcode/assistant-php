@@ -27,4 +27,5 @@ return [
     'error_file_system_is_full' => 'File system is full',
     'error_file_not_safe_filename' => 'Unsafe file name',
     'error_drive_dir_exists' => 'The directory already exists',
+    'error_drive_filename_exists' => 'A file with this name already exists in the directory',
 ];

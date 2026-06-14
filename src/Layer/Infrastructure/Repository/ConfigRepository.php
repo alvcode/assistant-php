@@ -49,4 +49,16 @@ final readonly class ConfigRepository implements ConfigRepositoryInterface
     {
         return $this->parameterBag->get('s3.secretAccessKey');
     }
+
+    /** @inheritDoc */
+    public function getDriveStorageLimitPerUser(): int
+    {
+        $config = $this->parameterBag->get('drive.limitStoragePerUser');
+        return $config * 1000000;
+    }
+
+    public function getDriveFileSavePath(): string
+    {
+        return $this->parameterBag->get('drive.savePath');
+    }
 }

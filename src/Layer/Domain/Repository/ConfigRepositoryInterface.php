@@ -20,4 +20,9 @@ interface ConfigRepositoryInterface
     public function getFileStorage(): string;
 
     public function getS3SecretAccessKey(): string;
+
+    /** @return int in bytes */
+    public function getDriveStorageLimitPerUser(): int;
+
+    public function getDriveFileSavePath(): string;
 }

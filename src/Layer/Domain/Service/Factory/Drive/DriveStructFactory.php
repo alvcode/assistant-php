@@ -23,4 +23,17 @@ final readonly class DriveStructFactory
             updatedAt: DateTime::createNowUtc(),
         );
     }
+
+    public function getNewDriveStructFile(int $userId, string $name, ?int $parentId): DriveStructEntity
+    {
+        return new DriveStructEntity(
+            id: null,
+            userId: $userId,
+            name: $name,
+            type: DriveStructTypeEnum::File,
+            parentId: $parentId,
+            createdAt: DateTimeImmutable::createNowUtc(),
+            updatedAt: DateTime::createNowUtc(),
+        );
+    }
 }

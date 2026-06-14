@@ -27,4 +27,5 @@ return [
     'error_file_system_is_full' => 'Файловая система переполнена',
     'error_file_not_safe_filename' => 'Небезопасное имя файла',
     'error_drive_dir_exists' => 'Директория уже существует',
+    'error_drive_filename_exists' => 'Файл с таким именем уже существует в директории',
 ];

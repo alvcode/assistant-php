@@ -10,7 +10,7 @@ use Symfony\Component\Validator\ConstraintValidator;
 
 class NoteBlocksValidator extends ConstraintValidator
 {
-    private const array ALLOWED_TYPES = ['paragraph', 'table', 'code', 'alert', 'header', 'list', 'image', 'attaches'];
+    private const ALLOWED_TYPES = ['paragraph', 'table', 'code', 'alert', 'header', 'list', 'image', 'attaches'];
 
     public function validate(mixed $value, Constraint $constraint): void
     {

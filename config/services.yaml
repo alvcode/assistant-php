@@ -21,6 +21,9 @@ parameters:
     noteFile.limitStoragePerUser: '%env(NOTE_FILE_LIMIT_STORAGE_PER_USER)%'
     noteFile.savePath: '%env(NOTE_FILE_SAVE_PATH)%'
 
+    drive.savePath: '%env(DRIVE_FILE_SAVE_PATH)%'
+    drive.limitStoragePerUser: '%env(DRIVE_LIMIT_STORAGE_PER_USER)%'
+
     s3.endpoint: '%env(S3_ENDPOINT)%'
     s3.accessKey: '%env(S3_ACCESS_KEY)%'
     s3.secretAccessKey: '%env(S3_SECRET_ACCESS_KEY)%'

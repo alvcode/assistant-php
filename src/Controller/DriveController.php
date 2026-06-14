@@ -7,11 +7,15 @@ namespace App\Controller;
 use App\Attribute\NeedAuth;
 use App\Entity\UserEntity;
 use App\Infrastructure\Lang;
+use App\Layer\Application\DTO\Common\FileDTO;
 use App\Layer\Application\DTO\Drive\DriveCreateDirectoryDTO;
+use App\Layer\Application\DTO\Drive\DriveUploadFileDTO;
 use App\Layer\Application\UseCase\Drive\DriveCreateDirectoryUseCase;
 use App\Layer\Application\UseCase\Drive\DriveGetTreeUseCase;
+use App\Layer\Application\UseCase\Drive\DriveUploadFileUseCase;
 use App\Layer\Domain\Exception\AbstractLogicException;
 use App\Request\Drive\DriveCreateDirectoryRequest;
+use App\Request\Drive\DriveUploadFileRequest;
 use App\Request\Drive\DriveWithParentIDRequest;
 use App\Response\Drive\DriveTreeResponse;
 use App\Security\BlockEvent\BlockEventService;
@@ -94,6 +98,50 @@ final class DriveController extends AbstractController
 
         try {
             $driveTree = $useCase->handle(
+                $user->id,
+                $requestModel->parentId ? (int)$requestModel->parentId : null
+            );
+
+            return new JsonResponse(
+                DriveTreeResponse::fromDriveTreeDTOs($driveTree),
+                Response::HTTP_OK
+            );
+        } catch (AbstractLogicException $e) {
+            throw new UnprocessableEntityHttpException(Lang::t($e->getErrorKey()));
+        }
+    }
+
+    #[Route(path: '/api/drive/upload-file', name: 'drive.upload_file', methods: ['POST'])]
+    #[NeedAuth]
+    public function uploadFile(
+        Request $request, 
+        DriveUploadFileRequest $requestModel,
+        DriveUploadFileUseCase $useCase,
+        DriveGetTreeUseCase $getTreeUseCase
+    ): JsonResponse
+    {
+        $requestModel->populateByArray($request->query->all());
+        $requestModel->file = $request->files->get('file');
+        if (!$requestModel->validate()) {
+            $this->blockEventService->setEvent($request, BlockEventTypeEnum::Validation);
+            throw new UnprocessableEntityHttpException($requestModel->getFirstError());
+        }
+
+        /** @var UserEntity $user */
+        $user = $this->getUser();
+
+        try {
+            $useCase->handle(
+                new FileDTO(
+                    file: $requestModel->file, 
+                    originalExtension: $requestModel->file->getClientOriginalExtension(), 
+                    originalName: $requestModel->file->getClientOriginalName()
+                ),
+                new DriveUploadFileDTO(parentId: $requestModel->parentId, sha256: $requestModel->sha256),
+                $user->id
+            );
+
+            $driveTree = $getTreeUseCase->handle(
                 $user->id,
                 $requestModel->parentId ? (int)$requestModel->parentId : null
             );
