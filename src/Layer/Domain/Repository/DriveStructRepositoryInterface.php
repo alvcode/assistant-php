@@ -21,4 +21,6 @@ interface DriveStructRepositoryInterface
     ): ?DriveStructEntity;
 
     public function save(DriveStructEntity $entity): DriveStructEntity;
+
+    public function getById(int $id): ?DriveStructEntity;
 }

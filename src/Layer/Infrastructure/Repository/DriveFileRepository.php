@@ -7,6 +7,7 @@ namespace App\Layer\Infrastructure\Repository;
 use App\Layer\Domain\Dict\Common\FileSizeTypeEnum;
 use App\Layer\Domain\Entity\DriveFileEntity;
 use App\Layer\Domain\Repository\DriveFileRepositoryInterface;
+use App\Layer\Domain\Service\Utils\DateTimeImmutable;
 use App\Layer\Domain\ValueObject\FileSizeVO;
 use Doctrine\DBAL\ParameterType;
 use Doctrine\ORM\EntityManagerInterface;
@@ -80,5 +81,34 @@ final readonly class DriveFileRepository implements DriveFileRepositoryInterface
             $entity->setId($stmt->fetchOne());
         }
         return $entity;
+    }
+
+    public function getByStructId(int $structId): ?DriveFileEntity
+    {
+        $query = "select * from drive_files where drive_struct_id = :struct_id";
+        $conn = $this->entityManager->getConnection();
+        $stmt = $conn->executeQuery($query, ['struct_id' => $structId]);
+
+        $row = $stmt->fetchAssociative();
+        if (!$row) {
+            return null;
+        }
+
+        return $this->getEntityFromRaw($row);
+    }
+
+    /** @param array<string,mixed> $raw */
+    private function getEntityFromRaw(array $raw): DriveFileEntity
+    {
+        return new DriveFileEntity(
+            id: $raw['id'],
+            driveStructId: $raw['drive_struct_id'],
+            path: $raw['path'],
+            ext: $raw['ext'],
+            size: new FileSizeVO($raw['size'], FileSizeTypeEnum::Bytes),
+            createdAt: DateTimeImmutable::createUTCFromString($raw['created_at']),
+            isChunk: $raw['is_chunk'],
+            sha256: $raw['sha256']
+        );
     }
 }

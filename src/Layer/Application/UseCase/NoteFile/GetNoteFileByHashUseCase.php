@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Layer\Application\UseCase\NoteFile;
 
-use App\Layer\Application\DTO\NoteFile\GetNoteFileDTO;
+use App\Layer\Application\DTO\Common\FileDTO;
 use App\Layer\Application\Exception\NoteFile\NoteFileNotFoundByHashException;
 use App\Layer\Domain\Exception\Storage\FailedStorageConfigurationException;
 use App\Layer\Domain\Exception\Utils\FailedDecryptionFileException;
@@ -27,7 +27,7 @@ final readonly class GetNoteFileByHashUseCase
      * @throws FailedDecryptionFileException
      * @throws FailedStorageConfigurationException
      */
-    public function handle(string $hash): GetNoteFileDTO
+    public function handle(string $hash): FileDTO
     {
         $noteFileEntity = $this->noteFileRepository->getByHash($hash);
         if (!$noteFileEntity) {
@@ -48,9 +48,10 @@ final readonly class GetNoteFileByHashUseCase
             $file = $this->storageRepositoryFactory->getRepository()->getFile($fullFilePath);
         }
 
-        return new GetNoteFileDTO(
+        return new FileDTO(
             file: $file,
-            originalFileName: $noteFileEntity->getOriginalFilename(),
+            originalExtension: $noteFileEntity->getExt(),
+            originalName: $noteFileEntity->getOriginalFilename()
         );
     }
 }

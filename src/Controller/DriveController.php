@@ -11,6 +11,7 @@ use App\Layer\Application\DTO\Common\FileDTO;
 use App\Layer\Application\DTO\Drive\DriveCreateDirectoryDTO;
 use App\Layer\Application\DTO\Drive\DriveUploadFileDTO;
 use App\Layer\Application\UseCase\Drive\DriveCreateDirectoryUseCase;
+use App\Layer\Application\UseCase\Drive\DriveGetFileUseCase;
 use App\Layer\Application\UseCase\Drive\DriveGetTreeUseCase;
 use App\Layer\Application\UseCase\Drive\DriveUploadFileUseCase;
 use App\Layer\Domain\Exception\AbstractLogicException;
@@ -22,9 +23,11 @@ use App\Security\BlockEvent\BlockEventService;
 use App\Security\BlockEvent\BlockEventTypeEnum;
 use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 
@@ -150,6 +153,27 @@ final class DriveController extends AbstractController
                 DriveTreeResponse::fromDriveTreeDTOs($driveTree),
                 Response::HTTP_OK
             );
+        } catch (AbstractLogicException $e) {
+            throw new UnprocessableEntityHttpException(Lang::t($e->getErrorKey()));
+        }
+    }
+
+    #[Route(path: '/api/drive/files/{id}', name: 'drive.get_file', methods: ['GET'])]
+    #[NeedAuth]
+    public function getFile(int $id, DriveGetFileUseCase $useCase): BinaryFileResponse
+    {
+        /** @var UserEntity $user */
+        $user = $this->getUser();
+
+        try {
+            $fileDTO = $useCase->handle($id, $user->id);
+
+            $response = new BinaryFileResponse($fileDTO->getFile());
+            $response->setContentDisposition(
+                ResponseHeaderBag::DISPOSITION_ATTACHMENT,
+                $fileDTO->getOriginalName()
+            );
+            return $response;
         } catch (AbstractLogicException $e) {
             throw new UnprocessableEntityHttpException(Lang::t($e->getErrorKey()));
         }

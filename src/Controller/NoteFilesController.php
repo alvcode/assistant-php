@@ -78,10 +78,10 @@ final class NoteFilesController extends AbstractController
         try {
             $fileDTO = $useCase->handle($hash);
 
-            $response = new BinaryFileResponse($fileDTO->file);
+            $response = new BinaryFileResponse($fileDTO->getFile());
             $response->setContentDisposition(
                 ResponseHeaderBag::DISPOSITION_ATTACHMENT,
-                $fileDTO->originalFileName
+                $fileDTO->getOriginalName()
             );
             return $response;
         } catch (AbstractLogicException $e) {

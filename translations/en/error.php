@@ -28,4 +28,5 @@ return [
     'error_file_not_safe_filename' => 'Unsafe file name',
     'error_drive_dir_exists' => 'The directory already exists',
     'error_drive_filename_exists' => 'A file with this name already exists in the directory',
+    'error_drive_method_unavailable_for_chunks' => 'You cannot download chunks using this method',
 ];

@@ -204,7 +204,6 @@ final readonly class FileUtils implements FileUtilsInterface
             fclose($input);
             fclose($output);
         }
-
         return new SplFileInfo($destinationPath);
     }
 

@@ -129,6 +129,20 @@ final readonly class DriveStructRepository implements DriveStructRepositoryInter
         return $entity;
     }
 
+    public function getById(int $id): ?DriveStructEntity
+    {
+        $query = "SELECT * FROM drive_structs WHERE id = :id";
+        $conn = $this->entityManager->getConnection();
+        $stmt = $conn->executeQuery($query, ['id' => $id]);
+
+        $row = $stmt->fetchAssociative();
+        if (!$row) {
+            return null;
+        }
+
+        return $this->getEntityFromRaw($row);
+    }
+
     /** @param array<string,mixed> $raw */
     private function getEntityFromRaw(array $raw): DriveStructEntity
     {

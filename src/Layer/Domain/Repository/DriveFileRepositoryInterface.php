@@ -14,4 +14,6 @@ interface DriveFileRepositoryInterface
     public function getLastId(): int;
 
     public function save(DriveFileEntity $entity): DriveFileEntity;
+
+    public function getByStructId(int $structId): ?DriveFileEntity;
 }
