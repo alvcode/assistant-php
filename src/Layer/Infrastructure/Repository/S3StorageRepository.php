@@ -12,30 +12,18 @@ use Exception;
 use SplFileInfo;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 
-final readonly class S3StorageRepository implements StorageRepositoryInterface
+final class S3StorageRepository implements StorageRepositoryInterface
 {
-    private S3Client $client;
-    
+    private ?S3Client $client = null;
 
     public function __construct(
         private ParameterBagInterface $parameterBag,
         private FileUtilsInterface $fileUtils,
-    ) {
-        $this->client = new S3Client([
-            'version' => 'latest',
-            'use_path_style_endpoint' => true,
-            'region' => $this->parameterBag->get('s3.location'),
-            'endpoint' => $this->parameterBag->get('s3.endpoint'),
-            'credentials' => [
-                'key' => $this->parameterBag->get('s3.accessKey'),
-                'secret' => $this->parameterBag->get('s3.secretAccessKey'),
-            ],
-        ]);
-    }
+    ) {}
 
     public function save(SaveFileDTO $in): void
     {
-        $this->client->putObject([
+        $this->getClient()->putObject([
             'Bucket' => $this->parameterBag->get('s3.bucketName'),
             'Key' => $in->getSavePath(),
             'Body' => fopen($in->getFile()->getRealPath(), 'rb'),
@@ -59,7 +47,7 @@ final readonly class S3StorageRepository implements StorageRepositoryInterface
                 throw new Exception('Не удалось создать временный файл');
             }
 
-            $result = $this->client->getObject([
+            $result = $this->getClient()->getObject([
                 'Bucket' => $this->parameterBag->get('s3.bucketName'),
                 'Key' => $path,
                 '@stream' => true
@@ -87,7 +75,7 @@ final readonly class S3StorageRepository implements StorageRepositoryInterface
 
     public function delete(string $path): void
     {
-        $this->client->deleteObject([
+        $this->getClient()->deleteObject([
             'Bucket' => $this->parameterBag->get('s3.bucketName'),
             'Key' => $path,
         ]);
@@ -96,7 +84,7 @@ final readonly class S3StorageRepository implements StorageRepositoryInterface
     /** @inheritDoc */
     public function deleteAll(array $paths): void
     {
-        $result = $this->client->deleteObjects([
+        $result = $this->getClient()->deleteObjects([
             'Bucket' => $this->parameterBag->get('s3.bucketName'),
             'Delete' => [
                 'Objects' => \array_map(
@@ -115,5 +103,33 @@ final readonly class S3StorageRepository implements StorageRepositoryInterface
                 )
             );
         }
+    }
+
+    /** @throws Exception */
+    private function getClient(): S3Client
+    {
+        if (!$this->client) {
+            if (
+                !$this->parameterBag->get('s3.location')
+                || !$this->parameterBag->get('s3.endpoint')
+                || !$this->parameterBag->get('s3.accessKey')
+                || !$this->parameterBag->get('s3.secretAccessKey')
+                || !$this->parameterBag->get('s3.bucketName')
+            ) {
+                throw new Exception('Отсутствуют необходимые конфиги для подключения к S3');
+            }
+
+            $this->client = new S3Client([
+                'version' => 'latest',
+                'use_path_style_endpoint' => true,
+                'region' => $this->parameterBag->get('s3.location'),
+                'endpoint' => $this->parameterBag->get('s3.endpoint'),
+                'credentials' => [
+                    'key' => $this->parameterBag->get('s3.accessKey'),
+                    'secret' => $this->parameterBag->get('s3.secretAccessKey'),
+                ],
+            ]);
+        }
+        return $this->client;
     }
 }

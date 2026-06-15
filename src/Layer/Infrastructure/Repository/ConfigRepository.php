@@ -54,7 +54,7 @@ final readonly class ConfigRepository implements ConfigRepositoryInterface
     public function getDriveStorageLimitPerUser(): int
     {
         $config = $this->parameterBag->get('drive.limitStoragePerUser');
-        return $config * 1000000;
+        return $config * 1024 * 1024;
     }
 
     public function getDriveFileSavePath(): string
