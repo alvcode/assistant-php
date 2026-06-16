@@ -9,7 +9,10 @@ use App\Entity\UserEntity;
 use App\Infrastructure\Lang;
 use App\Layer\Application\DTO\Common\FileDTO;
 use App\Layer\Application\DTO\Drive\DriveCreateDirectoryDTO;
+use App\Layer\Application\DTO\Drive\DriveRenMovDTO;
 use App\Layer\Application\DTO\Drive\DriveUploadFileDTO;
+use App\Layer\Application\Exception\Drive\DriveParentIdNotFoundException;
+use App\Layer\Application\Exception\Drive\DriveRelocatableStructureNotFoundException;
 use App\Layer\Application\Exception\Drive\DriveStructNotFoundException;
 use App\Layer\Application\UseCase\Drive\DriveCreateDirectoryUseCase;
 use App\Layer\Application\UseCase\Drive\DriveDeleteStructUseCase;
@@ -17,6 +20,7 @@ use App\Layer\Application\UseCase\Drive\DriveGetFileUseCase;
 use App\Layer\Application\UseCase\Drive\DriveGetFreeSpaceUseCase;
 use App\Layer\Application\UseCase\Drive\DriveGetTreeUseCase;
 use App\Layer\Application\UseCase\Drive\DriveRenameStructUseCase;
+use App\Layer\Application\UseCase\Drive\DriveRenMovStructUseCase;
 use App\Layer\Application\UseCase\Drive\DriveUploadFileUseCase;
 use App\Layer\Domain\Exception\AbstractLogicException;
 use App\Request\Drive\DriveCreateDirectoryRequest;
@@ -251,16 +255,34 @@ final class DriveController extends AbstractController
 
     #[Route(path: '/api/drive/renmov', name: 'drive.renmov_structs', methods: ['PATCH'])]
     #[NeedAuth]
-    public function renMovStructs(Request $request, DriveRenMovStructsRequest $requestModel)
+    public function renMovStructs(
+        Request $request, 
+        DriveRenMovStructsRequest $requestModel, 
+        DriveRenMovStructUseCase $useCase
+    ): Response
     {
         if (!$requestModel->populateByRequest($request)->validate()) {
             $this->blockEventService->setEvent($request, BlockEventTypeEnum::Validation);
             throw new UnprocessableEntityHttpException($requestModel->getFirstError());
         }
 
+        /** @var UserEntity $user */
+        $user = $this->getUser();
+
         try {
-            
+            $useCase->handle(
+                new DriveRenMovDTO(parentId: $requestModel->parent_id, structIds: $requestModel->struct_ids),
+                $user->id
+            );
+
+            return new Response(null, Response::HTTP_NO_CONTENT);
         } catch (AbstractLogicException $e) {
+            if (
+                $e instanceof DriveParentIdNotFoundException 
+                || $e instanceof DriveRelocatableStructureNotFoundException
+            ) {
+                $this->blockEventService->setEvent($request, BlockEventTypeEnum::BruteForce);
+            }
             throw new UnprocessableEntityHttpException(Lang::t($e->getErrorKey()));
         }
     }

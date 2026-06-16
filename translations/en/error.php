@@ -30,4 +30,7 @@ return [
     'error_drive_filename_exists' => 'A file with this name already exists in the directory',
     'error_drive_method_unavailable_for_chunks' => 'You cannot download chunks using this method',
     'error_drive_struct_not_found' => 'Disk structure not found',
+    'error_drive_parent_id_not_found' => 'Parent directory not found',
+    'error_drive_parent_references_one_of_the_relocatable_struct' => 'The parent structure references one of the relocatable structures',
+    'error_drive_relocatable_structure_not_found' => 'Relocatable structure not found',
 ];

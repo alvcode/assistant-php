@@ -10,10 +10,13 @@ use App\Layer\Domain\Repository\DriveStructRepositoryInterface;
 use App\Layer\Domain\Service\Utils\DateTime;
 use App\Layer\Domain\Service\Utils\DateTimeImmutable;
 use App\Layer\Infrastructure\DTO\Drive\DriveTreeDTO;
+use App\Layer\Infrastructure\Repository\Helper\ArrayHelperTrait;
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\ORM\EntityManagerInterface;
 
 final readonly class DriveStructRepository implements DriveStructRepositoryInterface
 {
+    use ArrayHelperTrait;
     public function __construct(
         private EntityManagerInterface $entityManager
     ) {}
@@ -164,6 +167,45 @@ final readonly class DriveStructRepository implements DriveStructRepositoryInter
         ";
         $conn = $this->entityManager->getConnection();
         $conn->executeQuery($query, ['struct_id' => $structId, 'user_id' => $userId]);
+    }
+
+    /** @inheritDoc */
+    public function structCountByUserAndIds(int $userId, array $structIds): int
+    {
+        $conn = $this->entityManager->getConnection();
+        $result = 0;
+        foreach ($this->arrayChunk($structIds, 200) as $batch) {
+            $query = "
+                select 
+                    coalesce(count(ds.id), 0) as count
+                from drive_structs ds 
+                where user_id = :user_id and id in (:struct_ids)
+            ";
+            $stmt = $conn->executeQuery(
+                $query, 
+                ['user_id' => $userId, 'struct_ids' => $batch], 
+                ['struct_ids' => ArrayParameterType::INTEGER]
+            );
+
+            $result += $stmt->fetchOne();
+        }
+        
+        return $result;
+    }
+
+    /** @inheritDoc */
+    public function massUpdateParentId(?int $parentId, array $structIds): void 
+    {
+        $conn = $this->entityManager->getConnection();
+
+        foreach ($this->arrayChunk($structIds, 200) as $batch) {
+            $query = "UPDATE drive_structs SET parent_id = :parent_id WHERE id in (:struct_ids)";
+            $conn->executeQuery(
+                $query, 
+                ['parent_id' => $parentId, 'struct_ids' => $batch], 
+                ['struct_ids' => ArrayParameterType::INTEGER]
+            );
+        }
     }
 
     /** @param array<string,mixed> $raw */

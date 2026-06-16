@@ -56,6 +56,9 @@ test:
 stan:
 	docker exec -it ast-app vendor/bin/phpstan analyse --memory-limit 2G -c phpstan/level-6.neon
 
+console-test:
+	docker exec -it ast-app php bin/console test
+
 # ========================================================= PRODUCTION COMMANDS ==========================================
 clear-cache-prod:
 	docker exec -it ast-app bin/console cache:clear --env=prod

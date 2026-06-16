@@ -30,4 +30,7 @@ return [
     'error_drive_filename_exists' => 'Файл с таким именем уже существует в директории',
     'error_drive_method_unavailable_for_chunks' => 'Нельзя получить чанки данным методом',
     'error_drive_struct_not_found' => 'Структура диска не найдена',
+    'error_drive_parent_id_not_found' => 'Родительская директория не найдена',
+    'error_drive_parent_references_one_of_the_relocatable_struct' => 'Родительская структура ссылается на одну из перемещаемых структур',
+    'error_drive_relocatable_structure_not_found' => 'Перемещаемая структура не найдена',
 ];

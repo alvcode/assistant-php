@@ -25,4 +25,10 @@ interface DriveStructRepositoryInterface
     public function getById(int $id): ?DriveStructEntity;
 
     public function deleteRecursive(int $structId, int $userId): void;
+
+    /** @param int[] $structIds */
+    public function structCountByUserAndIds(int $userId, array $structIds): int;
+
+    /** @param int[] $structIds */
+    public function massUpdateParentId(?int $parentId, array $structIds): void;
 }
