@@ -18,6 +18,8 @@ interface FileUtilsInterface
     /** @param string[] $parts */
     public function pathJoin(array $parts, bool $isAbsolute = false): string;
 
+    function getExtensionByName(string $filename): string;
+
     /** @throws FailedEncryptionFileException */
     public function encryptFile(SplFileInfo $source, string $key): SplFileInfo;
 

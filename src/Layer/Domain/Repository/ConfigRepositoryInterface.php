@@ -25,4 +25,7 @@ interface ConfigRepositoryInterface
     public function getDriveStorageLimitPerUser(): int;
 
     public function getDriveFileSavePath(): string;
+
+    /** @return int in bytes */
+    public function getDriveUploadMaxSize(): int;
 }

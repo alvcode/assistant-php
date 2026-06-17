@@ -8,12 +8,15 @@ use App\Attribute\NeedAuth;
 use App\Entity\UserEntity;
 use App\Infrastructure\Lang;
 use App\Layer\Application\DTO\Common\FileDTO;
+use App\Layer\Application\DTO\Drive\DriveChunkPrepareDTO;
 use App\Layer\Application\DTO\Drive\DriveCreateDirectoryDTO;
 use App\Layer\Application\DTO\Drive\DriveRenMovDTO;
 use App\Layer\Application\DTO\Drive\DriveUploadFileDTO;
+use App\Layer\Application\Exception\Drive\DriveNotSafeFilenameException;
 use App\Layer\Application\Exception\Drive\DriveParentIdNotFoundException;
 use App\Layer\Application\Exception\Drive\DriveRelocatableStructureNotFoundException;
 use App\Layer\Application\Exception\Drive\DriveStructNotFoundException;
+use App\Layer\Application\UseCase\Drive\DriveChunkPrepareUseCase;
 use App\Layer\Application\UseCase\Drive\DriveCreateDirectoryUseCase;
 use App\Layer\Application\UseCase\Drive\DriveDeleteStructUseCase;
 use App\Layer\Application\UseCase\Drive\DriveGetFileUseCase;
@@ -22,13 +25,17 @@ use App\Layer\Application\UseCase\Drive\DriveGetTreeUseCase;
 use App\Layer\Application\UseCase\Drive\DriveRenameStructUseCase;
 use App\Layer\Application\UseCase\Drive\DriveRenMovStructUseCase;
 use App\Layer\Application\UseCase\Drive\DriveUploadFileUseCase;
+use App\Layer\Domain\Dict\Common\FileSizeTypeEnum;
 use App\Layer\Domain\Exception\AbstractLogicException;
+use App\Layer\Domain\ValueObject\FileSizeVO;
+use App\Request\Drive\DriveChunkPrepareRequest;
 use App\Request\Drive\DriveCreateDirectoryRequest;
 use App\Request\Drive\DriveRenameStructRequest;
 use App\Request\Drive\DriveRenMovStructsRequest;
 use App\Request\Drive\DriveUploadFileRequest;
 use App\Request\Drive\DriveWithParentIDRequest;
 use App\Response\Drive\DriveGetFreeSpaceResponse;
+use App\Response\Drive\DriveStructIdResponse;
 use App\Response\Drive\DriveTreeResponse;
 use App\Security\BlockEvent\BlockEventService;
 use App\Security\BlockEvent\BlockEventTypeEnum;
@@ -280,6 +287,45 @@ final class DriveController extends AbstractController
             if (
                 $e instanceof DriveParentIdNotFoundException 
                 || $e instanceof DriveRelocatableStructureNotFoundException
+            ) {
+                $this->blockEventService->setEvent($request, BlockEventTypeEnum::BruteForce);
+            }
+            throw new UnprocessableEntityHttpException(Lang::t($e->getErrorKey()));
+        }
+    }
+
+    #[Route(path: '/api/drive/chunk-prepare', name: 'drive.chunk_prepare', methods: ['POST'])]
+    #[NeedAuth]
+    public function chunkPrepare(
+        Request $request, 
+        DriveChunkPrepareRequest $requestModel,
+        DriveChunkPrepareUseCase $useCase
+    ): JsonResponse
+    {
+        if (!$requestModel->populateByRequest($request)->validate()) {
+            $this->blockEventService->setEvent($request, BlockEventTypeEnum::Validation);
+            throw new UnprocessableEntityHttpException($requestModel->getFirstError());
+        }
+
+        /** @var UserEntity $user */
+        $user = $this->getUser();
+
+        try {
+            $structId = $useCase->handle(
+                new DriveChunkPrepareDTO(
+                    fileName: $requestModel->filename,
+                    size: new FileSizeVO(size: (float)$requestModel->full_size, sizeType: FileSizeTypeEnum::Bytes),
+                    parentId: $requestModel->parent_id,
+                    sha256: $requestModel->sha256,
+                ),
+                $user->id
+            );
+
+            return new JsonResponse(DriveStructIdResponse::fromStructId($structId), Response::HTTP_CREATED);
+        } catch (AbstractLogicException $e) {
+            if (
+                $e instanceof DriveParentIdNotFoundException 
+                || $e instanceof DriveNotSafeFilenameException
             ) {
                 $this->blockEventService->setEvent($request, BlockEventTypeEnum::BruteForce);
             }

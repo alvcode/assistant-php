@@ -50,6 +50,11 @@ final readonly class FileUtils implements FileUtilsInterface
         return $res;
     }
 
+    function getExtensionByName(string $filename): string
+    {
+        return strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+    }
+
     /**
      * @throws SodiumException
      * @throws FailedEncryptionFileException

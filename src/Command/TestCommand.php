@@ -2,6 +2,7 @@
 
 namespace App\Command;
 
+use App\Layer\Domain\Service\Utils\FileUtilsInterface;
 use App\Layer\Infrastructure\Repository\Helper\ArrayHelperTrait;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -15,9 +16,9 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 )]
 class TestCommand extends Command
 {
-    use ArrayHelperTrait;
-
-    public function __construct()
+    public function __construct(
+        private FileUtilsInterface $fileUtils
+    )
     {
         parent::__construct();
     }
@@ -30,12 +31,8 @@ class TestCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
-        
-        $structIds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
-        foreach ($this->arrayChunk($structIds, 5) as $batch) {
-            $io->text($batch);
-            $io->text('-----------');
-        }
+
+        $io->text($this->fileUtils->getExtensionByName('plug.pdf'));
 
         $io->success('end');
 
