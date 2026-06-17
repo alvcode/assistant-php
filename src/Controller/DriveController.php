@@ -11,12 +11,14 @@ use App\Layer\Application\DTO\Common\FileDTO;
 use App\Layer\Application\DTO\Drive\DriveChunkPrepareDTO;
 use App\Layer\Application\DTO\Drive\DriveCreateDirectoryDTO;
 use App\Layer\Application\DTO\Drive\DriveRenMovDTO;
+use App\Layer\Application\DTO\Drive\DriveUploadChunkDTO;
 use App\Layer\Application\DTO\Drive\DriveUploadFileDTO;
 use App\Layer\Application\Exception\Drive\DriveNotSafeFilenameException;
 use App\Layer\Application\Exception\Drive\DriveParentIdNotFoundException;
 use App\Layer\Application\Exception\Drive\DriveRelocatableStructureNotFoundException;
 use App\Layer\Application\Exception\Drive\DriveStructNotFoundException;
 use App\Layer\Application\UseCase\Drive\DriveChunkPrepareUseCase;
+use App\Layer\Application\UseCase\Drive\DriveChunkUploadUseCase;
 use App\Layer\Application\UseCase\Drive\DriveCreateDirectoryUseCase;
 use App\Layer\Application\UseCase\Drive\DriveDeleteStructUseCase;
 use App\Layer\Application\UseCase\Drive\DriveGetFileUseCase;
@@ -32,6 +34,7 @@ use App\Request\Drive\DriveChunkPrepareRequest;
 use App\Request\Drive\DriveCreateDirectoryRequest;
 use App\Request\Drive\DriveRenameStructRequest;
 use App\Request\Drive\DriveRenMovStructsRequest;
+use App\Request\Drive\DriveUploadChunkRequest;
 use App\Request\Drive\DriveUploadFileRequest;
 use App\Request\Drive\DriveWithParentIDRequest;
 use App\Response\Drive\DriveGetFreeSpaceResponse;
@@ -329,6 +332,44 @@ final class DriveController extends AbstractController
             ) {
                 $this->blockEventService->setEvent($request, BlockEventTypeEnum::BruteForce);
             }
+            throw new UnprocessableEntityHttpException(Lang::t($e->getErrorKey()));
+        }
+    }
+
+    #[Route(path: '/api/drive/upload-chunk', name: 'drive.upload_chunk', methods: ['POST'])]
+    #[NeedAuth]
+    public function uploadChunk(
+        Request $request, 
+        DriveUploadChunkRequest $requestModel,
+        DriveChunkUploadUseCase $useCase
+    ): Response
+    {
+        $requestModel->populateByArray($request->query->all());
+        $requestModel->file = $request->files->get('file');
+        if (!$requestModel->validate()) {
+            $this->blockEventService->setEvent($request, BlockEventTypeEnum::Validation);
+            throw new UnprocessableEntityHttpException($requestModel->getFirstError());
+        }
+
+        /** @var UserEntity $user */
+        $user = $this->getUser();
+
+        try {
+            $useCase->handle(
+                new FileDTO(
+                    file: $requestModel->file, 
+                    originalExtension: $requestModel->file->getClientOriginalExtension(), 
+                    originalName: $requestModel->file->getClientOriginalName()
+                ),
+                new DriveUploadChunkDTO(
+                    structId: $requestModel->structId,
+                    chunkNumber: $requestModel->chunkNumber
+                ),
+                $user->id
+            );
+
+            return new Response(null, Response::HTTP_CREATED);
+        } catch (AbstractLogicException $e) {
             throw new UnprocessableEntityHttpException(Lang::t($e->getErrorKey()));
         }
     }

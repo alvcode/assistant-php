@@ -51,6 +51,53 @@ final readonly class DriveFileChunkRepository implements DriveFileChunkRepositor
         return $result;
     }
 
+    public function getChunksSize(int $driveFileId): FileSizeVO
+    {
+        $query = "
+            SELECT 
+                coalesce(sum(dfc.size), 0)
+            FROM drive_file_chunks dfc
+            WHERE dfc.drive_file_id = :drive_file_id
+        ";
+
+        $conn = $this->entityManager->getConnection();
+        $stmt = $conn->executeQuery($query, ['drive_file_id' => $driveFileId]);
+        return new FileSizeVO((float)$stmt->fetchOne(), FileSizeTypeEnum::Bytes);
+    }
+
+    public function save(DriveFileChunkEntity $entity): DriveFileChunkEntity
+    {
+        $params = [
+            'drive_file_id' => $entity->getDriveFileId(),
+            'path' => $entity->getPath(),
+            'size' => $entity->getSize()->getBytes(),
+            'chunk_number' => $entity->getChunkNumber(),
+        ];
+
+        $isNew = is_null($entity->getId());
+        if ($isNew) {
+            $query = "
+                insert into drive_file_chunks (drive_file_id, path, size, chunk_number)
+                values (:drive_file_id, :path, :size, :chunk_number) RETURNING id
+            ";
+        } else {
+            $query = "
+                update drive_file_chunks
+                set drive_file_id = :drive_file_id, path = :path, size = :size, chunk_number = :chunk_number
+                where id = :id
+            ";
+            $params['id'] = $entity->getId();
+        }
+
+        $conn = $this->entityManager->getConnection();
+        $stmt = $conn->executeQuery($query, $params);
+
+        if ($isNew) {
+            $entity->setId($stmt->fetchOne());
+        }
+        return $entity;
+    }
+
     /** @param array<string,mixed> $raw */
     private function getEntityFromRaw(array $raw): DriveFileChunkEntity
     {
