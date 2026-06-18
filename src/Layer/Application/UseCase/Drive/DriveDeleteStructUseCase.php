@@ -41,7 +41,9 @@ final readonly class DriveDeleteStructUseCase
 
         $deleteFileEntityList = $this->driveFileRepository->getAllRecursive($structId, $userId);
         foreach ($deleteFileEntityList as $driveFileEntity) {
-            $deletePaths[] = $this->fileUtils->pathJoin([$baseSavePath, $driveFileEntity->getPath()]);
+            if (!$driveFileEntity->isChunk()) {
+                $deletePaths[] = $this->fileUtils->pathJoin([$baseSavePath, $driveFileEntity->getPath()]);
+            }
         }
         unset($deleteFileEntityList);
 

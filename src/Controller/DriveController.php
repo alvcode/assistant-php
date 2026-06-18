@@ -168,7 +168,10 @@ final class DriveController extends AbstractController
                     originalExtension: $requestModel->file->getClientOriginalExtension(), 
                     originalName: $requestModel->file->getClientOriginalName()
                 ),
-                new DriveUploadFileDTO(parentId: $requestModel->parentId, sha256: $requestModel->sha256),
+                new DriveUploadFileDTO(
+                    parentId: $requestModel->parentId ? (int)$requestModel->parentId : null, 
+                    sha256: $requestModel->sha256
+                ),
                 $user->id
             );
 
@@ -369,8 +372,8 @@ final class DriveController extends AbstractController
                     originalName: $requestModel->file->getClientOriginalName()
                 ),
                 new DriveUploadChunkDTO(
-                    structId: $requestModel->structId,
-                    chunkNumber: $requestModel->chunkNumber
+                    structId: (int)$requestModel->structId,
+                    chunkNumber: (int)$requestModel->chunkNumber
                 ),
                 $user->id
             );

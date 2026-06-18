@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Layer\Application\UseCase\Drive;
 
+use App\Layer\Application\Exception\Drive\DriveNotSafeFilenameException;
 use App\Layer\Application\Exception\Drive\DriveStructNotFoundException;
 use App\Layer\Domain\Repository\DriveStructRepositoryInterface;
 use App\Layer\Domain\Service\Utils\DateTime;
@@ -20,6 +21,14 @@ final readonly class DriveRenameStructUseCase
         $driveStructEntity = $this->driveStructRepository->getById($structId);
         if (!$driveStructEntity || $driveStructEntity->getUserId() !== $userId) {
             throw new DriveStructNotFoundException('Структура не найдена');
+        }
+
+        if (
+            str_contains($newName, '..')
+            || str_contains($newName, '/')
+            || str_contains($newName, '\\')
+        ) {
+            throw new DriveNotSafeFilenameException('Небезопасное имя файла');
         }
 
         $driveStructEntity->setName($newName);
