@@ -19,7 +19,7 @@ class DriveUploadChunkRequest extends BaseRequest
 
     #[Constraints\Type('digit')]
     #[Constraints\NotBlank()]
-    #[Constraints\Range(max: self::INT_2_MAX)]
+    #[Constraints\Range(max: self::INT_4_MAX)]
     public mixed $structId = null;
 
     #[Constraints\Type('digit')]

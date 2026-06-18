@@ -7,6 +7,7 @@ namespace App\Layer\Application\UseCase\Drive;
 use App\Layer\Application\DTO\Common\FileDTO;
 use App\Layer\Application\DTO\Drive\DriveUploadChunkDTO;
 use App\Layer\Application\Exception\Drive\DriveFileTooLargeException;
+use App\Layer\Application\Exception\Drive\DriveStructIsNotChunkException;
 use App\Layer\Application\Exception\Drive\DriveStructNotFoundException;
 use App\Layer\Domain\Dict\Common\FileSizeTypeEnum;
 use App\Layer\Domain\Entity\DriveFileChunkEntity;
@@ -33,6 +34,7 @@ final readonly class DriveChunkUploadUseCase
     /** 
      * @throws DriveStructNotFoundException 
      * @throws DriveFileTooLargeException 
+     * @throws DriveStructIsNotChunkException 
     */
     public function handle(FileDTO $file, DriveUploadChunkDTO $in, int $userId): void
     {
@@ -44,6 +46,9 @@ final readonly class DriveChunkUploadUseCase
         $driveFileEntity = $this->driveFileRepository->getByStructId($driveStructEntity->getId());
         if (!$driveFileEntity) {
             throw new DriveStructNotFoundException('Структура не найдена');
+        }
+        if (!$driveFileEntity->isChunk()) {
+            throw new DriveStructIsNotChunkException('Файл не является загруженным с помощью чанков');
         }
 
         if ($this->configRepository->useFileEncryption()) {

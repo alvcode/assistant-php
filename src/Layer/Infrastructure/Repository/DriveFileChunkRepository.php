@@ -8,6 +8,7 @@ use App\Layer\Domain\Dict\Common\FileSizeTypeEnum;
 use App\Layer\Domain\Entity\DriveFileChunkEntity;
 use App\Layer\Domain\Repository\DriveFileChunkRepositoryInterface;
 use App\Layer\Domain\ValueObject\FileSizeVO;
+use App\Layer\Infrastructure\DTO\Drive\DriveChunksInfoDTO;
 use Doctrine\ORM\EntityManagerInterface;
 
 final readonly class DriveFileChunkRepository implements DriveFileChunkRepositoryInterface
@@ -96,6 +97,38 @@ final readonly class DriveFileChunkRepository implements DriveFileChunkRepositor
             $entity->setId($stmt->fetchOne());
         }
         return $entity;
+    }
+
+    public function getChunksInfo(int $fileId): DriveChunksInfoDTO
+    {
+        $query = "
+            select  
+			(select min(chunk_number) from drive_file_chunks dfc where drive_file_id = :file_id) as min_chunk_number,
+			(select max(chunk_number) from drive_file_chunks dfc where drive_file_id = :file_id) as max_chunk_number
+        ";
+
+        $conn = $this->entityManager->getConnection();
+        $stmt = $conn->executeQuery($query, ['file_id' => $fileId]);
+        $result = $stmt->fetchAssociative();
+
+        return new DriveChunksInfoDTO(
+            startNumber: $result['min_chunk_number'],
+            endNumber: $result['max_chunk_number']
+        );
+    }
+
+    public function getByFileIDAndNumber(int $fileId, int $chunkNumber): ?DriveFileChunkEntity
+    {
+        $query = "
+            select * from drive_file_chunks where drive_file_id = :file_id and chunk_number = :chunk_number
+        ";
+        $conn = $this->entityManager->getConnection();
+        $stmt = $conn->executeQuery($query, ['file_id' => $fileId, 'chunk_number' => $chunkNumber]);
+        $row = $stmt->fetchAssociative();
+        if (!$row) {
+            return null;
+        }
+        return $this->getEntityFromRaw($row);
     }
 
     /** @param array<string,mixed> $raw */

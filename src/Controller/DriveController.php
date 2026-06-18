@@ -13,23 +13,29 @@ use App\Layer\Application\DTO\Drive\DriveCreateDirectoryDTO;
 use App\Layer\Application\DTO\Drive\DriveRenMovDTO;
 use App\Layer\Application\DTO\Drive\DriveUploadChunkDTO;
 use App\Layer\Application\DTO\Drive\DriveUploadFileDTO;
+use App\Layer\Application\Exception\Drive\DriveFileNotFoundException;
 use App\Layer\Application\Exception\Drive\DriveNotSafeFilenameException;
 use App\Layer\Application\Exception\Drive\DriveParentIdNotFoundException;
 use App\Layer\Application\Exception\Drive\DriveRelocatableStructureNotFoundException;
 use App\Layer\Application\Exception\Drive\DriveStructNotFoundException;
+use App\Layer\Application\UseCase\Drive\DriveChunkEndUseCase;
 use App\Layer\Application\UseCase\Drive\DriveChunkPrepareUseCase;
 use App\Layer\Application\UseCase\Drive\DriveChunkUploadUseCase;
 use App\Layer\Application\UseCase\Drive\DriveCreateDirectoryUseCase;
 use App\Layer\Application\UseCase\Drive\DriveDeleteStructUseCase;
+use App\Layer\Application\UseCase\Drive\DriveGetChunkByNumberUseCase;
+use App\Layer\Application\UseCase\Drive\DriveGetChunksInfoUseCase;
 use App\Layer\Application\UseCase\Drive\DriveGetFileUseCase;
 use App\Layer\Application\UseCase\Drive\DriveGetFreeSpaceUseCase;
 use App\Layer\Application\UseCase\Drive\DriveGetTreeUseCase;
 use App\Layer\Application\UseCase\Drive\DriveRenameStructUseCase;
 use App\Layer\Application\UseCase\Drive\DriveRenMovStructUseCase;
+use App\Layer\Application\UseCase\Drive\DriveUpdateFileHashUseCase;
 use App\Layer\Application\UseCase\Drive\DriveUploadFileUseCase;
 use App\Layer\Domain\Dict\Common\FileSizeTypeEnum;
 use App\Layer\Domain\Exception\AbstractLogicException;
 use App\Layer\Domain\ValueObject\FileSizeVO;
+use App\Request\Drive\DriveChunkEndRequest;
 use App\Request\Drive\DriveChunkPrepareRequest;
 use App\Request\Drive\DriveCreateDirectoryRequest;
 use App\Request\Drive\DriveRenameStructRequest;
@@ -37,6 +43,7 @@ use App\Request\Drive\DriveRenMovStructsRequest;
 use App\Request\Drive\DriveUploadChunkRequest;
 use App\Request\Drive\DriveUploadFileRequest;
 use App\Request\Drive\DriveWithParentIDRequest;
+use App\Response\Drive\DriveChunksInfoResponse;
 use App\Response\Drive\DriveGetFreeSpaceResponse;
 use App\Response\Drive\DriveStructIdResponse;
 use App\Response\Drive\DriveTreeResponse;
@@ -368,6 +375,102 @@ final class DriveController extends AbstractController
                 $user->id
             );
 
+            return new Response(null, Response::HTTP_CREATED);
+        } catch (AbstractLogicException $e) {
+            if ($e instanceof DriveStructNotFoundException) {
+                $this->blockEventService->setEvent($request, BlockEventTypeEnum::BruteForce);
+            }
+            throw new UnprocessableEntityHttpException(Lang::t($e->getErrorKey()));
+        }
+    }
+
+    #[Route(path: '/api/drive/chunk-end', name: 'drive.chunk_end', methods: ['POST'])]
+    #[NeedAuth]
+    public function chunkEnd(
+        Request $request, 
+        DriveChunkEndRequest $requestModel, 
+        DriveChunkEndUseCase $useCase
+    ): Response
+    {
+        if (!$requestModel->populateByRequest($request)->validate()) {
+            $this->blockEventService->setEvent($request, BlockEventTypeEnum::Validation);
+            throw new UnprocessableEntityHttpException($requestModel->getFirstError());
+        }
+
+        /** @var UserEntity $user */
+        $user = $this->getUser();
+
+        try {
+            $useCase->handle($requestModel->struct_id, $user->id);
+            return new Response(null, Response::HTTP_OK);
+        } catch (AbstractLogicException $e) {
+            if ($e instanceof DriveStructNotFoundException || $e instanceof DriveFileNotFoundException) {
+                $this->blockEventService->setEvent($request, BlockEventTypeEnum::BruteForce);
+            }
+            throw new UnprocessableEntityHttpException(Lang::t($e->getErrorKey()));
+        }
+    }
+
+    #[Route(path: '/api/drive/files/{id}/chunks-info', name: 'drive.chunks_info', methods: ['GET'])]
+    #[NeedAuth]
+    public function chunksInfo(int $id, Request $request, DriveGetChunksInfoUseCase $useCase): JsonResponse
+    {
+        /** @var UserEntity $user */
+        $user = $this->getUser();
+
+        try {
+            $info = $useCase->handle($id, $user->id);
+
+            return new JsonResponse(
+                new DriveChunksInfoResponse(start_number: $info->startNumber, end_number: $info->endNumber), 
+                Response::HTTP_OK
+            );
+        } catch (AbstractLogicException $e) {
+            if ($e instanceof DriveStructNotFoundException || $e instanceof DriveFileNotFoundException) {
+                $this->blockEventService->setEvent($request, BlockEventTypeEnum::BruteForce);
+            }
+            throw new UnprocessableEntityHttpException(Lang::t($e->getErrorKey()));
+        }
+    }
+
+    #[Route(path: '/api/drive/files/{id}/chunks/{chunkNumber}', name: 'drive.get_chunk_by_number', methods: ['GET'])]
+    #[NeedAuth]
+    public function getChunkByNumber(
+        int $id, 
+        int $chunkNumber, 
+        Request $request, 
+        DriveGetChunkByNumberUseCase $useCase
+    ): BinaryFileResponse
+    {
+        /** @var UserEntity $user */
+        $user = $this->getUser();
+
+        try {
+            $fileDTO = $useCase->handle($id, $chunkNumber, $user->id);
+
+            $response = new BinaryFileResponse($fileDTO->getFile());
+            $response->setContentDisposition(
+                ResponseHeaderBag::DISPOSITION_ATTACHMENT,
+                $fileDTO->getOriginalName()
+            );
+            return $response;
+        } catch (AbstractLogicException $e) {
+            if ($e instanceof DriveStructNotFoundException) {
+                $this->blockEventService->setEvent($request, BlockEventTypeEnum::BruteForce);
+            }
+            throw new UnprocessableEntityHttpException(Lang::t($e->getErrorKey()));
+        }
+    }
+
+    #[Route(path: '/api/drive/files/{id}/sha256/{hash}', name: 'drive.update_file_hash', methods: ['PATCH'])]
+    #[NeedAuth]
+    public function updateFileHash(int $id, string $hash, DriveUpdateFileHashUseCase $useCase): Response
+    {
+        /** @var UserEntity $user */
+        $user = $this->getUser();
+
+        try {
+            $useCase->handle($id, $hash, $user->id);
             return new Response(null, Response::HTTP_CREATED);
         } catch (AbstractLogicException $e) {
             throw new UnprocessableEntityHttpException(Lang::t($e->getErrorKey()));

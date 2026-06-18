@@ -34,4 +34,5 @@ return [
     'error_drive_parent_references_one_of_the_relocatable_struct' => 'Родительская структура ссылается на одну из перемещаемых структур',
     'error_drive_relocatable_structure_not_found' => 'Перемещаемая структура не найдена',
     'error_file_too_large' => 'Файл слишком большой',
+    'error_struct_is_not_chunk' => 'Структура не была загружена чанками',
 ];
