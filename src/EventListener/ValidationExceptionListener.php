@@ -41,6 +41,7 @@ final readonly class ValidationExceptionListener
         $this->logger->error($exception->getMessage(), [
             'message' => $exception->getMessage(),
             'code' => $exception->getCode(),
+            'clientIP' => $event->getRequest()->getClientIp(),
             'trace' => $exception->getTraceAsString(),
         ]);
 
