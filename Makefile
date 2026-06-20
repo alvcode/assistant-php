@@ -1,5 +1,5 @@
 -include .env.local
--include ../secrets/.env
+-include ../secrets/.env.prod
 
 start:
 	docker compose up -d;
