@@ -8,6 +8,7 @@ use App\Infrastructure\Lang;
 use App\Security\BlockEvent\BlockEventService;
 use App\Security\BlockEvent\BlockEventTypeEnum;
 use Exception;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
@@ -24,6 +25,7 @@ final readonly class ValidationExceptionListener
     public function __construct(
         private bool $isDebug,
         private BlockEventService $blockEventService,
+        private LoggerInterface $logger, 
     )
     {
     }
@@ -35,6 +37,12 @@ final readonly class ValidationExceptionListener
     {
         /** @var Throwable|HttpException $exception */
         $exception = $event->getThrowable();
+
+        $this->logger->error($exception->getMessage(), [
+            'message' => $exception->getMessage(),
+            'code' => $exception->getCode(),
+            'trace' => $exception->getTraceAsString(),
+        ]);
 
         $message = $exception->getMessage();
 

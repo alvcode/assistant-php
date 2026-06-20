@@ -1,0 +1,81 @@
+monolog:
+    channels:
+        - deprecation # Deprecations are logged in the dedicated "deprecation" channel when it exists
+    
+services:
+    # Определяем кастомный форматтер как сервис
+    monolog.formatter.custom_line:
+        class: Monolog\Formatter\LineFormatter
+        arguments:
+            - "[%%datetime%%] %%channel%%.%%level_name%%: %%message%% %%context%% %%extra%%\n"
+            - "Y-m-d H:i:s"
+            - true
+            - true
+
+when@dev:
+    monolog:
+        handlers:
+            main:
+                type: fingers_crossed
+                action_level: error
+                handler: nested
+                excluded_http_codes: [404, 405]
+                channels: ["!deprecation"]
+                buffer_size: 50
+            nested:
+                type: rotating_file
+                path: "/var/www/var/log/dev.log"
+                level: error
+                max_files: 15
+                formatter: monolog.formatter.custom_line
+            console:
+                type: console
+                process_psr_3_messages: false
+                channels: ["!event", "!doctrine"]
+            deprecation:
+                type: stream
+                channels: [deprecation]
+                path: "/var/www/var/log/deprecations.log"
+                max_files: 15
+                formatter: monolog.formatter.custom_line
+
+when@test:
+    monolog:
+        handlers:
+            main:
+                type: fingers_crossed
+                action_level: error
+                handler: nested
+                excluded_http_codes: [404, 405]
+                channels: ["!event"]
+            nested:
+                type: stream
+                path: "%kernel.logs_dir%/%kernel.environment%.log"
+                level: debug
+
+when@prod:
+    monolog:
+        handlers:
+            main:
+                type: fingers_crossed
+                action_level: error
+                handler: nested
+                excluded_http_codes: [404, 405]
+                channels: ["!deprecation"]
+                buffer_size: 50
+            nested:
+                type: rotating_file
+                path: "/var/www/var/log/prod.log"
+                level: error
+                max_files: 15
+                formatter: monolog.formatter.custom_line
+            console:
+                type: console
+                process_psr_3_messages: false
+                channels: ["!event", "!doctrine"]
+            deprecation:
+                type: stream
+                channels: [deprecation]
+                path: "/var/www/var/log/deprecations.log"
+                max_files: 15
+                formatter: monolog.formatter.custom_line
