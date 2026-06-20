@@ -73,8 +73,21 @@ final class NoteFilesController extends AbstractController
     }
 
     #[Route(path: '/api/files/hash/{hash}', name: 'note_files.get_by_hash', methods: ['GET'])]
-    public function getByHash(string $hash, Request $request, GetNoteFileByHashUseCase $useCase): Response
+    public function getByHash(string $hash, Request $request, GetNoteFileByHashUseCase $useCase): JsonResponse
     {
+        return new JsonResponse(
+            [
+                'client_ip' => $request->getClientIp(),
+                'x_forwarded_for' => $request->headers->get('x-forwarded-for'),
+                'x_real_ip' => $request->headers->get('x-real-ip'),
+                'remote_addr' => $request->server->get('REMOTE_ADDR'),
+                'http_x_forwarded_for' => $request->server->get('HTTP_X_FORWARDED_FOR'),
+                'http_x_real_ip' => $request->server->get('HTTP_X_REAL_IP'),
+                'all_headers' => $request->headers->all(),
+            ],
+            Response::HTTP_OK
+        );
+        
         try {
             $fileDTO = $useCase->handle($hash);
 
