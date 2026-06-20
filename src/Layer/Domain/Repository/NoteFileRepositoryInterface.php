@@ -17,6 +17,10 @@ interface NoteFileRepositoryInterface
 
     public function getByHash(string $hash): ?NoteFileEntity;
 
+    public function getById(int $id): ?NoteFileEntity;
+
+    public function delete(NoteFileEntity $entity): void;
+
     /** @param int[] $fileIDs */
     public function getCountByUserAndIDs(int $userID, array $fileIDs): int;
 }

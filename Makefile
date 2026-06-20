@@ -1,13 +1,14 @@
 -include .env.local
 -include ../secrets/.env.prod
 
+# ========================================================= LOCAL ==========================================
 start:
 	docker compose up -d;
 
 stop:
 	docker compose down;
 
-create-needed:
+create-required:
 	sudo mkdir uploads
 	sudo chown -R www-data:www-data uploads
 	sudo chmod -R 755 uploads
@@ -29,6 +30,10 @@ deploy:
 	make start-prod;
 	make clear-cache-prod;
 	make m;
+
+# ========================================================= CLI ==========================================
+cli-clean-db:
+	docker exec -it ast-app bin/console service:clean-db;
 
 # ========================================================= migrations / entity ==========================================
 mc:
@@ -98,9 +103,3 @@ clear-cache-prod:
 
 clear-cache-dev:
 	docker exec -it ast-app bin/console cache:clear --env=dev
-
-jwt-gen:
-	docker exec -it ast-app bin/console lexik:jwt:generate-keypair
-
-jwt-gen-overwrite:
-	docker exec -it ast-app bin/console lexik:jwt:generate-keypair --overwrite

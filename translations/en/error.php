@@ -1,9 +1,11 @@
 <?php
 
 return [
+    'error_operation_unavailable' => 'Operation unavailable',
     'error_internal_server_error' => 'Internal Server Error',
     'error_exception_validation' => 'Validation Error',
     'error_user_already_exists' => 'This user already exists',
+    'error_user_not_found' => 'User not found',
     'error_you_are_unauthorized' => 'You are not logged in',
     'error_access_denied' => 'Access Denied',
     'error_notes_category_already_exists' => 'This category already exists',

@@ -1,9 +1,11 @@
 <?php
 
 return [
+    'error_operation_unavailable' => 'Операция недоступна',
     'error_internal_server_error' => 'Возникла внутренняя ошибка сервера',
     'error_exception_validation' => 'Ошибка валидации',
     'error_user_already_exists' => 'Данный пользователь уже существует',
+    'error_user_not_found' => 'Пользователь не найден',
     'error_you_are_unauthorized' => 'Вы не авторизованы',
     'error_access_denied' => 'Доступ запрещен',
     'error_notes_category_already_exists' => 'Данная категория уже существует',

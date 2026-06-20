@@ -12,6 +12,7 @@ parameters:
 
     app.blockingParanoia: '%env(BLOCKING_PARANOIA)%'
     app.defaultUri: '%env(DEFAULT_URI)%'
+    app.registerNewUserViaApi: '%env(REGISTERING_NEW_USERS_VIA_API)%'
 
     file.useFileEncryption: '%env(FILE_USE_ENCRYPTION)%'
     file.encryptionKey: '%env(FILE_ENCRYPTION_KEY)%'

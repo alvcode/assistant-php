@@ -15,4 +15,6 @@ interface UserRepositoryInterface
     public function getByToken(string $token, int $unixTime): ?UserEntity;
 
     public function getByLogin(string $login): ?UserEntity;
+
+    public function getById(int $id): ?UserEntity;
 }

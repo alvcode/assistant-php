@@ -43,7 +43,7 @@ final readonly class UserRepository implements UserRepositoryInterface
             ";
         } else {
             $query = "
-                update users set login = :login, password = :password, created_at = :created_at
+                update users set login = :login, password = :password, created_at = :created_at, updated_at = :updated_at
                 where id = :id
             ";
             $params['id'] = $user->getId();
@@ -97,7 +97,24 @@ final readonly class UserRepository implements UserRepositoryInterface
         if (!$row) {
             return null;
         }
+        return $this->getEntityFromRaw($row);
+    }
 
+    public function getById(int $id): ?UserEntity
+    {
+        $query = "
+            select * from users u where u.id = :id
+        ";
+
+        $conn = $this->entityManager->getConnection();
+        $result = $conn->executeQuery($query, [
+            'id' => $id,
+        ]);
+
+        $row = $result->fetchAssociative();
+        if (!$row) {
+            return null;
+        }
         return $this->getEntityFromRaw($row);
     }
 

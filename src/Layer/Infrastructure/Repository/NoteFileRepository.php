@@ -91,6 +91,19 @@ final readonly class NoteFileRepository implements NoteFileRepositoryInterface
         return $this->getEntityFromRaw($row);
     }
 
+    public function getById(int $id): ?NoteFileEntity
+    {
+        $query = "select * from files where id = :id";
+        $conn = $this->entityManager->getConnection();
+        $result = $conn->executeQuery($query, ['id' => $id]);
+
+        $row = $result->fetchAssociative();
+        if (!$row) {
+            return null;
+        }
+        return $this->getEntityFromRaw($row);
+    }
+
     /** @inheritDoc */
     public function getCountByUserAndIDs(int $userID, array $fileIDs): int
     {
@@ -101,6 +114,13 @@ final readonly class NoteFileRepository implements NoteFileRepositoryInterface
             ['user_id' => $userID, 'file_ids' => $fileIDs],
             ['file_ids' => ArrayParameterType::INTEGER]
         )->fetchOne();
+    }
+
+    public function delete(NoteFileEntity $entity): void 
+    {
+        $query = "DELETE FROM files WHERE id = :id";
+        $conn = $this->entityManager->getConnection();
+        $conn->executeQuery($query, ['id' => $entity->getId()]);
     }
 
     /** @param array<string,mixed> $raw */
