@@ -82,7 +82,6 @@ final class NoteCategoriesController extends AbstractController
         ListNoteCategoryUseCase $useCase,
     ): JsonResponse
     {
-        throw new Exception('stop');
         /** @var UserEntity $user */
         $user = $this->getUser();
 
