@@ -27,6 +27,7 @@ deploy:
 	make composer-install;
 	make stop-prod;
 	make start-prod;
+	make clear-cache-prod;
 	make m;
 
 # ========================================================= migrations / entity ==========================================
