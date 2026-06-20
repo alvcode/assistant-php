@@ -11,6 +11,25 @@ create-needed:
 	sudo chown -R www-data:www-data uploads
 	sudo chmod -R 755 uploads
 
+# ========================================================= PROD ==========================================
+build-prod:
+	docker compose -f docker-compose-prod.yaml up -d --build;
+
+start-prod:
+	docker compose -f docker-compose-prod.yaml up -d;
+
+stop-prod:
+	docker compose -f docker-compose-prod.yaml down;
+
+deploy:
+	git pull;
+	make stop-prod;
+	make start-prod;
+	make m;
+	composer install;
+
+
+
 # ========================================================= migrations / entity ==========================================
 mc:
 	docker exec -it ast-app bin/console doctrine:migrations:generate
