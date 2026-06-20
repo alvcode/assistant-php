@@ -1,4 +1,5 @@
-include .env
+-include .env.local
+-include ../secrets/.env
 
 start:
 	docker compose up -d;
@@ -23,12 +24,10 @@ stop-prod:
 
 deploy:
 	git pull;
+	make composer-install;
 	make stop-prod;
 	make start-prod;
 	make m;
-	composer install;
-
-
 
 # ========================================================= migrations / entity ==========================================
 mc:
@@ -77,6 +76,20 @@ stan:
 
 console-test:
 	docker exec -it ast-app php bin/console test
+
+# ========================================================= BACKUP/RESTORE DATABASE ==========================================
+
+backup-db:
+	docker exec ast-db pg_dump -U $(DB_USER) -d $(DB_DATABASE) | gzip > $(DB_LOCAL_BACKUP_PATH)/$(shell date +%Y-%m-%d_%H-%M-%S).sql.gz
+	chown -R $(DB_LOCAL_BACKUP_OWNER):$(DB_LOCAL_BACKUP_OWNER) $(DB_LOCAL_BACKUP_PATH);
+	echo "Database backup created successfully"
+
+db-remove-old-backups: # Удаляет бэкапы БД, которые были созданы более 5 дней назад
+	find $(DB_LOCAL_BACKUP_PATH) -type f -mtime +5 -exec rm -rf {} +
+
+restore-db: # with param file=path/to/backup/dump.sql.gz
+	gunzip -c $(file) | docker exec -i ast-db psql -U $(DB_USER) -d $(DB_DATABASE)
+	echo "Database restored successfully"
 
 # ========================================================= PRODUCTION COMMANDS ==========================================
 clear-cache-prod:
