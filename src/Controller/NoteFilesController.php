@@ -78,6 +78,7 @@ final class NoteFilesController extends AbstractController
         return new JsonResponse(
             [
                 'client_ip' => $request->getClientIp(),
+                'client_ip' => $request->getClientIp(),
                 'x_forwarded_for' => $request->headers->get('x-forwarded-for'),
                 'x_real_ip' => $request->headers->get('x-real-ip'),
                 'remote_addr' => $request->server->get('REMOTE_ADDR'),
