@@ -10,6 +10,7 @@ use App\Layer\Application\Exception\Drive\DriveStructNotFoundException;
 use App\Layer\Domain\Repository\DriveFileChunkRepositoryInterface;
 use App\Layer\Domain\Repository\DriveFileRepositoryInterface;
 use App\Layer\Domain\Repository\DriveStructRepositoryInterface;
+use App\Layer\Infrastructure\DTO\Drive\DriveChunksInfoDTO;
 
 final readonly class DriveGetChunksInfoUseCase
 {
@@ -24,7 +25,7 @@ final readonly class DriveGetChunksInfoUseCase
      * @throws DriveFileNotFoundException
      * @throws DriveStructIsNotChunkException
      */
-    public function handle(int $structId, int $userId)
+    public function handle(int $structId, int $userId): DriveChunksInfoDTO
     {
         $driveStructEntity = $this->driveStructRepository->getById($structId);
         if (\is_null($driveStructEntity) || $driveStructEntity->getUserId() !== $userId) {
