@@ -14,13 +14,13 @@ create-needed:
 
 # ========================================================= PROD ==========================================
 build-prod:
-	docker compose -f docker-compose-prod.yaml up -d --build;
+	docker compose --env-file ./../secrets/.env.prod -f docker-compose-prod.yaml up -d --build;
 
 start-prod:
-	docker compose -f docker-compose-prod.yaml up -d;
+	docker compose --env-file ./../secrets/.env.prod -f docker-compose-prod.yaml up -d;
 
 stop-prod:
-	docker compose -f docker-compose-prod.yaml down;
+	docker compose --env-file ./../secrets/.env.prod -f docker-compose-prod.yaml down;
 
 deploy:
 	git pull;
