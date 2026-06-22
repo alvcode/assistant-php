@@ -9,12 +9,16 @@ use App\Layer\Domain\Entity\NoteFileEntity;
 use App\Layer\Domain\Repository\NoteFileRepositoryInterface;
 use App\Layer\Domain\Service\Utils\DateTimeImmutable;
 use App\Layer\Domain\ValueObject\FileSizeVO;
+use App\Layer\Infrastructure\Repository\Helper\EachLowCostTrait;
 use DateTimeZone;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\ORM\EntityManagerInterface;
+use Generator;
 
 final readonly class NoteFileRepository implements NoteFileRepositoryInterface
 {
+    use EachLowCostTrait;
+
     public function __construct(
         private EntityManagerInterface $entityManager
     ) {}
@@ -105,6 +109,21 @@ final readonly class NoteFileRepository implements NoteFileRepositoryInterface
     }
 
     /** @inheritDoc */
+    public function getAllFiles(): Generator
+    {
+        foreach (
+            $this->eachLowCost(
+                entityManager: $this->entityManager,
+                query: "select * from files",
+                where: "",
+                params: [],
+            ) as $row
+        ) {
+            yield $this->getEntityFromRaw($row);
+        }
+    }
+
+    /** @inheritDoc */
     public function getCountByUserAndIDs(int $userID, array $fileIDs): int
     {
         $query = "SELECT coalesce(count(id), 0) FROM files where user_id = :user_id and id in (:file_ids)";
@@ -116,7 +135,7 @@ final readonly class NoteFileRepository implements NoteFileRepositoryInterface
         )->fetchOne();
     }
 
-    public function delete(NoteFileEntity $entity): void 
+    public function delete(NoteFileEntity $entity): void
     {
         $query = "DELETE FROM files WHERE id = :id";
         $conn = $this->entityManager->getConnection();

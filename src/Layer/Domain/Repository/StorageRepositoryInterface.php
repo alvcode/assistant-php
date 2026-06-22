@@ -17,4 +17,6 @@ interface StorageRepositoryInterface
 
     /** @param string[] $paths */
     public function deleteAll(array $paths): void;
+
+    public function isExists(string $path): bool;
 }

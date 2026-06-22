@@ -9,11 +9,15 @@ use App\Layer\Domain\Entity\DriveFileEntity;
 use App\Layer\Domain\Repository\DriveFileRepositoryInterface;
 use App\Layer\Domain\Service\Utils\DateTimeImmutable;
 use App\Layer\Domain\ValueObject\FileSizeVO;
+use App\Layer\Infrastructure\Repository\Helper\EachLowCostTrait;
 use Doctrine\DBAL\ParameterType;
 use Doctrine\ORM\EntityManagerInterface;
+use Generator;
 
 final readonly class DriveFileRepository implements DriveFileRepositoryInterface
 {
+    use EachLowCostTrait;
+
     public function __construct(
         private EntityManagerInterface $entityManager
     ) {}
@@ -21,9 +25,9 @@ final readonly class DriveFileRepository implements DriveFileRepositoryInterface
     public function getUsedSpaceByUserID(int $userId): FileSizeVO
     {
         $query = "
-            SELECT 
+            SELECT
     		coalesce(sum(df.size), 0) as all_size
-            FROM drive_structs ds 
+            FROM drive_structs ds
             JOIN drive_files df on df.drive_struct_id = ds.id
             WHERE ds.user_id = :user_id
         ";
@@ -38,7 +42,7 @@ final readonly class DriveFileRepository implements DriveFileRepositoryInterface
         return new FileSizeVO((float)$row['all_size'], FileSizeTypeEnum::Bytes);
     }
 
-    public function getLastId(): int 
+    public function getLastId(): int
     {
         $query = "SELECT coalesce(max(id), 0) FROM drive_files";
         $conn = $this->entityManager->getConnection();
@@ -67,7 +71,7 @@ final readonly class DriveFileRepository implements DriveFileRepositoryInterface
         } else {
             $query = "
                 update drive_files
-                set drive_struct_id = :drive_struct_id, path = :path, ext = :ext, size = :size, created_at = :created_at, 
+                set drive_struct_id = :drive_struct_id, path = :path, ext = :ext, size = :size, created_at = :created_at,
                 is_chunk = :is_chunk, sha256 = :sha256
                 where id = :id
             ";
@@ -98,19 +102,19 @@ final readonly class DriveFileRepository implements DriveFileRepositoryInterface
     }
 
     /** @inheritDoc */
-    public function getAllRecursive(int $structId, int $userId): array 
+    public function getAllRecursive(int $structId, int $userId): array
     {
         $query = "
-            select * from drive_files df 
-            where 
+            select * from drive_files df
+            where
             df.drive_struct_id in (
                 WITH RECURSIVE structs AS (
                     SELECT id
-                    FROM drive_structs 
+                    FROM drive_structs
                     WHERE id = :struct_id and user_id = :user_id
-                
+
                     UNION ALL
-                
+
                     SELECT ds.id
                     FROM drive_structs ds
                     INNER JOIN structs s ON ds.parent_id = s.id
@@ -125,6 +129,21 @@ final readonly class DriveFileRepository implements DriveFileRepositoryInterface
             $result[] = $this->getEntityFromRaw($raw);
         }
         return $result;
+    }
+
+    /** @inheritDoc */
+    public function getAll(): Generator
+    {
+        foreach (
+            $this->eachLowCost(
+                entityManager: $this->entityManager,
+                query: "select * from drive_files",
+                where: "",
+                params: [],
+            ) as $row
+        ) {
+            yield $this->getEntityFromRaw($row);
+        }
     }
 
     /** @param array<string,mixed> $raw */

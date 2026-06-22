@@ -132,4 +132,12 @@ final class S3StorageRepository implements StorageRepositoryInterface
         }
         return $this->client;
     }
+
+    public function isExists(string $path): bool
+    {
+        return $this->getClient()->doesObjectExist(
+            $this->parameterBag->get('s3.bucketName'),
+            $path
+        );
+    }
 }

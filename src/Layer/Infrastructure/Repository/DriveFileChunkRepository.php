@@ -18,22 +18,22 @@ final readonly class DriveFileChunkRepository implements DriveFileChunkRepositor
     ) {}
 
     /** @inheritDoc */
-    public function getAllRecursive(int $structId, int $userId): array 
+    public function getAllRecursive(int $structId, int $userId): array
     {
         $query = "
-            select * from drive_file_chunks dfc 
-            where 
+            select * from drive_file_chunks dfc
+            where
             dfc.drive_file_id in (
-                select df.id from drive_files df 
-                where 
+                select df.id from drive_files df
+                where
                 df.drive_struct_id in (
                     WITH RECURSIVE structs AS (
                         SELECT id
-                        FROM drive_structs 
+                        FROM drive_structs
                         WHERE id = :struct_id and user_id = :user_id
-                    
+
                         UNION ALL
-                    
+
                         SELECT ds.id
                         FROM drive_structs ds
                         INNER JOIN structs s ON ds.parent_id = s.id
@@ -55,7 +55,7 @@ final readonly class DriveFileChunkRepository implements DriveFileChunkRepositor
     public function getChunksSize(int $driveFileId): FileSizeVO
     {
         $query = "
-            SELECT 
+            SELECT
                 coalesce(sum(dfc.size), 0)
             FROM drive_file_chunks dfc
             WHERE dfc.drive_file_id = :drive_file_id
@@ -102,7 +102,7 @@ final readonly class DriveFileChunkRepository implements DriveFileChunkRepositor
     public function getChunksInfo(int $fileId): DriveChunksInfoDTO
     {
         $query = "
-            select  
+            select
 			(select min(chunk_number) from drive_file_chunks dfc where drive_file_id = :file_id) as min_chunk_number,
 			(select max(chunk_number) from drive_file_chunks dfc where drive_file_id = :file_id) as max_chunk_number
         ";
@@ -129,6 +129,22 @@ final readonly class DriveFileChunkRepository implements DriveFileChunkRepositor
             return null;
         }
         return $this->getEntityFromRaw($row);
+    }
+
+    /** @inheritDoc */
+    public function getAllByFileId(int $fileId): array
+    {
+        $query = "
+            select * from drive_file_chunks where drive_file_id = :file_id
+        ";
+        $conn = $this->entityManager->getConnection();
+        $stmt = $conn->executeQuery($query, ['file_id' => $fileId]);
+
+        $result = [];
+        foreach ($stmt->fetchAllAssociative() as $raw) {
+            $result[] = $this->getEntityFromRaw($raw);
+        }
+        return $result;
     }
 
     /** @param array<string,mixed> $raw */

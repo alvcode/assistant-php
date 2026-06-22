@@ -40,7 +40,7 @@ final readonly class LocalStorageRepository implements StorageRepositoryInterfac
         );
     }
 
-    public function delete(string $path): void 
+    public function delete(string $path): void
     {
         $this->filesystem->remove(
             $this->fileUtils->pathJoin(
@@ -51,10 +51,15 @@ final readonly class LocalStorageRepository implements StorageRepositoryInterfac
     }
 
     /** @inheritDoc */
-    public function deleteAll(array $paths): void 
+    public function deleteAll(array $paths): void
     {
         foreach ($paths as $path) {
             $this->delete($path);
         }
+    }
+
+    public function isExists(string $path): bool
+    {
+        return $this->filesystem->exists($path);
     }
 }

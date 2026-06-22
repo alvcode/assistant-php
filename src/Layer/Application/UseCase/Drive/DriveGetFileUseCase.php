@@ -28,12 +28,12 @@ final readonly class DriveGetFileUseCase
      * @throws DriveFileNotFoundException
      * @throws DriveUnavailableForChunkException
      */
-    public function handle(int $stuctId, int $userId): FileDTO
+    public function handle(int $structId, int $userId): FileDTO
     {
-        $driveStructEntity = $this->driveStructRepository->getById($stuctId);
+        $driveStructEntity = $this->driveStructRepository->getById($structId);
         if (
-            \is_null($driveStructEntity) 
-            || $driveStructEntity->getUserId() !== $userId 
+            \is_null($driveStructEntity)
+            || $driveStructEntity->getUserId() !== $userId
             || $driveStructEntity->getType() !== DriveStructTypeEnum::File
         ) {
             throw new DriveFileNotFoundException('Структура не найдена');

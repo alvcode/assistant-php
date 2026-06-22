@@ -6,6 +6,7 @@ namespace App\Layer\Domain\Repository;
 
 use App\Layer\Domain\Entity\NoteFileEntity;
 use App\Layer\Domain\ValueObject\FileSizeVO;
+use Generator;
 
 interface NoteFileRepositoryInterface
 {
@@ -18,6 +19,11 @@ interface NoteFileRepositoryInterface
     public function getByHash(string $hash): ?NoteFileEntity;
 
     public function getById(int $id): ?NoteFileEntity;
+
+    /**
+     * @return Generator<int,NoteFileEntity>
+     */
+    public function getAllFiles(): Generator;
 
     public function delete(NoteFileEntity $entity): void;
 

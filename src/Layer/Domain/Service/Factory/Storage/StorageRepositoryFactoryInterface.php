@@ -13,4 +13,8 @@ interface StorageRepositoryFactoryInterface
      * @throws FailedStorageConfigurationException
      */
     public function getRepository(): StorageRepositoryInterface;
+
+    public function getLocalStorage(): StorageRepositoryInterface;
+
+    public function getS3Storage(): StorageRepositoryInterface;
 }

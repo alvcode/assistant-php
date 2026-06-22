@@ -20,4 +20,7 @@ interface DriveFileChunkRepositoryInterface
     public function getChunksInfo(int $fileId): DriveChunksInfoDTO;
 
     public function getByFileIDAndNumber(int $fileId, int $chunkNumber): ?DriveFileChunkEntity;
+
+    /** @return DriveFileChunkEntity[] */
+    public function getAllByFileId(int $fileId): array;
 }

@@ -6,6 +6,7 @@ namespace App\Layer\Domain\Repository;
 
 use App\Layer\Domain\Entity\DriveFileEntity;
 use App\Layer\Domain\ValueObject\FileSizeVO;
+use Generator;
 
 interface DriveFileRepositoryInterface
 {
@@ -19,4 +20,9 @@ interface DriveFileRepositoryInterface
 
     /** @return DriveFileEntity[] */
     public function getAllRecursive(int $structId, int $userId): array;
+
+    /**
+     * @return Generator<int,DriveFileEntity>
+     */
+    public function getAll(): Generator;
 }

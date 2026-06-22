@@ -15,9 +15,10 @@ final readonly class StorageRepositoryFactory implements StorageRepositoryFactor
 {
     public function __construct(
         private ConfigRepositoryInterface $configRepository,
-        private LocalStorageRepository $localStorageRepository,
-        private S3StorageRepository $s3StorageRepository,
-    ) {}
+        private LocalStorageRepository    $localStorageRepository,
+        private S3StorageRepository       $s3StorageRepository,
+    )
+    {}
 
     /** @inheritDoc */
     public function getRepository(): StorageRepositoryInterface
@@ -33,5 +34,15 @@ final readonly class StorageRepositoryFactory implements StorageRepositoryFactor
         }
 
         throw new FailedStorageConfigurationException('Не удалось определить storage');
+    }
+
+    public function getLocalStorage(): StorageRepositoryInterface
+    {
+        return $this->localStorageRepository;
+    }
+
+    public function getS3Storage(): StorageRepositoryInterface
+    {
+        return $this->s3StorageRepository;
     }
 }
