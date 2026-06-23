@@ -27,7 +27,7 @@ final readonly class DriveGetChunksInfoUseCase
      */
     public function handle(int $structId, int $userId): DriveChunksInfoDTO
     {
-        $driveStructEntity = $this->driveStructRepository->getById($structId);
+        $driveStructEntity = $this->driveStructRepository->getById($structId, false);
         if (\is_null($driveStructEntity) || $driveStructEntity->getUserId() !== $userId) {
             throw new DriveStructNotFoundException('Структура не найдена');
         }

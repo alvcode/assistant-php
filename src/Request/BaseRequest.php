@@ -40,7 +40,18 @@ class BaseRequest
 
     public function populateByRequest(Request $request): static
     {
-        return $this->populateByArray($request->isMethod('GET') ? $request->query->all() : $request->toArray());
+        return $request->isMethod('GET')
+                ? $this->populateByQueryParams($request) : $this->populateByRequestBody($request);
+    }
+
+    public function populateByQueryParams(Request $request): static
+    {
+        return $this->populateByArray($request->query->all());
+    }
+
+    public function populateByRequestBody(Request $request): static
+    {
+        return $this->populateByArray($request->toArray());
     }
 
     public function populateByArray(array $data): static

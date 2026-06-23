@@ -34,7 +34,8 @@ final readonly class DriveStructRepository implements DriveStructRepositoryInter
                     df.sha256
                 from drive_structs ds
                 left join drive_files df on ds.id = df.drive_struct_id
-                where user_id = :user_id and
+                left join drive_recycle_bin drb on drb.drive_struct_id = ds.id
+                where drb.id is null and user_id = :user_id and
             ",
             $parentID ? "parent_id = :parent_id" : "parent_id is null"
         );
@@ -67,14 +68,29 @@ final readonly class DriveStructRepository implements DriveStructRepositoryInter
         int $userId,
         string $name,
         DriveStructTypeEnum $type,
+        bool $includeRecycleBin,
         ?int $parentId = null,
     ): ?DriveStructEntity
     {
-        $query = sprintf(
-            "%s %s",
-            "SELECT * FROM drive_structs WHERE user_id = :user_id AND name = :name AND type = :type AND",
-            is_null($parentId) ? 'parent_id IS NULL' : 'parent_id = :parent_id'
-        );
+        if ($includeRecycleBin) {
+            $query = sprintf(
+                "%s %s",
+                "SELECT * FROM drive_structs WHERE user_id = :user_id AND name = :name AND type = :type AND",
+                is_null($parentId) ? 'parent_id IS NULL' : 'parent_id = :parent_id'
+            );
+        } else {
+            $query = sprintf(
+                "%s %s",
+                "
+                    SELECT ds.* FROM drive_structs ds
+                    LEFT JOIN drive_files df on df.drive_struct_id = ds.id
+                    LEFT JOIN drive_recycle_bin drb on drb.drive_struct_id = ds.id
+                    WHERE
+                    drb.id is null and ds.user_id = :user_id AND ds.name = :name AND ds.type = :type AND
+                ",
+                is_null($parentId) ? 'parent_id IS NULL' : 'parent_id = :parent_id'
+            );
+        }
 
         $params = [
             'user_id' => $userId,
@@ -116,7 +132,7 @@ final readonly class DriveStructRepository implements DriveStructRepositoryInter
         } else {
             $query = "
                 update drive_structs
-                set user_id = :user_id, name = :name, type = :type, parent_id = :parent_id, created_at = :created_at, 
+                set user_id = :user_id, name = :name, type = :type, parent_id = :parent_id, created_at = :created_at,
                 updated_at = :updated_at
                 where id = :id
             ";
@@ -132,9 +148,17 @@ final readonly class DriveStructRepository implements DriveStructRepositoryInter
         return $entity;
     }
 
-    public function getById(int $id): ?DriveStructEntity
+    public function getById(int $id, bool $includeRecycleBin): ?DriveStructEntity
     {
-        $query = "SELECT * FROM drive_structs WHERE id = :id";
+        if ($includeRecycleBin) {
+            $query = "SELECT * FROM drive_structs WHERE id = :id";
+        } else {
+            $query = "
+                SELECT ds.* FROM drive_structs ds
+                LEFT JOIN drive_recycle_bin drb on drb.drive_struct_id = ds.id
+                WHERE drb.id is null and ds.id = :id
+            ";
+        }
         $conn = $this->entityManager->getConnection();
         $stmt = $conn->executeQuery($query, ['id' => $id]);
 
@@ -146,21 +170,24 @@ final readonly class DriveStructRepository implements DriveStructRepositoryInter
         return $this->getEntityFromRaw($row);
     }
 
-    public function deleteRecursive(int $structId, int $userId): void 
+    public function deleteRecursiveWithoutRecycleBin(int $structId, int $userId): void
     {
         $query = "
             DELETE FROM drive_structs
             WHERE id in (
                 WITH RECURSIVE structs AS (
-                    SELECT *
-                    FROM drive_structs 
-                    WHERE id = :struct_id and user_id = :user_id
-                
+                    SELECT ds1.*
+                    FROM drive_structs ds1
+                    LEFT JOIN drive_recycle_bin drb1 on drb1.drive_struct_id = ds1.id
+                    WHERE drb1.id is null and ds1.id = :struct_id and ds1.user_id = :user_id
+
                     UNION ALL
-                
-                    SELECT ds.*
-                    FROM drive_structs ds
-                    INNER JOIN structs s ON ds.parent_id = s.id
+
+                    SELECT ds2.*
+                    FROM drive_structs ds2
+                    LEFT JOIN drive_recycle_bin drb2 on drb2.drive_struct_id = ds2.id
+                    INNER JOIN structs s ON ds2.parent_id = s.id
+                    WHERE drb2.id is null
                 )
                 SELECT id FROM structs
             )
@@ -170,42 +197,80 @@ final readonly class DriveStructRepository implements DriveStructRepositoryInter
     }
 
     /** @inheritDoc */
-    public function structCountByUserAndIds(int $userId, array $structIds): int
+    public function structCountByUserAndIds(int $userId, array $structIds, bool $includeRecycleBin): int
     {
         $conn = $this->entityManager->getConnection();
         $result = 0;
         foreach ($this->arrayChunk($structIds, 200) as $batch) {
-            $query = "
-                select 
-                    coalesce(count(ds.id), 0) as count
-                from drive_structs ds 
-                where user_id = :user_id and id in (:struct_ids)
-            ";
+            if ($includeRecycleBin) {
+                $query = "
+                    select
+                        coalesce(count(ds.id), 0) as count
+                    from drive_structs ds
+                    where user_id = :user_id and id in (:struct_ids)
+                ";
+            } else {
+                $query = "
+                    select
+                        coalesce(count(ds.id), 0) as count
+                    from drive_structs ds
+                    left join drive_recycle_bin drb on drb.drive_struct_id = ds.id
+                    where drb.id is null and user_id = :user_id and id in (:struct_ids)
+                ";
+            }
+
             $stmt = $conn->executeQuery(
-                $query, 
-                ['user_id' => $userId, 'struct_ids' => $batch], 
+                $query,
+                ['user_id' => $userId, 'struct_ids' => $batch],
                 ['struct_ids' => ArrayParameterType::INTEGER]
             );
 
             $result += $stmt->fetchOne();
         }
-        
+
         return $result;
     }
 
     /** @inheritDoc */
-    public function massUpdateParentId(?int $parentId, array $structIds): void 
+    public function massUpdateParentId(?int $parentId, array $structIds): void
     {
         $conn = $this->entityManager->getConnection();
 
         foreach ($this->arrayChunk($structIds, 200) as $batch) {
             $query = "UPDATE drive_structs SET parent_id = :parent_id WHERE id in (:struct_ids)";
             $conn->executeQuery(
-                $query, 
-                ['parent_id' => $parentId, 'struct_ids' => $batch], 
+                $query,
+                ['parent_id' => $parentId, 'struct_ids' => $batch],
                 ['struct_ids' => ArrayParameterType::INTEGER]
             );
         }
+    }
+
+    /** @inheritDoc */
+    public function getAllRecursiveBackward(int $structId, int $userId): array
+    {
+        $query = "
+            WITH RECURSIVE structs AS (
+                SELECT *
+                FROM drive_structs
+                WHERE id = :struct_id and user_id = :user_id
+
+                UNION ALL
+
+                SELECT ds.*
+                FROM drive_structs ds
+                INNER JOIN structs s ON ds.id = s.parent_id
+            )
+            SELECT * FROM structs
+        ";
+        $conn = $this->entityManager->getConnection();
+        $stmt = $conn->executeQuery($query, ['struct_id' => $structId, 'user_id' => $userId]);
+
+        $result = [];
+        foreach ($stmt->fetchAllAssociative() as $raw) {
+            $result[] = $this->getEntityFromRaw($raw);
+        }
+        return $result;
     }
 
     /** @param array<string,mixed> $raw */

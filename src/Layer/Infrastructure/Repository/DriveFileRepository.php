@@ -102,26 +102,51 @@ final readonly class DriveFileRepository implements DriveFileRepositoryInterface
     }
 
     /** @inheritDoc */
-    public function getAllRecursive(int $structId, int $userId): array
+    public function getAllRecursive(int $structId, int $userId, bool $includeRecycleBin): array
     {
-        $query = "
-            select * from drive_files df
-            where
-            df.drive_struct_id in (
-                WITH RECURSIVE structs AS (
-                    SELECT id
-                    FROM drive_structs
-                    WHERE id = :struct_id and user_id = :user_id
+        if ($includeRecycleBin) {
+            $query = "
+                select * from drive_files df
+                where
+                df.drive_struct_id in (
+                    WITH RECURSIVE structs AS (
+                        SELECT id
+                        FROM drive_structs
+                        WHERE id = :struct_id and user_id = :user_id
 
-                    UNION ALL
+                        UNION ALL
 
-                    SELECT ds.id
-                    FROM drive_structs ds
-                    INNER JOIN structs s ON ds.parent_id = s.id
+                        SELECT ds.id
+                        FROM drive_structs ds
+                        INNER JOIN structs s ON ds.parent_id = s.id
+                    )
+                    SELECT id FROM structs
                 )
-                SELECT id FROM structs
-            )
-        ";
+            ";
+        } else {
+            $query = "
+                select * from drive_files df
+                where
+                df.drive_struct_id in (
+                    WITH RECURSIVE structs AS (
+                        SELECT ds1.id
+                        FROM drive_structs ds1
+                        LEFT JOIN drive_recycle_bin drb1 on drb1.drive_struct_id = ds1.id
+                        WHERE drb1.id is null and ds1.id = :struct_id and ds1.user_id = :user_id
+
+                        UNION ALL
+
+                        SELECT ds2.id
+                        FROM drive_structs ds2
+                        LEFT JOIN drive_recycle_bin drb2 on drb2.drive_struct_id = ds2.id
+                        INNER JOIN structs s ON ds2.parent_id = s.id
+                        WHERE drb2.id is null
+                    )
+                    SELECT id FROM structs
+                )
+            ";
+        }
+
         $conn = $this->entityManager->getConnection();
         $stmt = $conn->executeQuery($query, ['struct_id' => $structId, 'user_id' => $userId]);
         $result = [];

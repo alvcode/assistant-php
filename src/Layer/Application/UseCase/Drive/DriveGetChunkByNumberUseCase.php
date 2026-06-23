@@ -32,7 +32,7 @@ final readonly class DriveGetChunkByNumberUseCase
      */
     public function handle(int $structId, int $chunkNumber, int $userId): FileDTO
     {
-        $driveStructEntity = $this->driveStructRepository->getById($structId);
+        $driveStructEntity = $this->driveStructRepository->getById($structId, false);
         if (\is_null($driveStructEntity) || $driveStructEntity->getUserId() !== $userId) {
             throw new DriveStructNotFoundException('Структура не найдена');
         }
@@ -46,7 +46,7 @@ final readonly class DriveGetChunkByNumberUseCase
         }
 
         $driveFileChunkEntity = $this->driveFileChunkRepository->getByFileIDAndNumber(
-            $driveFileEntity->getId(), 
+            $driveFileEntity->getId(),
             $chunkNumber
         );
 

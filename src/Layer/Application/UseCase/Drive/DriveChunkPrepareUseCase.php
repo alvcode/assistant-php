@@ -52,7 +52,7 @@ final readonly class DriveChunkPrepareUseCase
         }
 
         if (!\is_null($in->parentId)) {
-            $parentDriveStructEntity = $this->driveStructRepository->getById($in->parentId);
+            $parentDriveStructEntity = $this->driveStructRepository->getById($in->parentId, false);
             if (!$parentDriveStructEntity || $parentDriveStructEntity->getUserId() !== $userId) {
                 throw new DriveParentIdNotFoundException('Родительская структура не найдена');
             }
@@ -67,9 +67,10 @@ final readonly class DriveChunkPrepareUseCase
         }
 
         $foundDuplicateStruct = $this->driveStructRepository->findRow(
-            userId: $userId, 
-            name: $in->fileName, 
-            type: DriveStructTypeEnum::File, 
+            userId: $userId,
+            name: $in->fileName,
+            type: DriveStructTypeEnum::File,
+            includeRecycleBin: false,
             parentId: $in->parentId
         );
         if (!\is_null($foundDuplicateStruct)) {

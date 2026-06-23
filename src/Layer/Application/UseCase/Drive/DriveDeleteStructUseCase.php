@@ -8,8 +8,10 @@ use App\Layer\Application\Exception\Drive\DriveStructNotFoundException;
 use App\Layer\Domain\Repository\ConfigRepositoryInterface;
 use App\Layer\Domain\Repository\DriveFileChunkRepositoryInterface;
 use App\Layer\Domain\Repository\DriveFileRepositoryInterface;
+use App\Layer\Domain\Repository\DriveRecycleBinRepositoryInterface;
 use App\Layer\Domain\Repository\DriveStructRepositoryInterface;
 use App\Layer\Domain\Service\Factory\Storage\StorageRepositoryFactoryInterface;
+use App\Layer\Domain\Service\Utils\DateTimeImmutable;
 use App\Layer\Domain\Service\Utils\FileUtilsInterface;
 
 final readonly class DriveDeleteStructUseCase
@@ -21,36 +23,60 @@ final readonly class DriveDeleteStructUseCase
         private ConfigRepositoryInterface $configRepository,
         private FileUtilsInterface $fileUtils,
         private StorageRepositoryFactoryInterface $storageRepositoryFactory,
+        private DriveRecycleBinRepositoryInterface $driveRecycleBinRepository,
     ) {}
 
     /** @throws DriveStructNotFoundException */
-    public function handle(int $structId, int $userId): void
+    public function handle(int $structId, int $userId, bool $force): void
     {
-        $driveStructEntity = $this->driveStructRepository->getById($structId);
+        $driveStructEntity = $this->driveStructRepository->getById($structId, false);
         if (\is_null($driveStructEntity) || $driveStructEntity->getUserId() !== $userId) {
             throw new DriveStructNotFoundException('Структура не найдена');
         }
 
-        $deletePaths = [];
-        $baseSavePath = $this->configRepository->getDriveFileSavePath();
-        $deleteChunkEntityList = $this->driveFileChunkRepository->getAllRecursive($structId, $userId);
-        foreach ($deleteChunkEntityList as $driveFileChunkEntity) {
-            $deletePaths[] = $this->fileUtils->pathJoin([$baseSavePath, $driveFileChunkEntity->getPath()]);
-        }
-        unset($deleteChunkEntityList);
-
-        $deleteFileEntityList = $this->driveFileRepository->getAllRecursive($structId, $userId);
-        foreach ($deleteFileEntityList as $driveFileEntity) {
-            if (!$driveFileEntity->isChunk()) {
-                $deletePaths[] = $this->fileUtils->pathJoin([$baseSavePath, $driveFileEntity->getPath()]);
+        if ($force) {
+            $deletePaths = [];
+            $baseSavePath = $this->configRepository->getDriveFileSavePath();
+            $deleteChunkEntityList = $this->driveFileChunkRepository->getAllRecursive(
+                $structId,
+                $userId,
+                false
+            );
+            foreach ($deleteChunkEntityList as $driveFileChunkEntity) {
+                $deletePaths[] = $this->fileUtils->pathJoin([$baseSavePath, $driveFileChunkEntity->getPath()]);
             }
-        }
-        unset($deleteFileEntityList);
+            unset($deleteChunkEntityList);
 
-        if (!empty($deletePaths)) {
-            $this->storageRepositoryFactory->getRepository()->deleteAll($deletePaths);
-        }
+            $deleteFileEntityList = $this->driveFileRepository->getAllRecursive(
+                $structId,
+                $userId,
+                false
+            );
+            foreach ($deleteFileEntityList as $driveFileEntity) {
+                if (!$driveFileEntity->isChunk()) {
+                    $deletePaths[] = $this->fileUtils->pathJoin([$baseSavePath, $driveFileEntity->getPath()]);
+                }
+            }
+            unset($deleteFileEntityList);
 
-        $this->driveStructRepository->deleteRecursive($structId, $userId);
+            if (!empty($deletePaths)) {
+                $this->storageRepositoryFactory->getRepository()->deleteAll($deletePaths);
+            }
+
+            $this->driveStructRepository->deleteRecursiveWithoutRecycleBin($structId, $userId);
+        } else {
+            $originalPath = '/';
+            $nestedDriveStructEntities = $this->driveStructRepository->getAllRecursiveBackward($structId, $userId);
+
+            $nestedDriveStructEntities = array_reverse($nestedDriveStructEntities);
+            foreach ($nestedDriveStructEntities as $nestedStructEntity) {
+                if ($nestedStructEntity->getId() === $structId) {
+                    continue;
+                }
+                $originalPath = sprintf("%s%s/", $originalPath, $nestedStructEntity->getName());
+            }
+
+            $this->driveRecycleBinRepository->upsert($structId, $originalPath, DateTimeImmutable::createNowUtc());
+        }
     }
 }

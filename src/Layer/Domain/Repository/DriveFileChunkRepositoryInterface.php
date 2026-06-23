@@ -11,7 +11,7 @@ use App\Layer\Infrastructure\DTO\Drive\DriveChunksInfoDTO;
 interface DriveFileChunkRepositoryInterface
 {
     /** @return DriveFileChunkEntity[] */
-    public function getAllRecursive(int $structId, int $userId): array;
+    public function getAllRecursive(int $structId, int $userId, bool $includeRecycleBin): array;
 
     public function getChunksSize(int $driveFileId): FileSizeVO;
 

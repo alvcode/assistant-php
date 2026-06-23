@@ -19,7 +19,7 @@ interface DriveFileRepositoryInterface
     public function getByStructId(int $structId): ?DriveFileEntity;
 
     /** @return DriveFileEntity[] */
-    public function getAllRecursive(int $structId, int $userId): array;
+    public function getAllRecursive(int $structId, int $userId, bool $includeRecycleBin): array;
 
     /**
      * @return Generator<int,DriveFileEntity>

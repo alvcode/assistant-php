@@ -27,6 +27,7 @@ final readonly class DriveCreateDirectoryUseCase
             userId: $userId,
             name: $in->name,
             type: DriveStructTypeEnum::Directory,
+            includeRecycleBin: false,
             parentId: $in->parentId,
         );
         if ($existsDirectory) {

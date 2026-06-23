@@ -23,7 +23,7 @@ final readonly class DriveUpdateFileHashUseCase
      */
     public function handle(int $structId, string $sha256, int $userId): void
     {
-        $driveStructEntity = $this->driveStructRepository->getById($structId);
+        $driveStructEntity = $this->driveStructRepository->getById($structId, false);
         if (\is_null($driveStructEntity) || $driveStructEntity->getUserId() !== $userId) {
             throw new DriveStructNotFoundException('Структура не найдена');
         }

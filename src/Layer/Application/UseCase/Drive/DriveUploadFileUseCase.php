@@ -12,6 +12,8 @@ use App\Layer\Application\Service\TransactionManagerInterface;
 use App\Layer\Domain\Dict\Common\FileSizeTypeEnum;
 use App\Layer\Domain\Dict\Drive\DriveStructTypeEnum;
 use App\Layer\Domain\Entity\Aggregate\DriveFileSaveAggregate;
+use App\Layer\Domain\Exception\Storage\FailedStorageConfigurationException;
+use App\Layer\Domain\Exception\Utils\FailedEncryptionFileException;
 use App\Layer\Domain\Repository\ConfigRepositoryInterface;
 use App\Layer\Domain\Repository\DriveFileRepositoryInterface;
 use App\Layer\Domain\Repository\DriveStructRepositoryInterface;
@@ -35,6 +37,12 @@ final readonly class DriveUploadFileUseCase
         private DriveFileFactory $driveFileFactory,
     ) {}
 
+    /**
+     * @throws DriveFilenameExistsException
+     * @throws DriveFilesystemIsFullException
+     * @throws FailedStorageConfigurationException
+     * @throws FailedEncryptionFileException
+     */
     public function handle(FileDTO $file, DriveUploadFileDTO $in, int $userId): DriveFileSaveAggregate
     {
         $userSpaceUsed = $this->driveFileRepository->getUsedSpaceByUserID($userId);
@@ -48,6 +56,7 @@ final readonly class DriveUploadFileUseCase
             userId: $userId,
             name: $file->getOriginalName(),
             type: DriveStructTypeEnum::File,
+            includeRecycleBin: false,
             parentId: $in->parentId,
         );
 
@@ -96,7 +105,7 @@ final readonly class DriveUploadFileUseCase
                         path: $middleFilePath,
                         ext: $file->getOriginalExtension(),
                         size: new FileSizeVO($file->getFile()->getSize(), FileSizeTypeEnum::Bytes),
-                        isChunk: false, 
+                        isChunk: false,
                         sha256: $in->sha256
                     )
                 );

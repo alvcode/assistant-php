@@ -17,18 +17,18 @@ final readonly class DriveRenMovStructUseCase
         private DriveStructRepositoryInterface $driveStructRepository,
     ) {}
 
-    /** 
-     * @throws DriveParentIdNotFoundException 
-     * @throws DriveParentRefOfTheRelocatableStructException 
+    /**
+     * @throws DriveParentIdNotFoundException
+     * @throws DriveParentRefOfTheRelocatableStructException
      * @throws DriveRelocatableStructureNotFoundException
      * */
     public function handle(DriveRenMovDTO $in, int $userId): void
     {
         if (!\is_null($in->parentId)) {
-            $parentStruct = $this->driveStructRepository->getById($in->parentId);
+            $parentStruct = $this->driveStructRepository->getById($in->parentId, false);
 
             if (
-                \is_null($parentStruct) 
+                \is_null($parentStruct)
                 || $parentStruct->getUserId() !== $userId
                 || $parentStruct->getType() !== DriveStructTypeEnum::Directory
             ) {
@@ -45,7 +45,7 @@ final readonly class DriveRenMovStructUseCase
             }
         }
 
-        $structCount = $this->driveStructRepository->structCountByUserAndIds($userId, $in->structIds);
+        $structCount = $this->driveStructRepository->structCountByUserAndIds($userId, $in->structIds, false);
         if ($structCount !== count($in->structIds)) {
             throw new DriveRelocatableStructureNotFoundException('Перемещаемая структура не найдена');
         }

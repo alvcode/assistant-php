@@ -30,7 +30,7 @@ final readonly class DriveGetFileUseCase
      */
     public function handle(int $structId, int $userId): FileDTO
     {
-        $driveStructEntity = $this->driveStructRepository->getById($structId);
+        $driveStructEntity = $this->driveStructRepository->getById($structId, false);
         if (
             \is_null($driveStructEntity)
             || $driveStructEntity->getUserId() !== $userId

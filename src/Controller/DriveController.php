@@ -38,6 +38,7 @@ use App\Layer\Domain\ValueObject\FileSizeVO;
 use App\Request\Drive\DriveChunkEndRequest;
 use App\Request\Drive\DriveChunkPrepareRequest;
 use App\Request\Drive\DriveCreateDirectoryRequest;
+use App\Request\Drive\DriveDeleteStructRequest;
 use App\Request\Drive\DriveRenameStructRequest;
 use App\Request\Drive\DriveRenMovStructsRequest;
 use App\Request\Drive\DriveUploadChunkRequest;
@@ -71,8 +72,8 @@ final class DriveController extends AbstractController
     #[Route(path: '/api/drive/directories', name: 'drive.create_directory', methods: ['POST'])]
     #[NeedAuth]
     public function createDirectory(
-        Request $request, 
-        DriveCreateDirectoryRequest $requestModel, 
+        Request $request,
+        DriveCreateDirectoryRequest $requestModel,
         DriveCreateDirectoryUseCase $useCase,
         DriveGetTreeUseCase $getTreeUseCase
     ): JsonResponse
@@ -145,7 +146,7 @@ final class DriveController extends AbstractController
     #[Route(path: '/api/drive/upload-file', name: 'drive.upload_file', methods: ['POST'])]
     #[NeedAuth]
     public function uploadFile(
-        Request $request, 
+        Request $request,
         DriveUploadFileRequest $requestModel,
         DriveUploadFileUseCase $useCase,
         DriveGetTreeUseCase $getTreeUseCase
@@ -164,12 +165,12 @@ final class DriveController extends AbstractController
         try {
             $useCase->handle(
                 new FileDTO(
-                    file: $requestModel->file, 
-                    originalExtension: $requestModel->file->getClientOriginalExtension(), 
+                    file: $requestModel->file,
+                    originalExtension: $requestModel->file->getClientOriginalExtension(),
                     originalName: $requestModel->file->getClientOriginalName()
                 ),
                 new DriveUploadFileDTO(
-                    parentId: $requestModel->parentId ? (int)$requestModel->parentId : null, 
+                    parentId: $requestModel->parentId ? (int)$requestModel->parentId : null,
                     sha256: $requestModel->sha256
                 ),
                 $user->id
@@ -210,16 +211,26 @@ final class DriveController extends AbstractController
         }
     }
 
-    #[Route(path: '/api/drive/{id}', name: 'drive.delete_file', methods: ['DELETE'])]
+    #[Route(path: '/api/drive/{id}', name: 'drive.delete_struct', methods: ['DELETE'])]
     #[NeedAuth]
-    public function deleteFile(int $id, DriveDeleteStructUseCase $useCase): Response
+    public function deleteStruct(
+        int $id,
+        Request $request,
+        DriveDeleteStructRequest $requestModel,
+        DriveDeleteStructUseCase $useCase
+    ): Response
     {
+        $requestModel->populateByQueryParams($request);
+        if (!$requestModel->validate()) {
+            $this->blockEventService->setEvent($request, BlockEventTypeEnum::Validation);
+            throw new UnprocessableEntityHttpException($requestModel->getFirstError());
+        }
+
         /** @var UserEntity $user */
         $user = $this->getUser();
 
         try {
-            $useCase->handle($id, $user->id);
-
+            $useCase->handle($id, $user->id, $requestModel->getForceVal());
             return new Response(null, Response::HTTP_NO_CONTENT);
         } catch (AbstractLogicException $e) {
             throw new UnprocessableEntityHttpException(Lang::t($e->getErrorKey()));
@@ -229,9 +240,9 @@ final class DriveController extends AbstractController
     #[Route(path: '/api/drive/files/{id}/rename', name: 'drive.rename_struct', methods: ['PATCH'])]
     #[NeedAuth]
     public function renameStruct(
-        int $id, 
-        Request $request, 
-        DriveRenameStructRequest $requestModel, 
+        int $id,
+        Request $request,
+        DriveRenameStructRequest $requestModel,
         DriveRenameStructUseCase $useCase
     ): Response
     {
@@ -242,7 +253,7 @@ final class DriveController extends AbstractController
 
         /** @var UserEntity $user */
         $user = $this->getUser();
-            
+
         try {
             $useCase->handle($id, $requestModel->name, $user->id);
             return new Response(null, Response::HTTP_NO_CONTENT);
@@ -260,7 +271,7 @@ final class DriveController extends AbstractController
     {
         /** @var UserEntity $user */
         $user = $this->getUser();
-        
+
         try {
             $freeSpaceDTO = $useCase->handle($user->id);
 
@@ -276,8 +287,8 @@ final class DriveController extends AbstractController
     #[Route(path: '/api/drive/renmov', name: 'drive.renmov_structs', methods: ['PATCH'])]
     #[NeedAuth]
     public function renMovStructs(
-        Request $request, 
-        DriveRenMovStructsRequest $requestModel, 
+        Request $request,
+        DriveRenMovStructsRequest $requestModel,
         DriveRenMovStructUseCase $useCase
     ): Response
     {
@@ -298,7 +309,7 @@ final class DriveController extends AbstractController
             return new Response(null, Response::HTTP_NO_CONTENT);
         } catch (AbstractLogicException $e) {
             if (
-                $e instanceof DriveParentIdNotFoundException 
+                $e instanceof DriveParentIdNotFoundException
                 || $e instanceof DriveRelocatableStructureNotFoundException
             ) {
                 $this->blockEventService->setEvent($request, BlockEventTypeEnum::BruteForce);
@@ -310,7 +321,7 @@ final class DriveController extends AbstractController
     #[Route(path: '/api/drive/chunk-prepare', name: 'drive.chunk_prepare', methods: ['POST'])]
     #[NeedAuth]
     public function chunkPrepare(
-        Request $request, 
+        Request $request,
         DriveChunkPrepareRequest $requestModel,
         DriveChunkPrepareUseCase $useCase
     ): JsonResponse
@@ -337,7 +348,7 @@ final class DriveController extends AbstractController
             return new JsonResponse(DriveStructIdResponse::fromStructId($structId), Response::HTTP_CREATED);
         } catch (AbstractLogicException $e) {
             if (
-                $e instanceof DriveParentIdNotFoundException 
+                $e instanceof DriveParentIdNotFoundException
                 || $e instanceof DriveNotSafeFilenameException
             ) {
                 $this->blockEventService->setEvent($request, BlockEventTypeEnum::BruteForce);
@@ -349,7 +360,7 @@ final class DriveController extends AbstractController
     #[Route(path: '/api/drive/upload-chunk', name: 'drive.upload_chunk', methods: ['POST'])]
     #[NeedAuth]
     public function uploadChunk(
-        Request $request, 
+        Request $request,
         DriveUploadChunkRequest $requestModel,
         DriveChunkUploadUseCase $useCase
     ): Response
@@ -367,8 +378,8 @@ final class DriveController extends AbstractController
         try {
             $useCase->handle(
                 new FileDTO(
-                    file: $requestModel->file, 
-                    originalExtension: $requestModel->file->getClientOriginalExtension(), 
+                    file: $requestModel->file,
+                    originalExtension: $requestModel->file->getClientOriginalExtension(),
                     originalName: $requestModel->file->getClientOriginalName()
                 ),
                 new DriveUploadChunkDTO(
@@ -390,8 +401,8 @@ final class DriveController extends AbstractController
     #[Route(path: '/api/drive/chunk-end', name: 'drive.chunk_end', methods: ['POST'])]
     #[NeedAuth]
     public function chunkEnd(
-        Request $request, 
-        DriveChunkEndRequest $requestModel, 
+        Request $request,
+        DriveChunkEndRequest $requestModel,
         DriveChunkEndUseCase $useCase
     ): Response
     {
@@ -425,7 +436,7 @@ final class DriveController extends AbstractController
             $info = $useCase->handle($id, $user->id);
 
             return new JsonResponse(
-                new DriveChunksInfoResponse(start_number: $info->startNumber, end_number: $info->endNumber), 
+                new DriveChunksInfoResponse(start_number: $info->startNumber, end_number: $info->endNumber),
                 Response::HTTP_OK
             );
         } catch (AbstractLogicException $e) {
@@ -439,9 +450,9 @@ final class DriveController extends AbstractController
     #[Route(path: '/api/drive/files/{id}/chunks/{chunkNumber}', name: 'drive.get_chunk_by_number', methods: ['GET'])]
     #[NeedAuth]
     public function getChunkByNumber(
-        int $id, 
-        int $chunkNumber, 
-        Request $request, 
+        int $id,
+        int $chunkNumber,
+        Request $request,
         DriveGetChunkByNumberUseCase $useCase
     ): BinaryFileResponse
     {

@@ -31,14 +31,14 @@ final readonly class DriveChunkUploadUseCase
         private StorageRepositoryFactoryInterface $storageRepositoryFactory,
     ) {}
 
-    /** 
-     * @throws DriveStructNotFoundException 
-     * @throws DriveFileTooLargeException 
-     * @throws DriveStructIsNotChunkException 
+    /**
+     * @throws DriveStructNotFoundException
+     * @throws DriveFileTooLargeException
+     * @throws DriveStructIsNotChunkException
     */
     public function handle(FileDTO $file, DriveUploadChunkDTO $in, int $userId): void
     {
-        $driveStructEntity = $this->driveStructRepository->getById($in->structId);
+        $driveStructEntity = $this->driveStructRepository->getById($in->structId, false);
         if (!$driveStructEntity || $driveStructEntity->getUserId() !== $userId) {
             throw new DriveStructNotFoundException('Структура не найдена');
         }

@@ -18,7 +18,7 @@ final readonly class DriveRenameStructUseCase
     /** @throws DriveStructNotFoundException */
     public function handle(int $structId, string $newName, int $userId): void
     {
-        $driveStructEntity = $this->driveStructRepository->getById($structId);
+        $driveStructEntity = $this->driveStructRepository->getById($structId, false);
         if (!$driveStructEntity || $driveStructEntity->getUserId() !== $userId) {
             throw new DriveStructNotFoundException('Структура не найдена');
         }
