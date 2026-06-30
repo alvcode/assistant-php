@@ -7,8 +7,8 @@ namespace App\Layer\Infrastructure\Repository;
 use App\Layer\Domain\Dict\Common\FileSizeTypeEnum;
 use App\Layer\Domain\Entity\DriveFileChunkEntity;
 use App\Layer\Domain\Repository\DriveFileChunkRepositoryInterface;
+use App\Layer\Domain\Repository\DTO\Drive\DriveChunksInfoDTO;
 use App\Layer\Domain\ValueObject\FileSizeVO;
-use App\Layer\Infrastructure\DTO\Drive\DriveChunksInfoDTO;
 use Doctrine\ORM\EntityManagerInterface;
 
 final readonly class DriveFileChunkRepository implements DriveFileChunkRepositoryInterface

@@ -6,7 +6,7 @@ namespace App\Layer\Domain\Repository;
 
 use App\Layer\Domain\Dict\Drive\DriveStructTypeEnum;
 use App\Layer\Domain\Entity\DriveStructEntity;
-use App\Layer\Infrastructure\DTO\Drive\DriveTreeDTO;
+use App\Layer\Domain\Repository\DTO\Drive\DriveTreeDTO;
 
 interface DriveStructRepositoryInterface
 {

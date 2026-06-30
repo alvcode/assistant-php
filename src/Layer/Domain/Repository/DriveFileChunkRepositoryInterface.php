@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Layer\Domain\Repository;
 
 use App\Layer\Domain\Entity\DriveFileChunkEntity;
+use App\Layer\Domain\Repository\DTO\Drive\DriveChunksInfoDTO;
 use App\Layer\Domain\ValueObject\FileSizeVO;
-use App\Layer\Infrastructure\DTO\Drive\DriveChunksInfoDTO;
 
 interface DriveFileChunkRepositoryInterface
 {

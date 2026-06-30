@@ -10,7 +10,7 @@ use App\Layer\Application\Exception\Drive\DriveStructNotFoundException;
 use App\Layer\Domain\Repository\DriveFileChunkRepositoryInterface;
 use App\Layer\Domain\Repository\DriveFileRepositoryInterface;
 use App\Layer\Domain\Repository\DriveStructRepositoryInterface;
-use App\Layer\Infrastructure\DTO\Drive\DriveChunksInfoDTO;
+use App\Layer\Domain\Repository\DTO\Drive\DriveChunksInfoDTO;
 
 final readonly class DriveGetChunksInfoUseCase
 {

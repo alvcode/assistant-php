@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Response\Drive;
 
 use App\Infrastructure\FormatDict;
-use App\Layer\Infrastructure\DTO\Drive\DriveTreeDTO;
+use App\Layer\Domain\Repository\DTO\Drive\DriveTreeDTO;
 
 final class DriveTreeResponse
 {

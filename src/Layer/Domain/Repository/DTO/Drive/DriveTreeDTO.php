@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Layer\Infrastructure\DTO\Drive;
+namespace App\Layer\Domain\Repository\DTO\Drive;
 
 final readonly class DriveTreeDTO
 {

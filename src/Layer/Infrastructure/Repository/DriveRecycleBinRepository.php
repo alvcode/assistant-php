@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Layer\Infrastructure\Repository;
 
+use App\Layer\Domain\Dict\Drive\DriveStructTypeEnum;
+use App\Layer\Domain\Entity\Aggregate\DriveRecycleBinAggregate;
 use App\Layer\Domain\Repository\DriveRecycleBinRepositoryInterface;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
@@ -31,5 +33,34 @@ final readonly class DriveRecycleBinRepository implements DriveRecycleBinReposit
                 'original_path' => $originalPath,
             ]
         );
+    }
+
+    /** @inheritDoc */
+    public function getAll(int $userId): array
+    {
+        $query = "
+            select
+                drb.id, ds.name, ds.type, drb.drive_struct_id, drb.created_at, drb.original_path
+            from drive_recycle_bin drb
+            join drive_structs ds on ds.id = drb.drive_struct_id
+            where
+            ds.user_id = :user_id
+        ";
+
+        $conn = $this->entityManager->getConnection();
+        $stmt = $conn->executeQuery($query, ['user_id' => $userId]);
+
+        $result = [];
+        foreach ($stmt->fetchAllAssociative() as $raw) {
+            $result[] = new DriveRecycleBinAggregate(
+                id: $raw['id'],
+                name: $raw['name'],
+                type: DriveStructTypeEnum::tryFrom($raw['type']),
+                driveStructId: $raw['drive_struct_id'],
+                createdAt: \App\Layer\Domain\Service\Utils\DateTimeImmutable::createUTCFromString($raw['created_at']),
+                originalPath: $raw['original_path'],
+            );
+        }
+        return $result;
     }
 }
