@@ -6,7 +6,9 @@ namespace App\Layer\Infrastructure\Repository;
 
 use App\Layer\Domain\Dict\Drive\DriveStructTypeEnum;
 use App\Layer\Domain\Entity\Aggregate\DriveRecycleBinAggregate;
+use App\Layer\Domain\Entity\DriveRecycleBinEntity;
 use App\Layer\Domain\Repository\DriveRecycleBinRepositoryInterface;
+use App\Layer\Domain\ValueObject\PathVO;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -33,6 +35,30 @@ final readonly class DriveRecycleBinRepository implements DriveRecycleBinReposit
                 'original_path' => $originalPath,
             ]
         );
+    }
+
+    public function deleteAllChildren(int $parentStructId, int $userId): void
+    {
+        $query = "
+            delete from drive_recycle_bin drb
+            where
+            drb.drive_struct_id in (
+                WITH RECURSIVE structs AS (
+                    SELECT *
+                    FROM drive_structs
+                    WHERE id = :parent_struct_id and user_id = :user_id
+
+                    UNION ALL
+
+                    SELECT ds.*
+                    FROM drive_structs ds
+                    INNER JOIN structs s ON ds.parent_id = s.id
+                )
+                SELECT id FROM structs where id != :parent_struct_id
+            )
+        ";
+        $conn = $this->entityManager->getConnection();
+        $conn->executeQuery($query, ['parent_struct_id' => $parentStructId, 'user_id' => $userId]);
     }
 
     /** @inheritDoc */
@@ -62,5 +88,26 @@ final readonly class DriveRecycleBinRepository implements DriveRecycleBinReposit
             );
         }
         return $result;
+    }
+
+    public function getById(int $id): ?DriveRecycleBinEntity
+    {
+        $query = "
+            select * from drive_recycle_bin where id = :id
+        ";
+
+        $conn = $this->entityManager->getConnection();
+        $stmt = $conn->executeQuery($query, ['id' => $id]);
+        $row = $stmt->fetchAssociative();
+        if (!$row) {
+            return null;
+        }
+
+        return new DriveRecycleBinEntity(
+            id: $row['id'],
+            driveStructId: $row['drive_struct_id'],
+            createdAt: \App\Layer\Domain\Service\Utils\DateTimeImmutable::createUTCFromString($row['created_at']),
+            originalPath: new PathVO($row['original_path']),
+        );
     }
 }

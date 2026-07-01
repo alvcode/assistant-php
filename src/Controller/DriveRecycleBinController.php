@@ -8,12 +8,16 @@ use App\Attribute\NeedAuth;
 use App\Entity\UserEntity;
 use App\Infrastructure\Lang;
 use App\Layer\Application\UseCase\DriveRecycleBin\DriveRBGetAllUseCase;
+use App\Layer\Application\UseCase\DriveRecycleBin\DriveRBRestoreOneUseCase;
 use App\Layer\Domain\Exception\AbstractLogicException;
+use App\Request\Common\IDRequest;
 use App\Response\DriveRecycleBin\DriveRBGetAllResponse;
 use App\Security\BlockEvent\BlockEventService;
+use App\Security\BlockEvent\BlockEventTypeEnum;
 use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use Symfony\Component\Routing\Attribute\Route;
@@ -25,12 +29,10 @@ final class DriveRecycleBinController extends AbstractController
     ) {}
 
     /**
-     * Когда удаляем структуру, то смотрим все вложенные структуры и ищем их в корзине, если таковые имеются,
-     * то удаляем их, т.к добавление в корзину родительской структуры перетирает их.
-     * таким образом при восстановлении, мы удаляем только 1 запись корзины
-     *
      * когда восстанавливаем...идем рекурсивно. если папка существует, то переименовываем добавляя restored_HaSh
-     * если файл существует, то переименовываем добавляя restored_HaSh. в конце просто удаляем запись корзины и вся цепочка становится доступной
+     * если файл существует, то переименовываем добавляя restored_HaSh.
+     * в конце просто удаляем запись корзины и вся цепочка становится доступной.
+     * -- если папки не существует, то создаем её
      *
      * тест кейсы:
      * 1. файл в корне. добавляем в корзину. восстанавливаем. файл появился
@@ -41,6 +43,8 @@ final class DriveRecycleBinController extends AbstractController
      * 5. такой же кейс как 4 только не добавлять в корзину папку 1, а восстановить папку 2
      * 6. папки 1/2 внутрь кладу 2 файла. добавляю 2 файла в корзину. заливаю снова 2 таких же файла.
      *  восстанавливаю 2 файла из корзины
+     * 7. папки 1/2. кладем внутрь 2 файла. добавляем 2 файла в корзину. потом удаляем папку 1 через force.
+     *  далее восстанавливаем оба файла. папки 1/2 должны восстановиться
      *
      * Делаем метод для диска - upsert, который будет подменять файл и обновлять updated_at
      *
@@ -63,6 +67,31 @@ final class DriveRecycleBinController extends AbstractController
                 DriveRBGetAllResponse::fromDriveRBAggregates($useCase->handle($user->id)),
                 Response::HTTP_OK
             );
+        } catch (AbstractLogicException $e) {
+            throw new UnprocessableEntityHttpException(Lang::t($e->getErrorKey()));
+        }
+    }
+
+    #[Route(path: '/api/drive-recycle-bin/restore-one/{id}', name: 'drive_recycle_bin.restore_one', methods: ['POST'])]
+    #[NeedAuth]
+    public function restoreOne(
+        int $id,
+        Request $request,
+        IDRequest $requestModel,
+        DriveRBRestoreOneUseCase $useCase
+    ): JsonResponse
+    {
+        $requestModel->id = $id;
+        if (!$requestModel->validate()) {
+            $this->blockEventService->setEvent($request, BlockEventTypeEnum::Validation);
+            throw new UnprocessableEntityHttpException($requestModel->getFirstError());
+        }
+
+        /** @var UserEntity $user */
+        $user = $this->getUser();
+
+        try {
+
         } catch (AbstractLogicException $e) {
             throw new UnprocessableEntityHttpException(Lang::t($e->getErrorKey()));
         }

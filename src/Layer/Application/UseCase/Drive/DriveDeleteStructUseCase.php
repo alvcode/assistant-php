@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Layer\Application\UseCase\Drive;
 
 use App\Layer\Application\Exception\Drive\DriveStructNotFoundException;
+use App\Layer\Application\Service\TransactionManagerInterface;
+use App\Layer\Domain\Exception\Storage\FailedStorageConfigurationException;
 use App\Layer\Domain\Repository\ConfigRepositoryInterface;
 use App\Layer\Domain\Repository\DriveFileChunkRepositoryInterface;
 use App\Layer\Domain\Repository\DriveFileRepositoryInterface;
@@ -24,9 +26,12 @@ final readonly class DriveDeleteStructUseCase
         private FileUtilsInterface $fileUtils,
         private StorageRepositoryFactoryInterface $storageRepositoryFactory,
         private DriveRecycleBinRepositoryInterface $driveRecycleBinRepository,
+        private TransactionManagerInterface $transactionManager,
     ) {}
 
-    /** @throws DriveStructNotFoundException */
+    /** @throws DriveStructNotFoundException
+     * @throws FailedStorageConfigurationException
+     */
     public function handle(int $structId, int $userId, bool $force): void
     {
         $driveStructEntity = $this->driveStructRepository->getById($structId, false);
@@ -76,7 +81,10 @@ final readonly class DriveDeleteStructUseCase
                 $originalPath = sprintf("%s%s/", $originalPath, $nestedStructEntity->getName());
             }
 
-            $this->driveRecycleBinRepository->upsert($structId, $originalPath, DateTimeImmutable::createNowUtc());
+            $this->transactionManager->transactional(function () use ($structId, $userId, $originalPath) {
+                $this->driveRecycleBinRepository->deleteAllChildren($structId, $userId);
+                $this->driveRecycleBinRepository->upsert($structId, $originalPath, DateTimeImmutable::createNowUtc());
+            });
         }
     }
 }
