@@ -9,4 +9,10 @@ final readonly class PathVO
     public function __construct(
         private string $path,
     ) {}
+
+    /** @return string[] */
+    public function getAsArray(): array
+    {
+        return explode('/', trim($this->path, '/'));
+    }
 }

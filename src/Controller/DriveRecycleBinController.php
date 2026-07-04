@@ -91,7 +91,7 @@ final class DriveRecycleBinController extends AbstractController
         $user = $this->getUser();
 
         try {
-
+            $useCase->handle($requestModel->id, $user->id);
         } catch (AbstractLogicException $e) {
             throw new UnprocessableEntityHttpException(Lang::t($e->getErrorKey()));
         }

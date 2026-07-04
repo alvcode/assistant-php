@@ -38,4 +38,6 @@ interface DriveStructRepositoryInterface
      * @return DriveStructEntity[]
      */
     public function getAllRecursiveBackward(int $structId, int $userId): array;
+
+    public function checkExistsByName(int $userId, string $name, ?int $parentId, ?int $excludeId): bool;
 }

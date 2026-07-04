@@ -273,6 +273,26 @@ final readonly class DriveStructRepository implements DriveStructRepositoryInter
         return $result;
     }
 
+    public function checkExistsByName(int $userId, string $name, ?int $parentId, ?int $excludeId): bool
+    {
+        $params = ['user_id' => $userId, 'name' => $name];
+        $query = "select exists(select 1 from drive_structs where user_id = :user_id and name = :name";
+        if ($parentId) {
+            $query .= " and parent_id = :parent_id";
+            $params['parent_id'] = $parentId;
+        } else {
+            $query .= " and parent_id is null";
+        }
+        if ($excludeId) {
+            $query .= " and id != :exclude_id";
+            $params['exclude_id'] = $excludeId;
+        }
+        $query .= ")";
+
+        $conn = $this->entityManager->getConnection();
+        return (bool)$conn->executeQuery($query, $params)->fetchOne();
+    }
+
     /** @param array<string,mixed> $raw */
     private function getEntityFromRaw(array $raw): DriveStructEntity
     {
