@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Layer\Domain\Entity;
 
 use App\Layer\Domain\Dict\Drive\DriveStructTypeEnum;
+use App\Layer\Domain\Service\Utils\HasherServiceInterface;
 use DateTime;
 use DateTimeImmutable;
 
@@ -88,5 +89,10 @@ final class DriveStructEntity
     public function setUpdatedAt(DateTime $updatedAt): void
     {
         $this->updatedAt = $updatedAt;
+    }
+
+    public function generateRestoredName(HasherServiceInterface $hasherService): void
+    {
+        $this->name .= '_restored_' .$hasherService->generateRandomStringWithoutSymbols(10);
     }
 }

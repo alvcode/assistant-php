@@ -110,4 +110,11 @@ final readonly class DriveRecycleBinRepository implements DriveRecycleBinReposit
             originalPath: new PathVO($row['original_path']),
         );
     }
+
+    public function delete(DriveRecycleBinEntity $entity): void
+    {
+        $query = "DELETE FROM drive_recycle_bin WHERE id = :id";
+        $conn = $this->entityManager->getConnection();
+        $conn->executeQuery($query, ['id' => $entity->getId()]);
+    }
 }

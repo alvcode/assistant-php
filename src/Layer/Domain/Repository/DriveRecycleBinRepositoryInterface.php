@@ -17,4 +17,6 @@ interface DriveRecycleBinRepositoryInterface
     public function getAll(int $userId): array;
 
     public function getById(int $id): ?DriveRecycleBinEntity;
+
+    public function delete(DriveRecycleBinEntity $entity): void;
 }

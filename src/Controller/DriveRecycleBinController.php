@@ -7,6 +7,7 @@ namespace App\Controller;
 use App\Attribute\NeedAuth;
 use App\Entity\UserEntity;
 use App\Infrastructure\Lang;
+use App\Layer\Application\Exception\DriveRecycleBin\DriveRecycleBinNotFoundException;
 use App\Layer\Application\UseCase\DriveRecycleBin\DriveRBGetAllUseCase;
 use App\Layer\Application\UseCase\DriveRecycleBin\DriveRBRestoreOneUseCase;
 use App\Layer\Domain\Exception\AbstractLogicException;
@@ -72,6 +73,9 @@ final class DriveRecycleBinController extends AbstractController
         }
     }
 
+    /**
+     * @throws Exception
+     */
     #[Route(path: '/api/drive-recycle-bin/restore-one/{id}', name: 'drive_recycle_bin.restore_one', methods: ['POST'])]
     #[NeedAuth]
     public function restoreOne(
@@ -79,7 +83,7 @@ final class DriveRecycleBinController extends AbstractController
         Request $request,
         IDRequest $requestModel,
         DriveRBRestoreOneUseCase $useCase
-    ): JsonResponse
+    ): Response
     {
         $requestModel->id = $id;
         if (!$requestModel->validate()) {
@@ -92,7 +96,11 @@ final class DriveRecycleBinController extends AbstractController
 
         try {
             $useCase->handle($requestModel->id, $user->id);
+            return new Response(null, Response::HTTP_NO_CONTENT);
         } catch (AbstractLogicException $e) {
+            if ($e instanceof DriveRecycleBinNotFoundException) {
+                $this->blockEventService->setEvent($request, BlockEventTypeEnum::BruteForce);
+            }
             throw new UnprocessableEntityHttpException(Lang::t($e->getErrorKey()));
         }
     }
