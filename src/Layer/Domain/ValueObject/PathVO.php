@@ -13,6 +13,10 @@ final readonly class PathVO
     /** @return string[] */
     public function getAsArray(): array
     {
-        return explode('/', trim($this->path, '/'));
+        $result = explode('/', trim($this->path, '/'));
+        if (count($result) === 1 && $result[0] === '') {
+            return [];
+        }
+        return $result;
     }
 }

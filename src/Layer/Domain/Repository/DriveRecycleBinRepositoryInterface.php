@@ -13,6 +13,9 @@ interface DriveRecycleBinRepositoryInterface
 
     public function deleteAllChildren(int $parentStructId, int $userId): void;
 
+    /** @return DriveRecycleBinEntity[] */
+    public function getAllChildren(int $parentStructId, int $userId): array;
+
     /** @return DriveRecycleBinAggregate[] */
     public function getAll(int $userId): array;
 

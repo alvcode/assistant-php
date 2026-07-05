@@ -15,6 +15,7 @@ use App\Layer\Domain\Repository\DriveStructRepositoryInterface;
 use App\Layer\Domain\Service\Factory\Storage\StorageRepositoryFactoryInterface;
 use App\Layer\Domain\Service\Utils\DateTimeImmutable;
 use App\Layer\Domain\Service\Utils\FileUtilsInterface;
+use App\Layer\Domain\Service\Utils\HasherServiceInterface;
 
 final readonly class DriveDeleteStructUseCase
 {
@@ -27,6 +28,7 @@ final readonly class DriveDeleteStructUseCase
         private StorageRepositoryFactoryInterface $storageRepositoryFactory,
         private DriveRecycleBinRepositoryInterface $driveRecycleBinRepository,
         private TransactionManagerInterface $transactionManager,
+        private HasherServiceInterface $hasherService,
     ) {}
 
     /** @throws DriveStructNotFoundException
@@ -81,7 +83,26 @@ final readonly class DriveDeleteStructUseCase
                 $originalPath = sprintf("%s%s/", $originalPath, $nestedStructEntity->getName());
             }
 
-            $this->transactionManager->transactional(function () use ($structId, $userId, $originalPath) {
+            $childrenRecycleBinEntities = $this->driveRecycleBinRepository->getAllChildren($structId, $userId);
+            $this->transactionManager->transactional(function () use ($structId, $userId, $originalPath, $childrenRecycleBinEntities) {
+                foreach ($childrenRecycleBinEntities as $childrenRecycleBinEntity) {
+                    $childrenDriveStructEntity = $this->driveStructRepository->getById(
+                        $childrenRecycleBinEntity->getDriveStructId(),
+                        true
+                    );
+                    if ($childrenDriveStructEntity) {
+                        $existsName = $this->driveStructRepository->checkExistsByName(
+                            userId: $userId,
+                            name: $childrenDriveStructEntity->getName(),
+                            parentId: $childrenDriveStructEntity->getParentId(),
+                            excludeId: $childrenDriveStructEntity->getId()
+                        );
+                        if ($existsName) {
+                            $childrenDriveStructEntity->generateRestoredName($this->hasherService);
+                            $this->driveStructRepository->save($childrenDriveStructEntity);
+                        }
+                    }
+                }
                 $this->driveRecycleBinRepository->deleteAllChildren($structId, $userId);
                 $this->driveRecycleBinRepository->upsert($structId, $originalPath, DateTimeImmutable::createNowUtc());
             });

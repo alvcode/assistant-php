@@ -62,6 +62,34 @@ final readonly class DriveRecycleBinRepository implements DriveRecycleBinReposit
     }
 
     /** @inheritDoc */
+    public function getAllChildren(int $parentStructId, int $userId): array
+    {
+        $query = "
+            select * from drive_recycle_bin drb where drb.drive_struct_id in (
+                WITH RECURSIVE structs AS (
+                    SELECT *
+                    FROM drive_structs
+                    WHERE id = :parent_struct_id and user_id = :user_id
+
+                    UNION ALL
+
+                    SELECT ds.*
+                    FROM drive_structs ds
+                    INNER JOIN structs s ON ds.parent_id = s.id
+                )
+                SELECT id FROM structs where id != :parent_struct_id
+            )
+        ";
+        $conn = $this->entityManager->getConnection();
+        $stmt = $conn->executeQuery($query, ['parent_struct_id' => $parentStructId, 'user_id' => $userId]);
+        $result = [];
+        foreach ($stmt->fetchAllAssociative() as $row) {
+            $result[] = $this->getEntityByRaw($row);
+        }
+        return $result;
+    }
+
+    /** @inheritDoc */
     public function getAll(int $userId): array
     {
         $query = "
@@ -103,12 +131,7 @@ final readonly class DriveRecycleBinRepository implements DriveRecycleBinReposit
             return null;
         }
 
-        return new DriveRecycleBinEntity(
-            id: $row['id'],
-            driveStructId: $row['drive_struct_id'],
-            createdAt: \App\Layer\Domain\Service\Utils\DateTimeImmutable::createUTCFromString($row['created_at']),
-            originalPath: new PathVO($row['original_path']),
-        );
+        return $this->getEntityByRaw($row);
     }
 
     public function delete(DriveRecycleBinEntity $entity): void
@@ -116,5 +139,16 @@ final readonly class DriveRecycleBinRepository implements DriveRecycleBinReposit
         $query = "DELETE FROM drive_recycle_bin WHERE id = :id";
         $conn = $this->entityManager->getConnection();
         $conn->executeQuery($query, ['id' => $entity->getId()]);
+    }
+
+    /** @param array<string,mixed> $raw */
+    private function getEntityByRaw(array $raw): DriveRecycleBinEntity
+    {
+        return new DriveRecycleBinEntity(
+            id: $raw['id'],
+            driveStructId: $raw['drive_struct_id'],
+            createdAt: \App\Layer\Domain\Service\Utils\DateTimeImmutable::createUTCFromString($raw['created_at']),
+            originalPath: new PathVO($raw['original_path']),
+        );
     }
 }

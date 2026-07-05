@@ -93,6 +93,6 @@ final class DriveStructEntity
 
     public function generateRestoredName(HasherServiceInterface $hasherService): void
     {
-        $this->name .= '_restored_' .$hasherService->generateRandomStringWithoutSymbols(10);
+        $this->name = 'restored_' . $hasherService->generateRandomStringWithoutSymbols(10) . '__' . $this->name;
     }
 }
