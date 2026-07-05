@@ -6,7 +6,7 @@ nelmio_cors:
         allow_methods: [ 'OPTIONS', 'GET', 'POST', 'PUT', 'PATCH', 'DELETE' ]
         #allow_headers: ['Content-Type', 'Authorization', 'Locale']
         allow_headers: [ '*' ]
-        expose_headers: [ 'Link' ]
+        expose_headers: [ 'Link', 'Content-Disposition', 'X-Rate-Limit-Limit', 'X-Rate-Limit-Remaining' ]
         max_age: 3600
     paths:
         '^/': null
