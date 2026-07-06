@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Layer\Application\UseCase\DriveRecycleBin;
 
 use App\Layer\Application\Exception\DriveRecycleBin\DriveRecycleBinNotFoundException;
+use App\Layer\Domain\Dict\Drive\DriveStructTypeEnum;
 use App\Layer\Domain\Entity\DriveStructEntity;
 use App\Layer\Domain\Repository\DriveRecycleBinRepositoryInterface;
 use App\Layer\Domain\Repository\DriveStructRepositoryInterface;
@@ -73,11 +74,27 @@ final readonly class DriveRBRestoreOneUseCase
                     $structEntity->generateRestoredName($this->hasherService);
                 }
             } else {
+                // будем использовать существующую папку, если уже есть
+                $foundStructEntity = $this->driveStructRepository->findRow(
+                    userId: $userId,
+                    name: $structPathMatrixItem['name'],
+                    type: DriveStructTypeEnum::Directory,
+                    includeRecycleBin: false,
+                    parentId: $lastParentId
+                );
+
+                if (!is_null($foundStructEntity)) {
+                    $lastParentId = $foundStructEntity->getId();
+                    continue;
+                }
+
+                // папку не нашли, создадим её
                 $structEntity = $this->driveStructFactory->getNewDriveStructDirectory(
                     userId: $userId,
                     name: $structPathMatrixItem['name'],
                     parentId: $lastParentId
                 );
+
                 if ($this->isExistsStructName(
                     $userId,
                     $structPathMatrixItem['name'],
