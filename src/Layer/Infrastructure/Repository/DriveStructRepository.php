@@ -210,7 +210,7 @@ final readonly class DriveStructRepository implements DriveStructRepositoryInter
 
                     SELECT ds.*
                     FROM drive_structs ds
-                    INNER JOIN structs s ON ds.id = s.parent_id
+                    INNER JOIN structs s ON ds.parent_id = s.id
                 )
                 SELECT id FROM structs
             )
