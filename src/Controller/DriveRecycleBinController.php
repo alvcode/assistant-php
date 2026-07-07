@@ -7,7 +7,10 @@ namespace App\Controller;
 use App\Attribute\NeedAuth;
 use App\Entity\UserEntity;
 use App\Infrastructure\Lang;
+use App\Layer\Application\Exception\Drive\DriveStructNotFoundException;
 use App\Layer\Application\Exception\DriveRecycleBin\DriveRecycleBinNotFoundException;
+use App\Layer\Application\UseCase\DriveRecycleBin\DriveRBForceDeleteAllUseCase;
+use App\Layer\Application\UseCase\DriveRecycleBin\DriveRBForceDeleteOneUseCase;
 use App\Layer\Application\UseCase\DriveRecycleBin\DriveRBGetAllUseCase;
 use App\Layer\Application\UseCase\DriveRecycleBin\DriveRBRestoreAllUseCase;
 use App\Layer\Application\UseCase\DriveRecycleBin\DriveRBRestoreOneUseCase;
@@ -99,13 +102,56 @@ final class DriveRecycleBinController extends AbstractController
         }
     }
 
-    public function forceDeleteOne()
+    /**
+     * @throws Exception
+     */
+    #[Route(path: '/api/drive-recycle-bin/force-delete/{id}', name: 'drive_recycle_bin.force_delete_one', methods: ['POST'])]
+    #[NeedAuth]
+    public function forceDeleteOne(
+        int $id,
+        Request $request,
+        IDRequest $requestModel,
+        DriveRBForceDeleteOneUseCase $useCase,
+    ): Response
     {
+        $requestModel->id = $id;
+        if (!$requestModel->validate()) {
+            $this->blockEventService->setEvent($request, BlockEventTypeEnum::Validation);
+            throw new UnprocessableEntityHttpException($requestModel->getFirstError());
+        }
 
+        /** @var UserEntity $user */
+        $user = $this->getUser();
+
+        try {
+            $useCase->handle($requestModel->id, $user->id);
+            return new Response(null, Response::HTTP_NO_CONTENT);
+        } catch (AbstractLogicException $e) {
+            if ($e instanceof DriveStructNotFoundException || $e instanceof DriveRecycleBinNotFoundException) {
+                $this->blockEventService->setEvent($request, BlockEventTypeEnum::BruteForce);
+            }
+            throw new UnprocessableEntityHttpException(Lang::t($e->getErrorKey()));
+        }
     }
 
-    public function forceDeleteAll()
+    /**
+     * @throws Exception
+     */
+    #[Route(path: '/api/drive-recycle-bin/force-delete-all', name: 'drive_recycle_bin.force_delete_all', methods: ['POST'])]
+    #[NeedAuth]
+    public function forceDeleteAll(Request $request, DriveRBForceDeleteAllUseCase $useCase): Response
     {
+        /** @var UserEntity $user */
+        $user = $this->getUser();
 
+        try {
+            $useCase->handle($user->id);
+            return new Response(null, Response::HTTP_NO_CONTENT);
+        } catch (AbstractLogicException $e) {
+            if ($e instanceof DriveStructNotFoundException || $e instanceof DriveRecycleBinNotFoundException) {
+                $this->blockEventService->setEvent($request, BlockEventTypeEnum::BruteForce);
+            }
+            throw new UnprocessableEntityHttpException(Lang::t($e->getErrorKey()));
+        }
     }
 }

@@ -27,6 +27,8 @@ interface DriveStructRepositoryInterface
 
     public function deleteRecursiveWithoutRecycleBin(int $structId, int $userId): void;
 
+    public function deleteRecursiveWithRecycleBin(int $structId, int $userId): void;
+
     /** @param int[] $structIds */
     public function structCountByUserAndIds(int $userId, array $structIds, bool $includeRecycleBin): int;
 
