@@ -238,7 +238,7 @@ final readonly class DriveStructRepository implements DriveStructRepositoryInter
                         coalesce(count(ds.id), 0) as count
                     from drive_structs ds
                     left join drive_recycle_bin drb on drb.drive_struct_id = ds.id
-                    where drb.id is null and user_id = :user_id and id in (:struct_ids)
+                    where drb.id is null and ds.user_id = :user_id and ds.id in (:struct_ids)
                 ";
             }
 
