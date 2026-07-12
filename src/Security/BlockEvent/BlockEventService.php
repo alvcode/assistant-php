@@ -40,8 +40,6 @@ final readonly class BlockEventService
             throw new Exception(Lang::t('error_unable_to_determine_ip_address'));
         }
 
-
-
         $this->saveEvent($ip, $type->value, new DateTimeImmutable('now', new DateTimeZone('UTC')));
 
         $stats = $this->getStats(

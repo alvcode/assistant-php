@@ -71,7 +71,7 @@ services:
 
     App\EventListener\BlockIPListener:
         tags:
-            - { name: kernel.event_listener, event: kernel.request, priority: 17 }
+            - { name: kernel.event_listener, event: kernel.request, priority: 256 }
 
     App\EventListener\RateLimiterListener:
         tags:

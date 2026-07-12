@@ -26,11 +26,11 @@ final readonly class BlockIPListener
     {
         $ip = $event->getRequest()->getClientIp();
         if (!$ip) {
-            throw new Exception(Lang::t('error_unable_to_determine_ip_address'));
+            throw new Exception('Unable to determine IP address');
         }
 
         if ($this->findBlocking($ip, new DateTimeImmutable('now', new DateTimeZone('UTC')))) {
-            throw new AccessDeniedHttpException(Lang::t('error_access_denied'));
+            throw new AccessDeniedHttpException('Access denied');
         }
     }
 
