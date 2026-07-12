@@ -5,15 +5,21 @@ declare(strict_types=1);
 namespace App\Layer\Infrastructure\Repository;
 
 use App\Layer\Domain\Dict\Drive\DriveStructTypeEnum;
+use App\Layer\Domain\Entity\Aggregate\DriveRBOutdatedDeleteAggregate;
 use App\Layer\Domain\Entity\Aggregate\DriveRecycleBinAggregate;
 use App\Layer\Domain\Entity\DriveRecycleBinEntity;
 use App\Layer\Domain\Repository\DriveRecycleBinRepositoryInterface;
 use App\Layer\Domain\ValueObject\PathVO;
+use App\Layer\Infrastructure\Repository\Helper\EachLowCostTrait;
 use DateTimeImmutable;
+use Doctrine\DBAL\Exception;
 use Doctrine\ORM\EntityManagerInterface;
+use Generator;
 
 final readonly class DriveRecycleBinRepository implements DriveRecycleBinRepositoryInterface
 {
+    use EachLowCostTrait;
+
     public function __construct(
         private EntityManagerInterface $entityManager
     ) {}
@@ -139,6 +145,26 @@ final readonly class DriveRecycleBinRepository implements DriveRecycleBinReposit
         $query = "DELETE FROM drive_recycle_bin WHERE id = :id";
         $conn = $this->entityManager->getConnection();
         $conn->executeQuery($query, ['id' => $entity->getId()]);
+    }
+
+    /**
+     * @inheritDoc
+     * @throws Exception
+     */
+    public function getAllOutdatedIterator(DateTimeImmutable $olderThen): Generator
+    {
+        foreach ($this->eachLowCost(
+            entityManager: $this->entityManager,
+            query: "
+                select drb.id, ds.user_id from drive_recycle_bin drb
+                left join drive_structs ds on drb.drive_struct_id = ds.id
+            ",
+            where: "drb.created_at < :older_then",
+            params: ['older_then' => $olderThen->format('Y-m-d H:i:s')],
+            iterationField: 'drb.id'
+        ) as $row) {
+            yield new DriveRBOutdatedDeleteAggregate(id: $row['id'], userId: $row['user_id']);
+        }
     }
 
     /** @param array<string,mixed> $raw */

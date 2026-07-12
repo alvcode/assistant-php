@@ -44,7 +44,12 @@ final readonly class DriveRBForceDeleteOneUseCase
             throw new DriveStructNotFoundException('Удаляемая структура не найдена');
         }
 
-        $deletePaths = $this->driveDeletedStructPathsService->getPathsForDelete($driveStructEntity->getId(), $userId);
+        $deletePaths = $this->driveDeletedStructPathsService->getPathsForDelete(
+            $driveStructEntity->getId(),
+            $userId,
+            true
+        );
+
         if (!empty($deletePaths)) {
             $this->storageRepositoryFactory->getRepository()->deleteAll($deletePaths);
         }

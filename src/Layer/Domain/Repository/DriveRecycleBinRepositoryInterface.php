@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace App\Layer\Domain\Repository;
 
+use App\Layer\Domain\Entity\Aggregate\DriveRBOutdatedDeleteAggregate;
 use App\Layer\Domain\Entity\Aggregate\DriveRecycleBinAggregate;
 use App\Layer\Domain\Entity\DriveRecycleBinEntity;
+use DateTimeImmutable;
+use Generator;
 
 interface DriveRecycleBinRepositoryInterface
 {
@@ -22,4 +25,7 @@ interface DriveRecycleBinRepositoryInterface
     public function getById(int $id): ?DriveRecycleBinEntity;
 
     public function delete(DriveRecycleBinEntity $entity): void;
+
+    /** @return Generator<DriveRBOutdatedDeleteAggregate> */
+    public function getAllOutdatedIterator(DateTimeImmutable $olderThen): Generator;
 }

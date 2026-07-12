@@ -18,7 +18,7 @@ trait EachLowCostTrait
      * @param array<string,mixed> $types прим. ['file_ids' => ArrayParameterType::INTEGER]
      * @param int $batchSize
      * @param string $iterationField
-     * @return Generator
+     * @return Generator<array<string,mixed>>
      * @throws Exception
      */
     public function eachLowCost(
@@ -67,6 +67,10 @@ trait EachLowCostTrait
         string $iterationField = 'id',
     ): Generator
     {
+        $iterationFieldForArr = $iterationField;
+        if (str_contains($iterationField, '.')) {
+            $iterationFieldForArr = explode('.', $iterationField, 2)[1];
+        }
         $lastId = 0;
 
         $conn = $entityManager->getConnection();
@@ -82,7 +86,7 @@ trait EachLowCostTrait
                 break;
             }
 
-            $lastId = $rows[count($rows) - 1][$iterationField];
+            $lastId = $rows[count($rows) - 1][$iterationFieldForArr];
             yield $rows;
         }
     }

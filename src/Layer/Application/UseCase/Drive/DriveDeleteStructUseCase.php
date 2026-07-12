@@ -36,7 +36,7 @@ final readonly class DriveDeleteStructUseCase
         }
 
         if ($force) {
-            $deletePaths = $this->driveDeletedStructPathsService->getPathsForDelete($structId, $userId);
+            $deletePaths = $this->driveDeletedStructPathsService->getPathsForDelete($structId, $userId, false);
             if (!empty($deletePaths)) {
                 $this->storageRepositoryFactory->getRepository()->deleteAll($deletePaths);
             }

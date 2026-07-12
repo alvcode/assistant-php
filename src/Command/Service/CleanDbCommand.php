@@ -3,8 +3,10 @@
 namespace App\Command\Service;
 
 use App\Infrastructure\FormatDict;
+use App\Layer\Application\UseCase\DriveRecycleBin\DriveRBForceDeleteOldUseCase;
 use App\Layer\Application\UseCase\NoteFile\DeleteNoteFileByIdUseCase;
 use App\Layer\Domain\Service\Utils\DateTime;
+use App\Layer\Domain\Service\Utils\DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -21,6 +23,7 @@ class CleanDbCommand extends Command
     public function __construct(
         private EntityManagerInterface $entityManager,
         private DeleteNoteFileByIdUseCase $deleteNoteFileUseCase,
+        private DriveRBForceDeleteOldUseCase $driveRBForceDeleteOldUseCase,
     )
     {
         parent::__construct();
@@ -40,6 +43,7 @@ class CleanDbCommand extends Command
             $this->cleanBlockEvents();
             $this->cleanNoteFiles();
             $this->cleanRateLimiter();
+            $this->cleanRecycleBin();
         } catch (\Exception $e) {
             $io->error($e->getMessage());
             return Command::FAILURE;
@@ -97,5 +101,12 @@ class CleanDbCommand extends Command
         $query = "TRUNCATE TABLE rate_limiter";
         $conn = $this->entityManager->getConnection();
         $conn->executeQuery($query);
+    }
+
+    private function cleanRecycleBin(): void
+    {
+        $this->driveRBForceDeleteOldUseCase->handle(
+            DateTimeImmutable::createNowUtc()->modify('-30 days')
+        );
     }
 }

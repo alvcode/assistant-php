@@ -19,14 +19,14 @@ final readonly class DriveDeletedStructPathsService
     ) {}
 
     /** @return string[] */
-    public function getPathsForDelete(int $structId, int $userId): array
+    public function getPathsForDelete(int $structId, int $userId, bool $forRecycleBin): array
     {
         $deletePaths = [];
         $baseSavePath = $this->configRepository->getDriveFileSavePath();
         $deleteChunkEntityList = $this->driveFileChunkRepository->getAllRecursive(
             $structId,
             $userId,
-            false
+            $forRecycleBin,
         );
 
         foreach ($deleteChunkEntityList as $driveFileChunkEntity) {
@@ -37,7 +37,7 @@ final readonly class DriveDeletedStructPathsService
         $deleteFileEntityList = $this->driveFileRepository->getAllRecursive(
             $structId,
             $userId,
-            false
+            $forRecycleBin
         );
         foreach ($deleteFileEntityList as $driveFileEntity) {
             if (!$driveFileEntity->isChunk()) {
