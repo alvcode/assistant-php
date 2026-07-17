@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\EventListener;
 
 use App\Infrastructure\FormatDict;
-use App\Infrastructure\Lang;
 use DateTimeImmutable;
 use DateTimeZone;
 use Doctrine\ORM\EntityManagerInterface;
