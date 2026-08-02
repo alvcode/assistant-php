@@ -67,7 +67,12 @@ final readonly class BlockEventService
      */
     private function blockIP(string $ip, DateTimeImmutable $unblockedAt): void
     {
-        $query = "insert into block_ip (ip, blocked_until) values (:ip, :unblockedAt)";
+        $query = "
+            insert into block_ip (ip, blocked_until) values (:ip, :unblockedAt)
+            ON CONFLICT (ip)
+            DO UPDATE
+            SET blocked_until = GREATEST(block_ip.blocked_until, EXCLUDED.blocked_until);
+        ";
         $conn = $this->entityManager->getConnection();
         $conn->executeQuery(
             $query,
