@@ -3,7 +3,6 @@
 namespace App\Command;
 
 use App\Layer\Domain\Service\Utils\FileUtilsInterface;
-use App\Layer\Infrastructure\Repository\Helper\ArrayHelperTrait;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -25,7 +24,7 @@ class TestCommand extends Command
 
     protected function configure(): void
     {
-        
+
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int

@@ -25,7 +25,7 @@ final class Version20260720211956 extends AbstractMigration
                 id SERIAL PRIMARY KEY,
                 user_id INT NOT NULL,
                 struct_ids JSONB NOT NULL,
-                status INT NOT NULL,
+                status SMALLINT NOT NULL,
                 error_description TEXT,
                 created_at TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL,
                 finished_at TIMESTAMP(0) WITHOUT TIME ZONE

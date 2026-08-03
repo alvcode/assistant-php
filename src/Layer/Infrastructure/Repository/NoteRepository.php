@@ -50,7 +50,7 @@ final readonly class NoteRepository implements NoteRepositoryInterface
     {
         $params = [
             'category_id' => $entity->getCategoryId(),
-            'note_blocks' => json_encode($entity->getNoteBlocks()),
+            'note_blocks' => json_encode($entity->getNoteBlocks(), JSON_THROW_ON_ERROR),
             'created_at' => $entity->getCreatedAt()->format('Y-m-d H:i:s'),
             'updated_at' => $entity->getUpdatedAt()->format('Y-m-d H:i:s'),
             'title' => $entity->getTitle(),

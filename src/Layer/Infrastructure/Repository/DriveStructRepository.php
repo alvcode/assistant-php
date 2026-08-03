@@ -10,15 +10,15 @@ use App\Layer\Domain\Repository\DriveStructRepositoryInterface;
 use App\Layer\Domain\Repository\DTO\Drive\DriveTreeDTO;
 use App\Layer\Domain\Service\Utils\DateTime;
 use App\Layer\Domain\Service\Utils\DateTimeImmutable;
-use App\Layer\Infrastructure\Repository\Helper\ArrayHelperTrait;
+use App\Layer\Infrastructure\Service\Utils\ArrayUtils;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\ORM\EntityManagerInterface;
 
 final readonly class DriveStructRepository implements DriveStructRepositoryInterface
 {
-    use ArrayHelperTrait;
     public function __construct(
-        private EntityManagerInterface $entityManager
+        private EntityManagerInterface $entityManager,
+        private ArrayUtils $arrayUtils,
     ) {}
 
     /** @inheritDoc */
@@ -224,7 +224,7 @@ final readonly class DriveStructRepository implements DriveStructRepositoryInter
     {
         $conn = $this->entityManager->getConnection();
         $result = 0;
-        foreach ($this->arrayChunk($structIds, 200) as $batch) {
+        foreach ($this->arrayUtils->arrayChunk($structIds, 200) as $batch) {
             if ($includeRecycleBin) {
                 $query = "
                     select
@@ -259,7 +259,7 @@ final readonly class DriveStructRepository implements DriveStructRepositoryInter
     {
         $conn = $this->entityManager->getConnection();
 
-        foreach ($this->arrayChunk($structIds, 200) as $batch) {
+        foreach ($this->arrayUtils->arrayChunk($structIds, 200) as $batch) {
             $query = "UPDATE drive_structs SET parent_id = :parent_id WHERE id in (:struct_ids)";
             $conn->executeQuery(
                 $query,
