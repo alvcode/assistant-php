@@ -12,6 +12,7 @@ create-required:
 	sudo mkdir uploads
 	sudo chown -R www-data:www-data uploads
 	sudo chmod -R 755 uploads
+	docker exec -it ast-app php bin/console messenger:setup-transports
 
 # ========================================================= PROD ==========================================
 build-prod:
@@ -34,6 +35,9 @@ deploy:
 # ========================================================= CLI ==========================================
 cli-clean-db:
 	docker exec -it ast-app bin/console service:clean-db;
+
+restart-messenger:
+	docker compose restart ast-messenger;
 
 # ========================================================= migrations / entity ==========================================
 mc:
