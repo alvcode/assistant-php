@@ -38,4 +38,5 @@ return [
     'error_file_too_large' => 'File too large',
     'error_struct_is_not_chunk' => 'The structure was not loaded in chunks',
     'error_drive_recycle_bin_not_found' => 'Recycle Bin item not found',
+    'error_drive_archive_exists_active_jobs' => 'There is already an incomplete archiving task',
 ];

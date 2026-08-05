@@ -38,4 +38,5 @@ return [
     'error_file_too_large' => 'Файл слишком большой',
     'error_struct_is_not_chunk' => 'Структура не была загружена чанками',
     'error_drive_recycle_bin_not_found' => 'Запись корзины не найдена',
+    'error_drive_archive_exists_active_jobs' => 'Уже есть незавершенное задание на архивацию',
 ];

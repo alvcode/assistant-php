@@ -6,7 +6,6 @@ namespace App\Layer\Infrastructure\Repository;
 
 use App\Layer\Domain\Entity\NoteShareEntity;
 use App\Layer\Domain\Repository\NoteShareHashesRepositoryInterface;
-use Doctrine\DBAL\ParameterType;
 use Doctrine\ORM\EntityManagerInterface;
 
 final readonly class NoteShareHashesRepository implements NoteShareHashesRepositoryInterface

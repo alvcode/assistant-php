@@ -31,13 +31,13 @@ deploy:
 	make start-prod;
 	make clear-cache-prod;
 	make m;
+# ========================================================= Messenger ==========================================
+messenger-restart:
+	docker compose restart ast-messenger;
 
 # ========================================================= CLI ==========================================
 cli-clean-db:
 	docker exec -it ast-app bin/console service:clean-db;
-
-restart-messenger:
-	docker compose restart ast-messenger;
 
 # ========================================================= migrations / entity ==========================================
 mc:

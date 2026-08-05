@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Layer\Infrastructure\Repository;
 
+use App\Layer\Domain\Dict\Drive\DriveArchiveJobStatusEnum;
 use App\Layer\Domain\Entity\DriveArchiveJobEntity;
 use App\Layer\Domain\Repository\DriveArchiveRepositoryInterface;
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\ORM\EntityManagerInterface;
 
 final readonly class DriveArchiveRepository implements DriveArchiveRepositoryInterface
@@ -48,5 +50,32 @@ final readonly class DriveArchiveRepository implements DriveArchiveRepositoryInt
             $entity->setId($stmt->fetchOne());
         }
         return $entity;
+    }
+
+    public function getById(int $id): ?DriveArchiveJobEntity
+    {
+
+    }
+
+    /** @inheritDoc */
+    public function existsJobsByUserAndStatuses(int $userId, array $statuses): bool
+    {
+        $query = "
+            select EXISTS(
+                select 1 from drive_archive_jobs daj
+                where
+                daj.user_id = :user_id and daj.status in (:statuses)
+            )
+        ";
+
+        $conn = $this->entityManager->getConnection();
+        return (bool)$conn->executeQuery(
+            $query,
+            [
+                'user_id' => $userId,
+                'statuses' => array_map(static fn(DriveArchiveJobStatusEnum $status) => $status->value, $statuses)
+            ],
+            ['statuses' => ArrayParameterType::INTEGER]
+        )->fetchOne();
     }
 }
