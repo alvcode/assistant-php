@@ -53,7 +53,7 @@ final readonly class DriveStructRepository implements DriveStructRepositoryInter
                 id: $raw['id'],
                 userId: $raw['user_id'],
                 name: $raw['name'],
-                type: $raw['type'],
+                type: DriveStructTypeEnum::tryFrom($raw['type']),
                 size: $raw['size'],
                 createdAt: DateTimeImmutable::createUTCFromString($raw['created_at']),
                 updatedAt: DateTimeImmutable::createUTCFromString($raw['updated_at']),

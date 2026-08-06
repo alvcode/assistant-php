@@ -27,7 +27,7 @@ final class DriveTreeResponse
             id: $driveTreeDTO->id,
             user_id: $driveTreeDTO->userId,
             name: $driveTreeDTO->name,
-            type: $driveTreeDTO->type,
+            type: $driveTreeDTO->type->value,
             size: $driveTreeDTO->size,
             created_at: $driveTreeDTO->createdAt->format(FormatDict::DATETIME_ISO_8601_UTC),
             updated_at: $driveTreeDTO->updatedAt->format(FormatDict::DATETIME_ISO_8601_UTC),

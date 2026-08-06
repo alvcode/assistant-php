@@ -39,4 +39,6 @@ return [
     'error_struct_is_not_chunk' => 'Структура не была загружена чанками',
     'error_drive_recycle_bin_not_found' => 'Запись корзины не найдена',
     'error_drive_archive_exists_active_jobs' => 'Уже есть незавершенное задание на архивацию',
+    'error_drive_archive_job_not_found' => 'Задание на архивацию не найдено',
+    'error_drive_archive_job_not_found_files' => 'Для создания архива нужен по крайней мере один файл',
 ];

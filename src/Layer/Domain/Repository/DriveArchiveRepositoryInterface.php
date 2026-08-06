@@ -11,6 +11,8 @@ interface DriveArchiveRepositoryInterface
 {
     public function save(DriveArchiveJobEntity $entity): DriveArchiveJobEntity;
 
+    public function getJobById(int $id): ?DriveArchiveJobEntity;
+
     /**
      * @param DriveArchiveJobStatusEnum[] $statuses
      */

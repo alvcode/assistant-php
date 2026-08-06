@@ -26,6 +26,8 @@ interface ConfigRepositoryInterface
 
     public function getDriveFileSavePath(): string;
 
+    public function getTempSavePath(): string;
+
     /** @return int in bytes */
     public function getDriveUploadMaxSize(): int;
 }

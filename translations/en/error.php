@@ -39,4 +39,6 @@ return [
     'error_struct_is_not_chunk' => 'The structure was not loaded in chunks',
     'error_drive_recycle_bin_not_found' => 'Recycle Bin item not found',
     'error_drive_archive_exists_active_jobs' => 'There is already an incomplete archiving task',
+    'error_drive_archive_job_not_found' => 'Archiving task not found',
+    'error_drive_archive_job_not_found_files' => 'At least one file is required to create an archive',
 ];
