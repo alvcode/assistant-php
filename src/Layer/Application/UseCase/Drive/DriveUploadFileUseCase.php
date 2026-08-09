@@ -11,7 +11,7 @@ use App\Layer\Application\Exception\Drive\DriveFilesystemIsFullException;
 use App\Layer\Application\Service\TransactionManagerInterface;
 use App\Layer\Domain\Dict\Common\FileSizeTypeEnum;
 use App\Layer\Domain\Dict\Drive\DriveStructTypeEnum;
-use App\Layer\Domain\Entity\Aggregate\DriveFileSaveAggregate;
+use App\Layer\Domain\Entity\Aggregate\Drive\DriveFileSaveAggregate;
 use App\Layer\Domain\Exception\Storage\FailedStorageConfigurationException;
 use App\Layer\Domain\Exception\Utils\FailedEncryptionFileException;
 use App\Layer\Domain\Repository\ConfigRepositoryInterface;
@@ -104,7 +104,7 @@ final readonly class DriveUploadFileUseCase
                         driveStructId: $driveStructEntity->getId(),
                         path: $middleFilePath,
                         ext: $file->getOriginalExtension(),
-                        size: new FileSizeVO($file->getFile()->getSize(), FileSizeTypeEnum::Bytes),
+                        size: new FileSizeVO((float)$file->getFile()->getSize(), FileSizeTypeEnum::Bytes),
                         isChunk: false,
                         sha256: $in->sha256
                     )

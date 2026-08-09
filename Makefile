@@ -39,6 +39,9 @@ messenger-restart:
 cli-clean-db:
 	docker exec -it ast-app bin/console service:clean-db;
 
+cli-test:
+	docker exec -it ast-app bin/console test;
+
 # ========================================================= migrations / entity ==========================================
 mc:
 	docker exec -it ast-app bin/console doctrine:migrations:generate

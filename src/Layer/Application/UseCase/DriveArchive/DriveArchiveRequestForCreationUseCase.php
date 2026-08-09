@@ -8,13 +8,12 @@ use App\Layer\Application\Exception\Drive\DriveStructNotFoundException;
 use App\Layer\Application\Exception\DriveArchive\DriveArchiveExistsActiveJobsException;
 use App\Layer\Application\Exception\DriveArchive\DriveArchiveJobNotFoundFilesException;
 use App\Layer\Domain\Dict\Drive\DriveArchiveJobStatusEnum;
-use App\Layer\Domain\Dict\Drive\DriveStructTypeEnum;
 use App\Layer\Domain\Entity\DriveArchiveJobEntity;
 use App\Layer\Domain\Repository\DriveArchiveRepositoryInterface;
 use App\Layer\Domain\Repository\DriveStructRepositoryInterface;
 use App\Layer\Domain\Repository\QueueRepositoryInterface;
+use App\Layer\Domain\Service\Drive\GetRecursiveFileStructsWithRealPath;
 use App\Layer\Domain\Service\Factory\Drive\DriveArchiveFactory;
-use Generator;
 
 final readonly class DriveArchiveRequestForCreationUseCase
 {
@@ -23,6 +22,7 @@ final readonly class DriveArchiveRequestForCreationUseCase
         private DriveArchiveRepositoryInterface $driveArchiveRepository,
         private DriveArchiveFactory $driveArchiveFactory,
         private QueueRepositoryInterface $queueRepository,
+        private GetRecursiveFileStructsWithRealPath $getRecursiveFileStructsWithRealPath,
     ) {}
 
     /**
@@ -68,31 +68,24 @@ final readonly class DriveArchiveRequestForCreationUseCase
     /** @param int[] $structIds */
     private function existsFiles(int $userId, array $structIds): bool
     {
+        $existsFile = false;
         foreach ($structIds as $structId) {
-            foreach ($this->getRecursiveTree($userId, $structId) as $driveTreeDto) {
-                if ($driveTreeDto->type === DriveStructTypeEnum::File) {
-                    return true;
-                }
+            foreach (
+                $this->getRecursiveFileStructsWithRealPath->service(
+                    $userId,
+                    $structId,
+                    ''
+                ) as $driveStructWithRealPath
+            ) {
+                $existsFile = true;
+                break;
+            }
+
+            if ($existsFile) {
+                break;
             }
         }
 
-        return false;
-    }
-
-    private function getRecursiveTree(int $userId, int $structId): Generator
-    {
-        $structEntity = $this->driveStructRepository->getById($structId, false);
-        if ($structEntity->getType() === DriveStructTypeEnum::File) {
-            yield $structEntity;
-        } else {
-            $tree = $this->driveStructRepository->getTreeByUserID($userId, $structEntity->getId());
-            foreach ($tree as $driveTreeDto) {
-                if ($driveTreeDto->type === DriveStructTypeEnum::File) {
-                    yield $driveTreeDto;
-                } else {
-                    yield from $this->getRecursiveTree($userId, $driveTreeDto->id);
-                }
-            }
-        }
+        return $existsFile;
     }
 }

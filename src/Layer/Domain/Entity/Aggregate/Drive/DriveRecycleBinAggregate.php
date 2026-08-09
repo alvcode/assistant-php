@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Layer\Domain\Entity\Aggregate;
+namespace App\Layer\Domain\Entity\Aggregate\Drive;
 
 use App\Layer\Domain\Dict\Drive\DriveStructTypeEnum;
 use DateTimeImmutable;

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Layer\Infrastructure\Repository;
 
-use App\Layer\Domain\Entity\Aggregate\NoteListAggregate;
+use App\Layer\Domain\Entity\Aggregate\Note\NoteListAggregate;
 use App\Layer\Domain\Entity\NoteEntity;
 use App\Layer\Domain\Repository\NoteRepositoryInterface;
 use DateTime;

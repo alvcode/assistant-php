@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Response\Note;
 
 use App\Infrastructure\FormatDict;
-use App\Layer\Domain\Entity\Aggregate\NoteListAggregate;
+use App\Layer\Domain\Entity\Aggregate\Note\NoteListAggregate;
 
 final class NoteListResponse
 {

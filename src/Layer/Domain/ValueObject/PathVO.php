@@ -10,6 +10,11 @@ final readonly class PathVO
         private string $path,
     ) {}
 
+    public function getPath(): string
+    {
+        return $this->path;
+    }
+
     /** @return string[] */
     public function getAsArray(): array
     {

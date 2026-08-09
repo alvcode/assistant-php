@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Layer\Domain\Entity;
 
 use App\Layer\Domain\Dict\Drive\DriveArchiveJobStatusEnum;
+use App\Layer\Domain\Repository\ConfigRepositoryInterface;
+use App\Layer\Domain\Service\Utils\FileUtilsInterface;
 use DateTimeImmutable;
 
 final class DriveArchiveJobEntity
@@ -94,5 +96,14 @@ final class DriveArchiveJobEntity
     public function setFinishedAt(?DateTimeImmutable $finishedAt): void
     {
         $this->finishedAt = $finishedAt;
+    }
+
+    public function getBaseSavePath(FileUtilsInterface $fileUtils, ConfigRepositoryInterface $configRepository): string
+    {
+        return $fileUtils->pathJoin([
+            $configRepository->getTempSavePath(),
+            'archives',
+            $this->getId(),
+        ]);
     }
 }
