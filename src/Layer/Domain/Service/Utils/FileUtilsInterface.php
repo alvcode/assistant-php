@@ -28,4 +28,6 @@ interface FileUtilsInterface
 
     /** @throws FailedCreateTempFileException */
     public function createTempFile(): string;
+
+    public function createArchive(string $sourcePath, string $destinationPath): void;
 }

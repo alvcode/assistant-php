@@ -10,8 +10,12 @@ use App\Layer\Domain\Exception\Utils\FailedEncryptionFileException;
 use App\Layer\Domain\Service\Utils\FileUtilsInterface;
 use App\Layer\Domain\Service\Utils\HasherServiceInterface;
 use Exception;
+use FilesystemIterator;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
 use SodiumException;
 use SplFileInfo;
+use ZipArchive;
 
 final readonly class FileUtils implements FileUtilsInterface
 {
@@ -227,5 +231,28 @@ final readonly class FileUtils implements FileUtilsInterface
             throw new FailedCreateTempFileException('Не удалось создать временный файл');
         }
         return $path;
+    }
+
+    public function createArchive(string $sourcePath, string $destinationPath): void
+    {
+        $zip = new ZipArchive();
+        $zip->open($destinationPath, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+
+        $files = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($sourcePath, FilesystemIterator::SKIP_DOTS)
+        );
+
+        foreach ($files as $file) {
+            if ($file->isFile()) {
+                $localPath = substr(
+                    $file->getPathname(),
+                    strlen($sourcePath) + 1
+                );
+
+                $zip->addFile($file->getPathname(), $localPath);
+            }
+        }
+
+        $zip->close();
     }
 }
