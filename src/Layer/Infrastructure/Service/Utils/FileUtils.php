@@ -9,6 +9,7 @@ use App\Layer\Domain\Exception\Utils\FailedDecryptionFileException;
 use App\Layer\Domain\Exception\Utils\FailedEncryptionFileException;
 use App\Layer\Domain\Service\Utils\FileUtilsInterface;
 use App\Layer\Domain\Service\Utils\HasherServiceInterface;
+use App\Layer\Domain\ValueObject\SplFileInfoVO;
 use Exception;
 use FilesystemIterator;
 use RecursiveDirectoryIterator;
@@ -40,7 +41,7 @@ final readonly class FileUtils implements FileUtilsInterface
         return sprintf("%d/%d/", $dirLevel1+1, $dirLevel2+1);
     }
 
-    /** @param string[] $parts */
+    /** @inheritDoc */
     public function pathJoin(array $parts, bool $isAbsolute = false): string
     {
         $parts = array_map(
@@ -129,7 +130,7 @@ final readonly class FileUtils implements FileUtilsInterface
     public function decryptFile(
         SplFileInfo $source,
         string $key
-    ): SplFileInfo {
+    ): SplFileInfoVO {
         $key = sodium_crypto_generichash(
             $key,
             '',
@@ -213,7 +214,7 @@ final readonly class FileUtils implements FileUtilsInterface
             fclose($input);
             fclose($output);
         }
-        return new SplFileInfo($destinationPath);
+        return new SplFileInfoVO(file: new SplFileInfo($destinationPath), isTemporary: true);
     }
 
     /**

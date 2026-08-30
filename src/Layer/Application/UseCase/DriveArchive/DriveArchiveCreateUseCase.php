@@ -81,19 +81,22 @@ final readonly class DriveArchiveCreateUseCase
                         ]);
                         $file = $this->storageRepositoryFactory->getRepository()->getFile($fullFilePath);
                         if ($this->configRepository->useFileEncryption()) {
-                            $file = $this->fileUtils->decryptFile(
-                                source: $file,
+                            $fileDecrypted = $this->fileUtils->decryptFile(
+                                source: $file->getFile(),
                                 key: $this->configRepository->getFileEncryptionKey()
                             );
+                            $file->unlinkIfTemporary();
+                            $file = $fileDecrypted;
                         }
                     }
 
                     $this->storageRepositoryFactory->getLocalStorage()->save(
                         new SaveFileDTO(
-                            file: $file,
+                            file: $file->getFile(),
                             savePath: $driveStructWithRealPath->realPath->getPath()
                         )
                     );
+                    $file->unlinkIfTemporary();
 
                     $processedStructIds[] = $driveStructWithRealPath->driveStructEntity->getId();
                 }
@@ -102,8 +105,7 @@ final readonly class DriveArchiveCreateUseCase
             $this->storageRepositoryFactory->getLocalStorage()->delete(
                 $driveArchiveJobEntity->getBaseSavePath($this->fileUtils, $this->configRepository)
             );
-            $driveArchiveJobEntity->setErrorDescription($e->getMessage());
-            $driveArchiveJobEntity->setStatus(DriveArchiveJobStatusEnum::Failed);
+            $driveArchiveJobEntity->setFailed($e->getMessage());
             $this->driveArchiveRepository->save($driveArchiveJobEntity);
         }
 

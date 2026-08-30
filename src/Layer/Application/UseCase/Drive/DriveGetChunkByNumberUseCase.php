@@ -61,7 +61,7 @@ final readonly class DriveGetChunkByNumberUseCase
 
         if ($this->configRepository->useFileEncryption()) {
             $file = $this->fileUtils->decryptFile(
-                source: $this->storageRepositoryFactory->getRepository()->getFile($fullFilePath),
+                source: $this->storageRepositoryFactory->getRepository()->getFile($fullFilePath)->getFile(),
                 key: $this->configRepository->getFileEncryptionKey()
             );
         } else {
@@ -69,7 +69,7 @@ final readonly class DriveGetChunkByNumberUseCase
         }
 
         return new FileDTO(
-            file: $file,
+            file: $file->getFile(),
             originalExtension: $driveFileEntity->getExt(),
             originalName: $driveStructEntity->getName()
         );

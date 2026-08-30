@@ -51,7 +51,7 @@ final readonly class DriveRelocationStorageUseCase
             return;
         }
         $oldFile = $s3StorageRepository->getFile($fullPath);
-        $localStorageRepository->save(new SaveFileDTO(file: $oldFile, savePath: $fullPath));
+        $localStorageRepository->save(new SaveFileDTO(file: $oldFile->getFile(), savePath: $fullPath));
         $s3StorageRepository->delete($fullPath);
     }
 
@@ -63,7 +63,7 @@ final readonly class DriveRelocationStorageUseCase
             return;
         }
         $oldFile = $localStorageRepository->getFile($fullPath);
-        $s3StorageRepository->save(new SaveFileDTO(file: $oldFile, savePath: $fullPath));
+        $s3StorageRepository->save(new SaveFileDTO(file: $oldFile->getFile(), savePath: $fullPath));
         $localStorageRepository->delete($fullPath);
     }
 }

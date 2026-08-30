@@ -41,7 +41,7 @@ final readonly class GetNoteFileByHashUseCase
 
         if ($this->configRepository->useFileEncryption()) {
             $file = $this->fileUtils->decryptFile(
-                source: $this->storageRepositoryFactory->getRepository()->getFile($fullFilePath),
+                source: $this->storageRepositoryFactory->getRepository()->getFile($fullFilePath)->getFile(),
                 key: $this->configRepository->getFileEncryptionKey()
             );
         } else {
@@ -49,7 +49,7 @@ final readonly class GetNoteFileByHashUseCase
         }
 
         return new FileDTO(
-            file: $file,
+            file: $file->getFile(),
             originalExtension: $noteFileEntity->getExt(),
             originalName: $noteFileEntity->getOriginalFilename()
         );

@@ -35,14 +35,14 @@ final readonly class NoteFileRelocationStorageUseCase
                     continue;
                 }
                 $oldFile = $s3StorageRepository->getFile($fullFilePath);
-                $localStorageRepository->save(new SaveFileDTO(file: $oldFile, savePath: $fullFilePath));
+                $localStorageRepository->save(new SaveFileDTO(file: $oldFile->getFile(), savePath: $fullFilePath));
                 $s3StorageRepository->delete($fullFilePath);
             } else {
                 if ($s3StorageRepository->isExists($fullFilePath)) {
                     continue;
                 }
                 $oldFile = $localStorageRepository->getFile($fullFilePath);
-                $s3StorageRepository->save(new SaveFileDTO(file: $oldFile, savePath: $fullFilePath));
+                $s3StorageRepository->save(new SaveFileDTO(file: $oldFile->getFile(), savePath: $fullFilePath));
                 $localStorageRepository->delete($fullFilePath);
             }
         }

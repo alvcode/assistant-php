@@ -89,7 +89,7 @@ final readonly class DriveArchiveRepository implements DriveArchiveRepositoryInt
         )->fetchOne();
     }
 
-    /** @paaram array<string,mixed> $ */
+    /** @param array<string,mixed> $raw */
     private function getJobEntityFromRaw(array $raw): DriveArchiveJobEntity
     {
         return new DriveArchiveJobEntity(

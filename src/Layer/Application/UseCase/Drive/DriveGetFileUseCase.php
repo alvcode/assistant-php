@@ -55,7 +55,7 @@ final readonly class DriveGetFileUseCase
 
         if ($this->configRepository->useFileEncryption()) {
             $file = $this->fileUtils->decryptFile(
-                source: $this->storageRepositoryFactory->getRepository()->getFile($fullFilePath),
+                source: $this->storageRepositoryFactory->getRepository()->getFile($fullFilePath)->getFile(),
                 key: $this->configRepository->getFileEncryptionKey()
             );
         } else {
@@ -63,7 +63,7 @@ final readonly class DriveGetFileUseCase
         }
 
         return new FileDTO(
-            file: $file,
+            file: $file->getFile(),
             originalExtension: $driveFileEntity->getExt(),
             originalName: $driveStructEntity->getName()
         );

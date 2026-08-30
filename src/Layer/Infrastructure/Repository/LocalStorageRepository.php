@@ -10,6 +10,7 @@ use App\Layer\Domain\Repository\StorageRepositoryInterface;
 use App\Layer\Domain\Service\Utils\FileUtilsInterface;
 use SplFileInfo;
 use Symfony\Component\Filesystem\Filesystem;
+use App\Layer\Domain\ValueObject\SplFileInfoVO;
 
 final readonly class LocalStorageRepository implements StorageRepositoryInterface
 {
@@ -30,13 +31,16 @@ final readonly class LocalStorageRepository implements StorageRepositoryInterfac
         );
     }
 
-    public function getFile(string $path): SplFileInfo
+    public function getFile(string $path): SplFileInfoVO
     {
-        return new SplFileInfo(
-            $this->fileUtils->pathJoin(
-                [$this->configRepository->getProjectDir(), $path],
-                true
+        return new SplFileInfoVO(
+            file: new SplFileInfo(
+                $this->fileUtils->pathJoin(
+                    [$this->configRepository->getProjectDir(), $path],
+                    true
+                ),
             ),
+            isTemporary: false
         );
     }
 

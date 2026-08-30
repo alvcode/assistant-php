@@ -63,19 +63,15 @@ final class DriveArchiveJobEntity
         return $this->status;
     }
 
-    public function setStatus(DriveArchiveJobStatusEnum $status): void
+    public function setFailed(?string $errorDescription): void
     {
-        $this->status = $status;
+        $this->status = DriveArchiveJobStatusEnum::Failed;
+        $this->errorDescription = $errorDescription;
     }
 
     public function getErrorDescription(): ?string
     {
         return $this->errorDescription;
-    }
-
-    public function setErrorDescription(?string $errorDescription): void
-    {
-        $this->errorDescription = $errorDescription;
     }
 
     public function getCreatedAt(): DateTimeImmutable

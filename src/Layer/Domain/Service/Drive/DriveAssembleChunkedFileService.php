@@ -13,6 +13,7 @@ use App\Layer\Domain\Repository\DriveFileRepositoryInterface;
 use App\Layer\Domain\Repository\DriveStructRepositoryInterface;
 use App\Layer\Domain\Service\Factory\Storage\StorageRepositoryFactoryInterface;
 use App\Layer\Domain\Service\Utils\FileUtilsInterface;
+use App\Layer\Domain\ValueObject\SplFileInfoVO;
 use Exception;
 use SplFileInfo;
 
@@ -37,7 +38,7 @@ final readonly class DriveAssembleChunkedFileService
      * @throws DriveFileNotFoundException
      * @throws Exception
      */
-    public function handle(int $structId, int $userId): SplFileInfo
+    public function handle(int $structId, int $userId): SplFileInfoVO
     {
         $driveStructEntity = $this->driveStructRepository->getById($structId, false);
         if (\is_null($driveStructEntity) || $driveStructEntity->getUserId() !== $userId) {
@@ -74,19 +75,21 @@ final readonly class DriveAssembleChunkedFileService
                 $chunkFile = $this->storageRepositoryFactory->getRepository()->getFile($fullFilePath);
 
                 if ($this->configRepository->useFileEncryption()) {
-                    $chunkFile = $this->fileUtils->decryptFile(
-                        source: $chunkFile,
+                    $chunkFileDecrypted = $this->fileUtils->decryptFile(
+                        source: $chunkFile->getFile(),
                         key: $this->configRepository->getFileEncryptionKey()
                     );
+                    $chunkFile->unlinkIfTemporary();
+                    $chunkFile = $chunkFileDecrypted;
                 }
 
-                $this->appendFile($chunkFile, $output);
+                $this->appendFile($chunkFile->getFile(), $output);
             }
         } finally {
             fclose($output);
         }
 
-        return new SplFileInfo($tempPath);
+        return new SplFileInfoVO(file: new SplFileInfo($tempPath), isTemporary: true);
     }
 
     /** @param resource $output

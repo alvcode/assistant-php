@@ -7,6 +7,7 @@ namespace App\Layer\Infrastructure\Repository;
 use App\Layer\Domain\Repository\DTO\Storage\SaveFileDTO;
 use App\Layer\Domain\Repository\StorageRepositoryInterface;
 use App\Layer\Domain\Service\Utils\FileUtilsInterface;
+use App\Layer\Domain\ValueObject\SplFileInfoVO;
 use Aws\S3\S3Client;
 use Exception;
 use SplFileInfo;
@@ -33,9 +34,8 @@ final class S3StorageRepository implements StorageRepositoryInterface
     /**
      * @throws Exception
      */
-    public function getFile(string $path): SplFileInfo
+    public function getFile(string $path): SplFileInfoVO
     {
-        $tempFile = null;
         $handle = null;
         $bodyStream = null;
 
@@ -60,16 +60,17 @@ final class S3StorageRepository implements StorageRepositoryInterface
                 fwrite($handle, $chunk);
             }
 
-            return new SplFileInfo($tempFile);
+            return new SplFileInfoVO(
+                file: new SplFileInfo($tempFile),
+                isTemporary: true
+            );
         } catch (Exception $e) {
             throw new Exception(sprintf('Failed to get file from S3: %s', $e->getMessage()), $e->getCode(), $e);
         } finally {
             if ($handle !== null) {
                 fclose($handle);
             }
-            if ($bodyStream !== null) {
-                $bodyStream->close();
-            }
+            $bodyStream?->close();
         }
     }
 
