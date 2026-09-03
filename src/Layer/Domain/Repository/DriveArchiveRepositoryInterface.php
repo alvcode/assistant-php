@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Layer\Domain\Repository;
 
 use App\Layer\Domain\Dict\Drive\DriveArchiveJobStatusEnum;
+use App\Layer\Domain\Entity\DriveArchiveFileEntity;
 use App\Layer\Domain\Entity\DriveArchiveJobEntity;
 
 interface DriveArchiveRepositoryInterface
@@ -17,4 +18,6 @@ interface DriveArchiveRepositoryInterface
      * @param DriveArchiveJobStatusEnum[] $statuses
      */
     public function existsJobsByUserAndStatuses(int $userId, array $statuses): bool;
+
+    public function saveFileEntity(DriveArchiveFileEntity $entity): DriveArchiveFileEntity;
 }

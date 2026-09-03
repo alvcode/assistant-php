@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Layer\Infrastructure\Repository;
 
 use App\Layer\Domain\Dict\Drive\DriveArchiveJobStatusEnum;
+use App\Layer\Domain\Entity\DriveArchiveFileEntity;
 use App\Layer\Domain\Entity\DriveArchiveJobEntity;
 use App\Layer\Domain\Repository\DriveArchiveRepositoryInterface;
 use App\Layer\Domain\Service\Utils\DateTimeImmutable;
@@ -89,6 +90,38 @@ final readonly class DriveArchiveRepository implements DriveArchiveRepositoryInt
         )->fetchOne();
     }
 
+    public function saveFileEntity(DriveArchiveFileEntity $entity): DriveArchiveFileEntity
+    {
+        $params = [
+            'drive_archive_job_id' => $entity->getDriveArchiveJobId(),
+            'size' => $entity->getSize() ? $entity->getSize()->getBytes() : null,
+            'created_at' => $entity->getCreatedAt()->format('Y-m-d H:i:s'),
+        ];
+
+        $isNew = is_null($entity->getId());
+        if ($isNew) {
+            $query = "
+                insert into drive_archive_files (drive_archive_job_id, size, created_at)
+                values (:drive_archive_job_id, :size, :created_at) RETURNING id
+            ";
+        } else {
+            $query = "
+                update drive_archive_files
+                set drive_archive_job_id = :drive_archive_job_id, size = :size, created_at = :created_at
+                where id = :id
+            ";
+            $params['id'] = $entity->getId();
+        }
+
+        $conn = $this->entityManager->getConnection();
+        $stmt = $conn->executeQuery($query, $params);
+
+        if ($isNew) {
+            $entity->setId($stmt->fetchOne());
+        }
+        return $entity;
+    }
+
     /** @param array<string,mixed> $raw */
     private function getJobEntityFromRaw(array $raw): DriveArchiveJobEntity
     {
@@ -99,7 +132,7 @@ final readonly class DriveArchiveRepository implements DriveArchiveRepositoryInt
             status: DriveArchiveJobStatusEnum::from($raw['status']),
             errorDescription: $raw['error_description'],
             createdAt: DateTimeImmutable::createUTCFromString($raw['created_at']),
-            finishedAt: DateTimeImmutable::createUTCFromString($raw['finished_at']),
+            finishedAt: $raw['finished_at'] ? DateTimeImmutable::createUTCFromString($raw['finished_at']) : null,
         );
     }
 }

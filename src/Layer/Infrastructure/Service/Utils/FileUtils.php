@@ -256,4 +256,11 @@ final readonly class FileUtils implements FileUtilsInterface
 
         $zip->close();
     }
+
+    public function unlinkPath(string $path): void 
+    {
+        if (file_exists($path)) {
+            unlink($path);
+        }
+    }
 }

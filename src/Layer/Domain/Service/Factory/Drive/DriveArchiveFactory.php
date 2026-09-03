@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Layer\Domain\Service\Factory\Drive;
 
 use App\Layer\Domain\Dict\Drive\DriveArchiveJobStatusEnum;
+use App\Layer\Domain\Entity\DriveArchiveFileEntity;
 use App\Layer\Domain\Entity\DriveArchiveJobEntity;
 use App\Layer\Domain\Service\Utils\DateTimeImmutable;
 
@@ -26,6 +27,16 @@ final readonly class DriveArchiveFactory
             errorDescription: null,
             createdAt: DateTimeImmutable::createNowUtc(),
             finishedAt: null,
+        );
+    }
+
+    public function getNewDriveArchiveFile(int $driveArchiveJobId): DriveArchiveFileEntity
+    {
+        return new DriveArchiveFileEntity(
+            id: null,
+            driveArchiveJobId: $driveArchiveJobId,
+            size: null, 
+            createdAt: DateTimeImmutable::createNowUtc(),
         );
     }
 }

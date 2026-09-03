@@ -35,6 +35,12 @@ deploy:
 messenger-restart:
 	docker compose restart ast-messenger;
 
+messenger-failed:
+	docker exec -it ast-app bin/console messenger:failed:show;
+
+messenger-failed-remove:
+	docker exec -it ast-app bin/console messenger:failed:remove --all;
+
 # ========================================================= CLI ==========================================
 cli-clean-db:
 	docker exec -it ast-app bin/console service:clean-db;

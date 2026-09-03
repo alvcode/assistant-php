@@ -69,6 +69,11 @@ final class DriveArchiveJobEntity
         $this->errorDescription = $errorDescription;
     }
 
+    public function setSuccess(): void
+    {
+        $this->status = DriveArchiveJobStatusEnum::Completed;
+    }
+
     public function getErrorDescription(): ?string
     {
         return $this->errorDescription;
@@ -100,6 +105,15 @@ final class DriveArchiveJobEntity
             $configRepository->getTempSavePath(),
             'archives',
             $this->getId(),
+        ]);
+    }
+
+    public function getPathToArchive(FileUtilsInterface $fileUtils, ConfigRepositoryInterface $configRepository): string
+    {
+        return $fileUtils->pathJoin([
+            $configRepository->getTempSavePath(),
+            'archives',
+            $this->getId() . '.zip',
         ]);
     }
 }

@@ -31,4 +31,6 @@ interface FileUtilsInterface
     public function createTempFile(): string;
 
     public function createArchive(string $sourcePath, string $destinationPath): void;
+
+    public function unlinkPath(string $path): void;
 }
