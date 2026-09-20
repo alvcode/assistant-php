@@ -74,6 +74,11 @@ final class DriveArchiveJobEntity
         $this->status = DriveArchiveJobStatusEnum::Completed;
     }
 
+    public function setProcessed(): void
+    {
+        $this->status = DriveArchiveJobStatusEnum::Processed;
+    }
+
     public function getErrorDescription(): ?string
     {
         return $this->errorDescription;
@@ -97,23 +102,5 @@ final class DriveArchiveJobEntity
     public function setFinishedAt(?DateTimeImmutable $finishedAt): void
     {
         $this->finishedAt = $finishedAt;
-    }
-
-    public function getBaseSavePath(FileUtilsInterface $fileUtils, ConfigRepositoryInterface $configRepository): string
-    {
-        return $fileUtils->pathJoin([
-            $configRepository->getTempSavePath(),
-            'archives',
-            $this->getId(),
-        ]);
-    }
-
-    public function getPathToArchive(FileUtilsInterface $fileUtils, ConfigRepositoryInterface $configRepository): string
-    {
-        return $fileUtils->pathJoin([
-            $configRepository->getTempSavePath(),
-            'archives',
-            $this->getId() . '.zip',
-        ]);
     }
 }

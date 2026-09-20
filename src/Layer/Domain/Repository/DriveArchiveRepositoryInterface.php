@@ -20,4 +20,10 @@ interface DriveArchiveRepositoryInterface
     public function existsJobsByUserAndStatuses(int $userId, array $statuses): bool;
 
     public function saveFileEntity(DriveArchiveFileEntity $entity): DriveArchiveFileEntity;
+
+    public function getSaveStructsPath(int $driveArchiveJobId): string;
+
+    public function getSaveArchivePath(int $driveArchiveJobId): string;
+
+    public function getSaveChunksPath(int $driveArchiveJobId): string;
 }

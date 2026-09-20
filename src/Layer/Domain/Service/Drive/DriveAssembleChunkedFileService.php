@@ -22,7 +22,7 @@ use SplFileInfo;
  */
 final readonly class DriveAssembleChunkedFileService
 {
-    private const STREAM_CHUNK_SIZE = 1024 * 1024;
+    private const int STREAM_CHUNK_SIZE = 1024 * 1024;
 
     public function __construct(
         private DriveStructRepositoryInterface $driveStructRepository,
