@@ -9,4 +9,6 @@ use App\Layer\Domain\Entity\DriveArchiveFileChunkEntity;
 interface DriveArchiveFileChunkRepositoryInterface
 {
     public function save(DriveArchiveFileChunkEntity $entity): DriveArchiveFileChunkEntity;
+
+    public function deleteByDriveArchiveFileId(int $driveArchiveFileId): void;
 }

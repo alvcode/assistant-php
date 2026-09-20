@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Layer\Infrastructure\Repository;
 
+use App\Layer\Domain\Dict\Common\FileSizeTypeEnum;
 use App\Layer\Domain\Dict\Drive\DriveArchiveJobStatusEnum;
 use App\Layer\Domain\Entity\DriveArchiveFileEntity;
 use App\Layer\Domain\Entity\DriveArchiveJobEntity;
 use App\Layer\Domain\Repository\DriveArchiveRepositoryInterface;
 use App\Layer\Domain\Service\Utils\DateTimeImmutable;
+use App\Layer\Domain\ValueObject\FileSizeVO;
 use App\Layer\Infrastructure\Service\Utils\FileUtils;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\ORM\EntityManagerInterface;
@@ -123,6 +125,27 @@ final readonly class DriveArchiveRepository implements DriveArchiveRepositoryInt
             $entity->setId($stmt->fetchOne());
         }
         return $entity;
+    }
+
+    public function getFileByJobId(int $driveArchiveJobId): ?DriveArchiveFileEntity
+    {
+        $query = "select * from drive_archive_files where drive_archive_job_id = :drive_archive_job_id";
+        $conn = $this->entityManager->getConnection();
+        $stmt = $conn->executeQuery($query, ['drive_archive_job_id' => $driveArchiveJobId]);
+
+        $row = $stmt->fetchAssociative();
+        if (!$row) {
+            return null;
+        }
+
+        return new DriveArchiveFileEntity(
+            id: $row['id'],
+            driveArchiveJobId: $row['drive_archive_job_id'],
+            size: $row['size'] !== null
+                ? new FileSizeVO(size: $row['size'], sizeType: FileSizeTypeEnum::Bytes)
+                : null,
+            createdAt: DateTimeImmutable::createUTCFromString($row['created_at']),
+        );
     }
 
     public function getSaveStructsPath(int $driveArchiveJobId): string

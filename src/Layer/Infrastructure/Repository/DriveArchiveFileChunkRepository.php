@@ -18,7 +18,7 @@ final readonly class DriveArchiveFileChunkRepository implements DriveArchiveFile
     {
         $params = [
             'drive_archive_file_id' => $entity->getDriveArchiveFileId(),
-            'path' => $entity->getPath(),
+            'path' => $entity->getPath()->getPath(),
             'size' => $entity->getSize()->getBytes(),
             'chunk_number' => $entity->getChunkNumber(),
         ];
@@ -45,5 +45,14 @@ final readonly class DriveArchiveFileChunkRepository implements DriveArchiveFile
             $entity->setId($stmt->fetchOne());
         }
         return $entity;
+    }
+
+    public function deleteByDriveArchiveFileId(int $driveArchiveFileId): void
+    {
+        $conn = $this->entityManager->getConnection();
+        $conn->executeQuery(
+            "delete from drive_archive_file_chunks where drive_archive_file_id = :drive_archive_file_id",
+            ['drive_archive_file_id' => $driveArchiveFileId]
+        );
     }
 }

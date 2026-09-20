@@ -63,18 +63,23 @@ final readonly class DriveArchiveCreateUseCase
             destinationPath: $archivePath
         );
 
-        $driveArchiveFileEntity = $this->driveArchiveRepository->saveFileEntity(
-            $this->driveArchiveFactory->getNewDriveArchiveFile($driveArchiveJobEntity->getId())
-        );
+        $driveArchiveFileEntity = $this->driveArchiveRepository->getFileByJobId($driveArchiveJobEntity->getId())
+            ?? $this->driveArchiveRepository->saveFileEntity(
+                $this->driveArchiveFactory->getNewDriveArchiveFile($driveArchiveJobEntity->getId())
+            );
 
         $this->fileUtils->unlinkPath($workDirectoryPath);
 
         // разбиваем архив на чанки
+        $chunksPath = $this->driveArchiveRepository->getSaveChunksPath($driveArchiveJobEntity->getId());
+        $this->fileUtils->unlinkPath($chunksPath);
+        $this->driveArchiveFileChunkRepository->deleteByDriveArchiveFileId($driveArchiveFileEntity->getId());
+
         $totalSize = 0;
         try {
             foreach ($this->splitFileIntoChunksService->handle(
                 filePath: $archivePath,
-                savePath: $this->driveArchiveRepository->getSaveChunksPath($driveArchiveJobEntity->getId())
+                savePath: $chunksPath
             ) as $driveFileChunkVO) {
                 $this->driveArchiveFileChunkRepository->save(
                     new DriveArchiveFileChunkEntity(
@@ -89,7 +94,8 @@ final readonly class DriveArchiveCreateUseCase
                 $totalSize += $driveFileChunkVO->getSize()->getBytes();
             }
         } catch (Exception $e) {
-            // TODO: тут должны очистить все: БД с чанками, сам путь с чанками
+            $this->fileUtils->unlinkPath($chunksPath);
+            $this->driveArchiveFileChunkRepository->deleteByDriveArchiveFileId($driveArchiveFileEntity->getId());
             throw $e;
         }
 

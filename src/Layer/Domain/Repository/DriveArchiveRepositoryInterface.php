@@ -21,6 +21,8 @@ interface DriveArchiveRepositoryInterface
 
     public function saveFileEntity(DriveArchiveFileEntity $entity): DriveArchiveFileEntity;
 
+    public function getFileByJobId(int $driveArchiveJobId): ?DriveArchiveFileEntity;
+
     public function getSaveStructsPath(int $driveArchiveJobId): string;
 
     public function getSaveArchivePath(int $driveArchiveJobId): string;
