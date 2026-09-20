@@ -42,9 +42,8 @@ final readonly class DriveArchiveCreateUseCase
         $this->driveArchiveRepository->save($driveArchiveJobEntity);
 
         // Формируем реальную папку
+        $workDirectoryPath = $this->driveArchiveRepository->getSaveStructsPath($driveArchiveJobEntity->getId());
         try {
-            $workDirectoryPath = $this->driveArchiveRepository->getSaveStructsPath($driveArchiveJobEntity->getId());
-
             $this->creationFolderStructService->handle(
                 structIds: $driveArchiveJobEntity->getStructIds(),
                 userId: $driveArchiveJobEntity->getUserId(),
@@ -52,21 +51,31 @@ final readonly class DriveArchiveCreateUseCase
             );
         } catch (Exception $e) {
             $driveArchiveJobEntity->setFailed($e->getMessage());
+            $driveArchiveJobEntity->setFinished();
             $this->driveArchiveRepository->save($driveArchiveJobEntity);
             throw $e;
         }
 
         // формируем из папки архив
         $archivePath = $this->driveArchiveRepository->getSaveArchivePath($driveArchiveJobEntity->getId());
-        $this->fileUtils->createArchive(
-            sourcePath: $workDirectoryPath,
-            destinationPath: $archivePath
-        );
-
-        $driveArchiveFileEntity = $this->driveArchiveRepository->getFileByJobId($driveArchiveJobEntity->getId())
-            ?? $this->driveArchiveRepository->saveFileEntity(
-                $this->driveArchiveFactory->getNewDriveArchiveFile($driveArchiveJobEntity->getId())
+        try {
+            $this->fileUtils->createArchive(
+                sourcePath: $workDirectoryPath,
+                destinationPath: $archivePath
             );
+
+            $driveArchiveFileEntity = $this->driveArchiveRepository->getFileByJobId($driveArchiveJobEntity->getId())
+                ?? $this->driveArchiveRepository->saveFileEntity(
+                    $this->driveArchiveFactory->getNewDriveArchiveFile($driveArchiveJobEntity->getId())
+                );
+        } catch (Exception $e) {
+            $this->fileUtils->unlinkPath($workDirectoryPath);
+            $this->fileUtils->unlinkPath($archivePath);
+            $driveArchiveJobEntity->setFailed($e->getMessage());
+            $driveArchiveJobEntity->setFinished();
+            $this->driveArchiveRepository->save($driveArchiveJobEntity);
+            throw $e;
+        }
 
         $this->fileUtils->unlinkPath($workDirectoryPath);
 
@@ -94,8 +103,12 @@ final readonly class DriveArchiveCreateUseCase
                 $totalSize += $driveFileChunkVO->getSize()->getBytes();
             }
         } catch (Exception $e) {
+            $this->fileUtils->unlinkPath($archivePath);
             $this->fileUtils->unlinkPath($chunksPath);
             $this->driveArchiveFileChunkRepository->deleteByDriveArchiveFileId($driveArchiveFileEntity->getId());
+            $driveArchiveJobEntity->setFailed($e->getMessage());
+            $driveArchiveJobEntity->setFinished();
+            $this->driveArchiveRepository->save($driveArchiveJobEntity);
             throw $e;
         }
 
@@ -105,6 +118,7 @@ final readonly class DriveArchiveCreateUseCase
         $this->fileUtils->unlinkPath($archivePath);
 
         $driveArchiveJobEntity->setSuccess();
+        $driveArchiveJobEntity->setFinished();
         $this->driveArchiveRepository->save($driveArchiveJobEntity);
     }
 }

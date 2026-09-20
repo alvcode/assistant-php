@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace App\Layer\Domain\Entity;
 
 use App\Layer\Domain\Dict\Drive\DriveArchiveJobStatusEnum;
-use App\Layer\Domain\Repository\ConfigRepositoryInterface;
-use App\Layer\Domain\Service\Utils\FileUtilsInterface;
-use DateTimeImmutable;
+use App\Layer\Domain\Service\Utils\DateTimeImmutable;
 
 final class DriveArchiveJobEntity
 {
@@ -99,8 +97,8 @@ final class DriveArchiveJobEntity
         return $this->finishedAt;
     }
 
-    public function setFinishedAt(?DateTimeImmutable $finishedAt): void
+    public function setFinished(): void
     {
-        $this->finishedAt = $finishedAt;
+        $this->finishedAt = DateTimeImmutable::createNowUtc();
     }
 }

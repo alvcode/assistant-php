@@ -19,6 +19,8 @@ interface DriveArchiveRepositoryInterface
      */
     public function existsJobsByUserAndStatuses(int $userId, array $statuses): bool;
 
+    public function getJobByUserAndStatuses(int $userId, array $statuses): ?DriveArchiveJobEntity;
+
     public function saveFileEntity(DriveArchiveFileEntity $entity): DriveArchiveFileEntity;
 
     public function getFileByJobId(int $driveArchiveJobId): ?DriveArchiveFileEntity;

@@ -95,6 +95,32 @@ final readonly class DriveArchiveRepository implements DriveArchiveRepositoryInt
         )->fetchOne();
     }
 
+    public function getJobByUserAndStatuses(int $userId, array $statuses): ?DriveArchiveJobEntity
+    {
+        $query = "
+            select * from drive_archive_jobs daj
+            where
+            daj.user_id = :user_id and daj.status in (:statuses)
+            limit 1
+        ";
+
+        $conn = $this->entityManager->getConnection();
+        $stmt = $conn->executeQuery(
+            $query,
+            [
+                'user_id' => $userId,
+                'statuses' => array_map(static fn(DriveArchiveJobStatusEnum $status) => $status->value, $statuses)
+            ],
+            ['statuses' => ArrayParameterType::INTEGER]
+        );
+
+        $row = $stmt->fetchAssociative();
+        if (!$row) {
+            return null;
+        }
+        return $this->getJobEntityFromRaw($row);
+    }
+
     public function saveFileEntity(DriveArchiveFileEntity $entity): DriveArchiveFileEntity
     {
         $params = [

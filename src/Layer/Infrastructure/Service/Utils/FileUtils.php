@@ -16,12 +16,14 @@ use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use SodiumException;
 use SplFileInfo;
+use Symfony\Component\Filesystem\Filesystem;
 use ZipArchive;
 
 final readonly class FileUtils implements FileUtilsInterface
 {
     public function __construct(
         private HasherServiceInterface $hasherService,
+        private Filesystem $filesystem,
     ) {}
 
     public function generateNewFilename(string $extension): string
@@ -257,31 +259,8 @@ final readonly class FileUtils implements FileUtilsInterface
         $zip->close();
     }
 
-    public function unlinkPath(string $path): void 
+    public function unlinkPath(string $path): void
     {
-        if (!file_exists($path) && !is_link($path)) {
-            return;
-        }
-
-        if (is_dir($path) && !is_link($path)) {
-            $items = new RecursiveIteratorIterator(
-                new RecursiveDirectoryIterator($path, FilesystemIterator::SKIP_DOTS),
-                RecursiveIteratorIterator::CHILD_FIRST
-            );
-
-            foreach ($items as $item) {
-                if ($item->isDir()) {
-                    rmdir($item->getPathname());
-                } else {
-                    unlink($item->getPathname());
-                }
-            }
-
-            rmdir($path);
-
-            return;
-        }
-
-        unlink($path);
+        $this->filesystem->remove($path);
     }
 }
