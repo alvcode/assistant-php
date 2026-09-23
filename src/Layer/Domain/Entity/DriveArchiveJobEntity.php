@@ -67,7 +67,7 @@ final class DriveArchiveJobEntity
         $this->errorDescription = $errorDescription;
     }
 
-    public function setSuccess(): void
+    public function setCompleted(): void
     {
         $this->status = DriveArchiveJobStatusEnum::Completed;
     }
@@ -75,6 +75,11 @@ final class DriveArchiveJobEntity
     public function setProcessed(): void
     {
         $this->status = DriveArchiveJobStatusEnum::Processed;
+    }
+
+    public function setDeleted(): void
+    {
+        $this->status = DriveArchiveJobStatusEnum::Deleted;
     }
 
     public function getErrorDescription(): ?string

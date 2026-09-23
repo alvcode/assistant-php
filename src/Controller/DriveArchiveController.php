@@ -9,6 +9,7 @@ use App\Entity\UserEntity;
 use App\Infrastructure\Lang;
 use App\Layer\Application\Exception\Drive\DriveStructNotFoundException;
 use App\Layer\Application\UseCase\DriveArchive\DriveArchiveGetActiveJobUseCase;
+use App\Layer\Application\UseCase\DriveArchive\DriveArchiveRemoveUseCase;
 use App\Layer\Application\UseCase\DriveArchive\DriveArchiveRequestForCreationUseCase;
 use App\Layer\Domain\Exception\AbstractLogicException;
 use App\Request\DriveArchive\DriveArchiveCreateRequest;
@@ -64,10 +65,7 @@ final class DriveArchiveController extends AbstractController
 
     #[Route(path: '/api/drive-archive/status', name: 'drive_archive.get_status', methods: ['GET'])]
     #[NeedAuth]
-    public function getStatus(
-        Request $request,
-        DriveArchiveGetActiveJobUseCase $useCase,
-    ): JsonResponse
+    public function getStatus(DriveArchiveGetActiveJobUseCase $useCase): JsonResponse
     {
         /** @var UserEntity $user */
         $user = $this->getUser();
@@ -85,8 +83,16 @@ final class DriveArchiveController extends AbstractController
 
     #[Route(path: '/api/drive-archive/{id}', name: 'drive_archive.remove_generated', methods: ['DELETE'])]
     #[NeedAuth]
-    public function removeGenerated(int $id)
+    public function removeGenerated(int $id, DriveArchiveRemoveUseCase $useCase): Response
     {
+        /** @var UserEntity $user */
+        $user = $this->getUser();
 
+        try {
+            $useCase->handle($id, $user->id);
+            return new JsonResponse(null, Response::HTTP_NO_CONTENT);
+        } catch (AbstractLogicException $e) {
+            throw new UnprocessableEntityHttpException(Lang::t($e->getErrorKey()));
+        }
     }
 }

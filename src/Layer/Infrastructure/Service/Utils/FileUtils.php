@@ -262,5 +262,29 @@ final readonly class FileUtils implements FileUtilsInterface
     public function unlinkPath(string $path): void
     {
         $this->filesystem->remove($path);
+//        if (!file_exists($path) && !is_link($path)) {
+//            return;
+//        }
+//
+//        if (is_dir($path) && !is_link($path)) {
+//            $items = new RecursiveIteratorIterator(
+//                new RecursiveDirectoryIterator($path, FilesystemIterator::SKIP_DOTS),
+//                RecursiveIteratorIterator::CHILD_FIRST
+//            );
+//
+//            foreach ($items as $item) {
+//                if ($item->isDir()) {
+//                    rmdir($item->getPathname());
+//                } else {
+//                    unlink($item->getPathname());
+//                }
+//            }
+//
+//            rmdir($path);
+//
+//            return;
+//        }
+//
+//        unlink($path);
     }
 }
