@@ -11,6 +11,7 @@ use App\Layer\Domain\Entity\DriveArchiveJobEntity;
 use App\Layer\Domain\Repository\DriveArchiveRepositoryInterface;
 use App\Layer\Domain\Service\Utils\DateTimeImmutable;
 use App\Layer\Domain\ValueObject\FileSizeVO;
+use App\Layer\Domain\ValueObject\PathVO;
 use App\Layer\Infrastructure\Service\Utils\FileUtils;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\ORM\EntityManagerInterface;
@@ -95,6 +96,7 @@ final readonly class DriveArchiveRepository implements DriveArchiveRepositoryInt
         )->fetchOne();
     }
 
+    /** @inheritDoc */
     public function getJobByUserAndStatuses(int $userId, array $statuses): ?DriveArchiveJobEntity
     {
         $query = "
@@ -174,31 +176,37 @@ final readonly class DriveArchiveRepository implements DriveArchiveRepositoryInt
         );
     }
 
-    public function getSaveStructsPath(int $driveArchiveJobId): string
+    public function getSaveStructsPath(int $driveArchiveJobId): PathVO
     {
-        return $this->fileUtils->pathJoin([
-            $this->configRepository->getTempSavePath(),
-            'archives',
-            $driveArchiveJobId,
-        ]);
+        return new PathVO(
+            $this->fileUtils->pathJoin([
+                $this->configRepository->getTempSavePath(),
+                'archives',
+                $driveArchiveJobId,
+            ])
+        );
     }
 
-    public function getSaveArchivePath(int $driveArchiveJobId): string
+    public function getSaveArchivePath(int $driveArchiveJobId): PathVO
     {
-        return $this->fileUtils->pathJoin([
-            $this->configRepository->getTempSavePath(),
-            'archives',
-            $driveArchiveJobId . '.zip',
-        ]);
+        return new PathVO(
+            $this->fileUtils->pathJoin([
+                $this->configRepository->getTempSavePath(),
+                'archives',
+                $driveArchiveJobId . '.zip',
+            ])
+        );
     }
 
-    public function getSaveChunksPath(int $driveArchiveJobId): string
+    public function getSaveChunksPath(int $driveArchiveJobId): PathVO
     {
-        return $this->fileUtils->pathJoin([
-            $this->configRepository->getTempSavePath(),
-            'archives',
-            $driveArchiveJobId . '_chunks',
-        ]);
+        return new PathVO(
+            $this->fileUtils->pathJoin([
+                $this->configRepository->getTempSavePath(),
+                'archives',
+                $driveArchiveJobId . '_chunks',
+            ])
+        );
     }
 
     /** @param array<string,mixed> $raw */

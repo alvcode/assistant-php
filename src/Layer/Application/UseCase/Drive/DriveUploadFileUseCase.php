@@ -23,6 +23,7 @@ use App\Layer\Domain\Service\Factory\Drive\DriveStructFactory;
 use App\Layer\Domain\Service\Factory\Storage\StorageRepositoryFactoryInterface;
 use App\Layer\Domain\Service\Utils\FileUtilsInterface;
 use App\Layer\Domain\ValueObject\FileSizeVO;
+use App\Layer\Domain\ValueObject\PathVO;
 
 final readonly class DriveUploadFileUseCase
 {
@@ -81,7 +82,7 @@ final readonly class DriveUploadFileUseCase
             $fileForSave = $this->fileUtils->encryptFile(
                 source: $file->getFile(),
                 key: $this->configRepository->getFileEncryptionKey()
-            );
+            )->getFile();
         } else {
             $fileForSave = $file->getFile();
         }
@@ -89,7 +90,7 @@ final readonly class DriveUploadFileUseCase
         $this->storageRepositoryFactory->getRepository()->save(
             new SaveFileDTO(
                 file: $fileForSave,
-                savePath: $fullFilePath
+                savePath: new PathVO($fullFilePath)
             )
         );
 

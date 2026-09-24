@@ -12,6 +12,7 @@ use App\Layer\Domain\Repository\ConfigRepositoryInterface;
 use App\Layer\Domain\Repository\NoteFileRepositoryInterface;
 use App\Layer\Domain\Service\Factory\Storage\StorageRepositoryFactoryInterface;
 use App\Layer\Domain\Service\Utils\FileUtilsInterface;
+use App\Layer\Domain\ValueObject\PathVO;
 
 final readonly class GetNoteFileByHashUseCase
 {
@@ -41,11 +42,11 @@ final readonly class GetNoteFileByHashUseCase
 
         if ($this->configRepository->useFileEncryption()) {
             $file = $this->fileUtils->decryptFile(
-                source: $this->storageRepositoryFactory->getRepository()->getFile($fullFilePath)->getFile(),
+                source: $this->storageRepositoryFactory->getRepository()->getFile(new PathVO($fullFilePath))->getFile(),
                 key: $this->configRepository->getFileEncryptionKey()
             );
         } else {
-            $file = $this->storageRepositoryFactory->getRepository()->getFile($fullFilePath);
+            $file = $this->storageRepositoryFactory->getRepository()->getFile(new PathVO($fullFilePath));
         }
 
         return new FileDTO(

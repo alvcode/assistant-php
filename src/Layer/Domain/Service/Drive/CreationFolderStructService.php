@@ -4,11 +4,16 @@ declare(strict_types=1);
 
 namespace App\Layer\Domain\Service\Drive;
 
+use App\Layer\Domain\Exception\Drive\DriveFileNotFoundException;
+use App\Layer\Domain\Exception\Drive\DriveStructNotFoundException;
+use App\Layer\Domain\Exception\Storage\FailedStorageConfigurationException;
+use App\Layer\Domain\Exception\Utils\FailedDecryptionFileException;
 use App\Layer\Domain\Repository\ConfigRepositoryInterface;
 use App\Layer\Domain\Repository\DriveFileRepositoryInterface;
 use App\Layer\Domain\Repository\DTO\Storage\SaveFileDTO;
 use App\Layer\Domain\Service\Factory\Storage\StorageRepositoryFactoryInterface;
 use App\Layer\Domain\Service\Utils\FileUtilsInterface;
+use App\Layer\Domain\ValueObject\PathVO;
 use Exception;
 
 /**
@@ -28,11 +33,14 @@ final readonly class CreationFolderStructService
     /**
      * @param int[] $structIds
      * @param int $userId
-     * @param string $savePath
+     * @param PathVO $savePath
      * @return void
-     * @throws Exception
+     * @throws DriveFileNotFoundException
+     * @throws DriveStructNotFoundException
+     * @throws FailedStorageConfigurationException
+     * @throws FailedDecryptionFileException
      */
-    public function handle(array $structIds, int $userId, string $savePath): void
+    public function handle(array $structIds, int $userId, PathVO $savePath): void
     {
         $processedStructIds = [];
 
@@ -66,7 +74,7 @@ final readonly class CreationFolderStructService
                             $this->configRepository->getDriveFileSavePath(),
                             $driveFileEntity->getPath()
                         ]);
-                        $file = $this->storageRepositoryFactory->getRepository()->getFile($fullFilePath);
+                        $file = $this->storageRepositoryFactory->getRepository()->getFile(new PathVO($fullFilePath));
                         if ($this->configRepository->useFileEncryption()) {
                             $fileDecrypted = $this->fileUtils->decryptFile(
                                 source: $file->getFile(),
@@ -80,7 +88,7 @@ final readonly class CreationFolderStructService
                     $this->storageRepositoryFactory->getLocalStorage()->save(
                         new SaveFileDTO(
                             file: $file->getFile(),
-                            savePath: $driveStructWithRealPath->realPath->getPath()
+                            savePath: new PathVO($driveStructWithRealPath->realPath->getPath())
                         )
                     );
                     $file->unlinkIfTemporary();

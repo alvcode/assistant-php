@@ -14,6 +14,7 @@ use App\Layer\Domain\Repository\DriveStructRepositoryInterface;
 use App\Layer\Domain\Repository\QueueRepositoryInterface;
 use App\Layer\Domain\Service\Drive\GetRecursiveFileStructsWithRealPath;
 use App\Layer\Domain\Service\Factory\Drive\DriveArchiveFactory;
+use App\Layer\Domain\ValueObject\PathVO;
 
 final readonly class DriveArchiveRequestForCreationUseCase
 {
@@ -74,7 +75,7 @@ final readonly class DriveArchiveRequestForCreationUseCase
                 $this->getRecursiveFileStructsWithRealPath->service(
                     $userId,
                     $structId,
-                    ''
+                    new PathVO('')
                 ) as $driveStructWithRealPath
             ) {
                 $existsFile = true;

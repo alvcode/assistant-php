@@ -15,6 +15,11 @@ final readonly class PathVO
         return $this->path;
     }
 
+    public function isAbsolute(): bool
+    {
+        return str_starts_with($this->path, '/');
+    }
+
     /** @return string[] */
     public function getAsArray(): array
     {

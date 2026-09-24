@@ -8,6 +8,7 @@ use App\Layer\Domain\Repository\ConfigRepositoryInterface;
 use App\Layer\Domain\Repository\NoteFileRepositoryInterface;
 use App\Layer\Domain\Service\Factory\Storage\StorageRepositoryFactoryInterface;
 use App\Layer\Domain\Service\Utils\FileUtilsInterface;
+use App\Layer\Domain\ValueObject\PathVO;
 
 final readonly class DeleteNoteFileByIdUseCase
 {
@@ -30,7 +31,7 @@ final readonly class DeleteNoteFileByIdUseCase
             $noteFileEntity->getFilePath()
         ]);
 
-        $this->storageRepositoryFactory->getRepository()->delete($fullFilePath);
+        $this->storageRepositoryFactory->getRepository()->delete(new PathVO($fullFilePath));
         $this->noteFileRepository->delete($noteFileEntity);
     }
 }

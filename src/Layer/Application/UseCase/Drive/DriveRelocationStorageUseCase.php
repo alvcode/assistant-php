@@ -10,6 +10,7 @@ use App\Layer\Domain\Repository\DriveFileRepositoryInterface;
 use App\Layer\Domain\Repository\DTO\Storage\SaveFileDTO;
 use App\Layer\Domain\Service\Factory\Storage\StorageRepositoryFactoryInterface;
 use App\Layer\Domain\Service\Utils\FileUtilsInterface;
+use App\Layer\Domain\ValueObject\PathVO;
 
 final readonly class DriveRelocationStorageUseCase
 {
@@ -47,23 +48,23 @@ final readonly class DriveRelocationStorageUseCase
     {
         $localStorageRepository = $this->storageRepositoryFactory->getLocalStorage();
         $s3StorageRepository = $this->storageRepositoryFactory->getS3Storage();
-        if ($localStorageRepository->isExists($fullPath)) {
+        if ($localStorageRepository->isExists(new PathVO($fullPath))) {
             return;
         }
-        $oldFile = $s3StorageRepository->getFile($fullPath);
-        $localStorageRepository->save(new SaveFileDTO(file: $oldFile->getFile(), savePath: $fullPath));
-        $s3StorageRepository->delete($fullPath);
+        $oldFile = $s3StorageRepository->getFile(new PathVO($fullPath));
+        $localStorageRepository->save(new SaveFileDTO(file: $oldFile->getFile(), savePath: new PathVO($fullPath)));
+        $s3StorageRepository->delete(new PathVO($fullPath));
     }
 
     private function toS3(string $fullPath): void
     {
         $localStorageRepository = $this->storageRepositoryFactory->getLocalStorage();
         $s3StorageRepository = $this->storageRepositoryFactory->getS3Storage();
-        if ($s3StorageRepository->isExists($fullPath)) {
+        if ($s3StorageRepository->isExists(new PathVO($fullPath))) {
             return;
         }
-        $oldFile = $localStorageRepository->getFile($fullPath);
-        $s3StorageRepository->save(new SaveFileDTO(file: $oldFile->getFile(), savePath: $fullPath));
-        $localStorageRepository->delete($fullPath);
+        $oldFile = $localStorageRepository->getFile(new PathVO($fullPath));
+        $s3StorageRepository->save(new SaveFileDTO(file: $oldFile->getFile(), savePath: new PathVO($fullPath)));
+        $localStorageRepository->delete(new PathVO($fullPath));
     }
 }

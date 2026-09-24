@@ -9,6 +9,7 @@ use App\Layer\Domain\Repository\DTO\Storage\SaveFileDTO;
 use App\Layer\Domain\Repository\NoteFileRepositoryInterface;
 use App\Layer\Domain\Service\Factory\Storage\StorageRepositoryFactoryInterface;
 use App\Layer\Domain\Service\Utils\FileUtilsInterface;
+use App\Layer\Domain\ValueObject\PathVO;
 
 final readonly class NoteFileRelocationStorageUseCase
 {
@@ -31,19 +32,19 @@ final readonly class NoteFileRelocationStorageUseCase
             ]);
 
             if ($toLocal) {
-                if ($localStorageRepository->isExists($fullFilePath)) {
+                if ($localStorageRepository->isExists(new PathVO($fullFilePath))) {
                     continue;
                 }
-                $oldFile = $s3StorageRepository->getFile($fullFilePath);
-                $localStorageRepository->save(new SaveFileDTO(file: $oldFile->getFile(), savePath: $fullFilePath));
-                $s3StorageRepository->delete($fullFilePath);
+                $oldFile = $s3StorageRepository->getFile(new PathVO($fullFilePath));
+                $localStorageRepository->save(new SaveFileDTO(file: $oldFile->getFile(), savePath: new PathVO($fullFilePath)));
+                $s3StorageRepository->delete(new PathVO($fullFilePath));
             } else {
-                if ($s3StorageRepository->isExists($fullFilePath)) {
+                if ($s3StorageRepository->isExists(new PathVO($fullFilePath))) {
                     continue;
                 }
-                $oldFile = $localStorageRepository->getFile($fullFilePath);
-                $s3StorageRepository->save(new SaveFileDTO(file: $oldFile->getFile(), savePath: $fullFilePath));
-                $localStorageRepository->delete($fullFilePath);
+                $oldFile = $localStorageRepository->getFile(new PathVO($fullFilePath));
+                $s3StorageRepository->save(new SaveFileDTO(file: $oldFile->getFile(), savePath: new PathVO($fullFilePath)));
+                $localStorageRepository->delete(new PathVO($fullFilePath));
             }
         }
     }

@@ -7,6 +7,7 @@ namespace App\Layer\Infrastructure\Repository;
 use App\Layer\Domain\Repository\DTO\Storage\SaveFileDTO;
 use App\Layer\Domain\Repository\StorageRepositoryInterface;
 use App\Layer\Domain\Service\Utils\FileUtilsInterface;
+use App\Layer\Domain\ValueObject\PathVO;
 use App\Layer\Domain\ValueObject\SplFileInfoVO;
 use Aws\S3\S3Client;
 use Exception;
@@ -26,7 +27,7 @@ final class S3StorageRepository implements StorageRepositoryInterface
     {
         $this->getClient()->putObject([
             'Bucket' => $this->parameterBag->get('s3.bucketName'),
-            'Key' => $in->getSavePath(),
+            'Key' => $in->getSavePath()->getPath(),
             'Body' => fopen($in->getFile()->getRealPath(), 'rb'),
         ]);
     }
@@ -34,14 +35,14 @@ final class S3StorageRepository implements StorageRepositoryInterface
     /**
      * @throws Exception
      */
-    public function getFile(string $path): SplFileInfoVO
+    public function getFile(PathVO $path): SplFileInfoVO
     {
         $handle = null;
         $bodyStream = null;
 
         try {
             $tempFile = $this->fileUtils->createTempFile();
-            $handle = fopen($tempFile, 'wb');
+            $handle = fopen($tempFile->getFile()->getPathname(), 'wb');
 
             if ($handle === false) {
                 throw new Exception('Не удалось создать временный файл');
@@ -49,7 +50,7 @@ final class S3StorageRepository implements StorageRepositoryInterface
 
             $result = $this->getClient()->getObject([
                 'Bucket' => $this->parameterBag->get('s3.bucketName'),
-                'Key' => $path,
+                'Key' => $path->getPath(),
                 '@stream' => true
             ]);
 
@@ -60,10 +61,7 @@ final class S3StorageRepository implements StorageRepositoryInterface
                 fwrite($handle, $chunk);
             }
 
-            return new SplFileInfoVO(
-                file: new SplFileInfo($tempFile),
-                isTemporary: true
-            );
+            return $tempFile;
         } catch (Exception $e) {
             throw new Exception(sprintf('Failed to get file from S3: %s', $e->getMessage()), $e->getCode(), $e);
         } finally {
@@ -74,11 +72,11 @@ final class S3StorageRepository implements StorageRepositoryInterface
         }
     }
 
-    public function delete(string $path): void
+    public function delete(PathVO $path): void
     {
         $this->getClient()->deleteObject([
             'Bucket' => $this->parameterBag->get('s3.bucketName'),
-            'Key' => $path,
+            'Key' => $path->getPath(),
         ]);
     }
 
@@ -89,7 +87,7 @@ final class S3StorageRepository implements StorageRepositoryInterface
             'Bucket' => $this->parameterBag->get('s3.bucketName'),
             'Delete' => [
                 'Objects' => \array_map(
-                    static fn(string $key): array => ['Key' => $key],
+                    static fn(PathVO $key): array => ['Key' => $key->getPath()],
                     $paths
                 ),
             ],
@@ -134,11 +132,11 @@ final class S3StorageRepository implements StorageRepositoryInterface
         return $this->client;
     }
 
-    public function isExists(string $path): bool
+    public function isExists(PathVO $path): bool
     {
         return $this->getClient()->doesObjectExist(
             $this->parameterBag->get('s3.bucketName'),
-            $path
+            $path->getPath()
         );
     }
 }

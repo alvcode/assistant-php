@@ -7,6 +7,7 @@ namespace App\Layer\Domain\Service\Utils;
 use App\Layer\Domain\Exception\Utils\FailedCreateTempFileException;
 use App\Layer\Domain\Exception\Utils\FailedDecryptionFileException;
 use App\Layer\Domain\Exception\Utils\FailedEncryptionFileException;
+use App\Layer\Domain\ValueObject\PathVO;
 use App\Layer\Domain\ValueObject\SplFileInfoVO;
 use SplFileInfo;
 
@@ -22,15 +23,17 @@ interface FileUtilsInterface
     function getExtensionByName(string $filename): string;
 
     /** @throws FailedEncryptionFileException */
-    public function encryptFile(SplFileInfo $source, string $key): SplFileInfo;
+    public function encryptFile(SplFileInfo $source, string $key): SplFileInfoVO;
 
     /** @throws FailedDecryptionFileException */
     public function decryptFile(SplFileInfo $source, string $key): SplFileInfoVO;
 
     /** @throws FailedCreateTempFileException */
-    public function createTempFile(): string;
+    public function createTempFile(): SplFileInfoVO;
 
-    public function createArchive(string $sourcePath, string $destinationPath): void;
+    public function createArchive(PathVO $sourcePath, PathVO $destinationPath): void;
 
-    public function unlinkPath(string $path): void;
+    public function unlinkPath(PathVO $path): void;
+
+    public function isPathExists(PathVO $path): bool;
 }

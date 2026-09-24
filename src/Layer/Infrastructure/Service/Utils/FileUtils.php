@@ -9,7 +9,9 @@ use App\Layer\Domain\Exception\Utils\FailedDecryptionFileException;
 use App\Layer\Domain\Exception\Utils\FailedEncryptionFileException;
 use App\Layer\Domain\Service\Utils\FileUtilsInterface;
 use App\Layer\Domain\Service\Utils\HasherServiceInterface;
+use App\Layer\Domain\ValueObject\PathVO;
 use App\Layer\Domain\ValueObject\SplFileInfoVO;
+use App\Layer\Infrastructure\Repository\ConfigRepository;
 use Exception;
 use FilesystemIterator;
 use RecursiveDirectoryIterator;
@@ -24,6 +26,7 @@ final readonly class FileUtils implements FileUtilsInterface
     public function __construct(
         private HasherServiceInterface $hasherService,
         private Filesystem $filesystem,
+        private ConfigRepository $configRepository,
     ) {}
 
     public function generateNewFilename(string $extension): string
@@ -70,17 +73,17 @@ final readonly class FileUtils implements FileUtilsInterface
     public function encryptFile(
         SplFileInfo $source,
         string $key
-    ): SplFileInfo {
+    ): SplFileInfoVO {
         $key = sodium_crypto_generichash(
             $key,
             '',
             SODIUM_CRYPTO_SECRETSTREAM_XCHACHA20POLY1305_KEYBYTES
         );
 
-        $destinationPath = $this->createTempFile();
+        $destinationFile = $this->createTempFile();
 
         $input = fopen($source->getPathname(), 'rb');
-        $output = fopen($destinationPath, 'wb');
+        $output = fopen($destinationFile->getFile()->getPathname(), 'wb');
 
         if ($input === false || $output === false) {
             throw new FailedEncryptionFileException('Ошибка открытия файла');
@@ -121,7 +124,7 @@ final readonly class FileUtils implements FileUtilsInterface
             fclose($output);
         }
 
-        return new SplFileInfo($destinationPath);
+        return $destinationFile;
     }
 
     /**
@@ -139,10 +142,10 @@ final readonly class FileUtils implements FileUtilsInterface
             SODIUM_CRYPTO_SECRETSTREAM_XCHACHA20POLY1305_KEYBYTES
         );
 
-        $destinationPath = $this->createTempFile();
+        $destinationFile = $this->createTempFile();
 
         $input = fopen($source->getPathname(), 'rb');
-        $output = fopen($destinationPath, 'wb');
+        $output = fopen($destinationFile->getFile()->getPathname(), 'wb');
 
         if ($input === false || $output === false) {
             throw new FailedDecryptionFileException('Ошибка открытия файла');
@@ -216,13 +219,13 @@ final readonly class FileUtils implements FileUtilsInterface
             fclose($input);
             fclose($output);
         }
-        return new SplFileInfoVO(file: new SplFileInfo($destinationPath), isTemporary: true);
+        return $destinationFile;
     }
 
     /**
      * @inheritDoc
      */
-    public function createTempFile(): string
+    public function createTempFile(): SplFileInfoVO
     {
         $path = tempnam(sys_get_temp_dir(), 'file_utils_');
         register_shutdown_function(function() use ($path) {
@@ -233,11 +236,19 @@ final readonly class FileUtils implements FileUtilsInterface
         if ($path === false) {
             throw new FailedCreateTempFileException('Не удалось создать временный файл');
         }
-        return $path;
+        return new SplFileInfoVO(file: new SplFileInfo($path), isTemporary: true);
     }
 
-    public function createArchive(string $sourcePath, string $destinationPath): void
+    public function createArchive(PathVO $sourcePath, PathVO $destinationPath): void
     {
+        $sourcePath = $sourcePath->isAbsolute() ? $sourcePath->getPath() : $this->pathJoin(
+            [$this->configRepository->getProjectDir(), $sourcePath->getPath()],
+            true
+        );
+        $destinationPath = $destinationPath->isAbsolute() ? $destinationPath->getPath() : $this->pathJoin(
+            [$this->configRepository->getProjectDir(), $destinationPath->getPath()],
+            true
+        );
         $zip = new ZipArchive();
         $zip->open($destinationPath, ZipArchive::CREATE | ZipArchive::OVERWRITE);
 
@@ -259,32 +270,22 @@ final readonly class FileUtils implements FileUtilsInterface
         $zip->close();
     }
 
-    public function unlinkPath(string $path): void
+    public function unlinkPath(PathVO $path): void
     {
-        $this->filesystem->remove($path);
-//        if (!file_exists($path) && !is_link($path)) {
-//            return;
-//        }
-//
-//        if (is_dir($path) && !is_link($path)) {
-//            $items = new RecursiveIteratorIterator(
-//                new RecursiveDirectoryIterator($path, FilesystemIterator::SKIP_DOTS),
-//                RecursiveIteratorIterator::CHILD_FIRST
-//            );
-//
-//            foreach ($items as $item) {
-//                if ($item->isDir()) {
-//                    rmdir($item->getPathname());
-//                } else {
-//                    unlink($item->getPathname());
-//                }
-//            }
-//
-//            rmdir($path);
-//
-//            return;
-//        }
-//
-//        unlink($path);
+        $link = $path->isAbsolute() ? $path->getPath() : $this->pathJoin(
+            [$this->configRepository->getProjectDir(), $path->getPath()],
+            true
+        );
+
+        $this->filesystem->remove($link);
+    }
+
+    public function isPathExists(PathVO $path): bool
+    {
+        $link = $path->isAbsolute() ? $path->getPath() : $this->pathJoin(
+            [$this->configRepository->getProjectDir(), $path->getPath()],
+            true
+        );
+        return $this->filesystem->exists($link);
     }
 }

@@ -6,6 +6,7 @@ namespace App\Layer\Application\UseCase\DriveArchive;
 
 use App\Layer\Application\Exception\DriveArchive\DriveArchiveJobNotFoundException;
 use App\Layer\Application\Exception\DriveArchive\DriveArchiveNotCompletedJobException;
+use App\Layer\Application\Exception\DriveArchive\DriveArchiveRemoveException;
 use App\Layer\Domain\Dict\Drive\DriveArchiveJobStatusEnum;
 use App\Layer\Domain\Repository\DriveArchiveRepositoryInterface;
 use App\Layer\Domain\Service\Utils\FileUtilsInterface;
@@ -34,6 +35,9 @@ final readonly class DriveArchiveRemoveUseCase
 
         $chunksPath = $this->driveArchiveRepository->getSaveChunksPath($driveArchiveJobEntity->getId());
         $this->fileUtils->unlinkPath($chunksPath);
+        if ($this->fileUtils->isPathExists($chunksPath)) {
+            throw new DriveArchiveRemoveException('Не удалось удалить папку с архивом');
+        }
 
         $driveArchiveJobEntity->setDeleted();
         $this->driveArchiveRepository->save($driveArchiveJobEntity);

@@ -7,13 +7,11 @@ namespace App\Layer\Application\UseCase\DriveArchive;
 use App\Layer\Application\Exception\DriveArchive\DriveArchiveJobNotFoundException;
 use App\Layer\Domain\Dict\Common\FileSizeTypeEnum;
 use App\Layer\Domain\Entity\DriveArchiveFileChunkEntity;
-use App\Layer\Domain\Repository\ConfigRepositoryInterface;
 use App\Layer\Domain\Repository\DriveArchiveFileChunkRepositoryInterface;
 use App\Layer\Domain\Repository\DriveArchiveRepositoryInterface;
 use App\Layer\Domain\Service\Drive\CreationFolderStructService;
 use App\Layer\Domain\Service\Drive\SplitFileIntoChunksService;
 use App\Layer\Domain\Service\Factory\Drive\DriveArchiveFactory;
-use App\Layer\Domain\Service\Factory\Storage\StorageRepositoryFactoryInterface;
 use App\Layer\Domain\Service\Utils\FileUtilsInterface;
 use App\Layer\Domain\ValueObject\FileSizeVO;
 use Exception;
@@ -27,8 +25,6 @@ final readonly class DriveArchiveCreateUseCase
         private DriveArchiveFileChunkRepositoryInterface $driveArchiveFileChunkRepository,
         private CreationFolderStructService $creationFolderStructService,
         private SplitFileIntoChunksService $splitFileIntoChunksService,
-        private ConfigRepositoryInterface $configRepository,
-        private StorageRepositoryFactoryInterface $storageRepositoryFactory,
     ) {}
 
     /**
@@ -64,14 +60,8 @@ final readonly class DriveArchiveCreateUseCase
         $archivePath = $this->driveArchiveRepository->getSaveArchivePath($driveArchiveJobEntity->getId());
         try {
             $this->fileUtils->createArchive(
-                sourcePath: $this->fileUtils->pathJoin(
-                    [$this->configRepository->getProjectDir(), $workDirectoryPath],
-                    true
-                ),
-                destinationPath: $this->fileUtils->pathJoin(
-                    [$this->configRepository->getProjectDir(), $archivePath],
-                    true
-                )
+                sourcePath: $workDirectoryPath,
+                destinationPath: $archivePath
             );
 
             $driveArchiveFileEntity = $this->driveArchiveRepository->getFileByJobId($driveArchiveJobEntity->getId())
@@ -79,31 +69,25 @@ final readonly class DriveArchiveCreateUseCase
                     $this->driveArchiveFactory->getNewDriveArchiveFile($driveArchiveJobEntity->getId())
                 );
         } catch (Exception $e) {
-            $this->storageRepositoryFactory->getLocalStorage()->delete($workDirectoryPath);
-            $this->storageRepositoryFactory->getLocalStorage()->delete($archivePath);
+            $this->fileUtils->unlinkPath($workDirectoryPath);
+            $this->fileUtils->unlinkPath($archivePath);
             $driveArchiveJobEntity->setFailed($e->getMessage());
             $driveArchiveJobEntity->setFinished();
             $this->driveArchiveRepository->save($driveArchiveJobEntity);
             throw $e;
         }
 
-        $this->storageRepositoryFactory->getLocalStorage()->delete($workDirectoryPath);
+        $this->fileUtils->unlinkPath($workDirectoryPath);
 
         // разбиваем архив на чанки
         $chunksPath = $this->driveArchiveRepository->getSaveChunksPath($driveArchiveJobEntity->getId());
-        $this->storageRepositoryFactory->getLocalStorage()->delete($chunksPath);
+        $this->fileUtils->unlinkPath($chunksPath);
         $this->driveArchiveFileChunkRepository->deleteByDriveArchiveFileId($driveArchiveFileEntity->getId());
-
-        // TODO: разобраться с абсолютными путями. В коде оперируем только относительными. Где-то в конечной точке делаем
-        // подстановку
 
         $totalSize = 0;
         try {
             foreach ($this->splitFileIntoChunksService->handle(
-                filePath: $this->fileUtils->pathJoin(
-                    [$this->configRepository->getProjectDir(), $archivePath],
-                    true
-                ),
+                filePath: $archivePath,
                 savePath: $chunksPath,
             ) as $driveFileChunkVO) {
                 $this->driveArchiveFileChunkRepository->save(

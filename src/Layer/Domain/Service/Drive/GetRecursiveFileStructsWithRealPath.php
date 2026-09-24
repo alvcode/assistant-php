@@ -25,13 +25,13 @@ final readonly class GetRecursiveFileStructsWithRealPath
     ) {}
 
     /** @return Generator<DriveStructWithRealPathAggregate> */
-    public function service(int $userId, int $structId, string $basePath): Generator
+    public function service(int $userId, int $structId, PathVO $basePath): Generator
     {
         $structEntity = $this->driveStructRepository->getById($structId, false);
         if ($structEntity->getType() === DriveStructTypeEnum::File) {
             yield new DriveStructWithRealPathAggregate(
                 driveStructEntity: $structEntity,
-                realPath: new PathVO($this->fileUtils->pathJoin([$basePath, $structEntity->getName()]))
+                realPath: new PathVO($this->fileUtils->pathJoin([$basePath->getPath(), $structEntity->getName()]))
             );
         } else {
             $tree = $this->driveStructRepository->getTreeByUserID($userId, $structId);
@@ -41,7 +41,7 @@ final readonly class GetRecursiveFileStructsWithRealPath
                         driveStructEntity: $this->driveStructRepository->getById($treeStructEntity->id, false),
                         realPath: new PathVO(
                             $this->fileUtils->pathJoin([
-                                $basePath,
+                                $basePath->getPath(),
                                 $structEntity->getName(),
                                 $treeStructEntity->name
                             ])
@@ -51,10 +51,12 @@ final readonly class GetRecursiveFileStructsWithRealPath
                     yield from $this->service(
                         $userId,
                         $treeStructEntity->id,
-                        $this->fileUtils->pathJoin([
-                            $basePath,
-                            $structEntity->getName(),
-                        ])
+                        new PathVO(
+                            $this->fileUtils->pathJoin([
+                                $basePath->getPath(),
+                                $structEntity->getName(),
+                            ])
+                        )
                     );
                 }
             }

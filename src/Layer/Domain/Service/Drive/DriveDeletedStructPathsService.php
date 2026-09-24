@@ -8,6 +8,7 @@ use App\Layer\Domain\Repository\ConfigRepositoryInterface;
 use App\Layer\Domain\Repository\DriveFileChunkRepositoryInterface;
 use App\Layer\Domain\Repository\DriveFileRepositoryInterface;
 use App\Layer\Domain\Service\Utils\FileUtilsInterface;
+use App\Layer\Domain\ValueObject\PathVO;
 
 final readonly class DriveDeletedStructPathsService
 {
@@ -18,7 +19,7 @@ final readonly class DriveDeletedStructPathsService
         private DriveFileRepositoryInterface $driveFileRepository,
     ) {}
 
-    /** @return string[] */
+    /** @return PathVO[] */
     public function getPathsForDelete(int $structId, int $userId, bool $forRecycleBin): array
     {
         $deletePaths = [];
@@ -30,7 +31,7 @@ final readonly class DriveDeletedStructPathsService
         );
 
         foreach ($deleteChunkEntityList as $driveFileChunkEntity) {
-            $deletePaths[] = $this->fileUtils->pathJoin([$baseSavePath, $driveFileChunkEntity->getPath()]);
+            $deletePaths[] = new PathVO($this->fileUtils->pathJoin([$baseSavePath, $driveFileChunkEntity->getPath()]));
         }
         unset($deleteChunkEntityList);
 
@@ -41,7 +42,7 @@ final readonly class DriveDeletedStructPathsService
         );
         foreach ($deleteFileEntityList as $driveFileEntity) {
             if (!$driveFileEntity->isChunk()) {
-                $deletePaths[] = $this->fileUtils->pathJoin([$baseSavePath, $driveFileEntity->getPath()]);
+                $deletePaths[] = new PathVO($this->fileUtils->pathJoin([$baseSavePath, $driveFileEntity->getPath()]));
             }
         }
         unset($deleteFileEntityList);

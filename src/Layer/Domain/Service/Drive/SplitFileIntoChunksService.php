@@ -7,6 +7,7 @@ namespace App\Layer\Domain\Service\Drive;
 use App\Layer\Domain\Dict\Common\FileSizeTypeEnum;
 use App\Layer\Domain\Exception\Common\FileFopenException;
 use App\Layer\Domain\Exception\Common\FileFreadException;
+use App\Layer\Domain\Repository\ConfigRepositoryInterface;
 use App\Layer\Domain\Repository\DTO\Storage\SaveFileDTO;
 use App\Layer\Domain\Service\Factory\Storage\StorageRepositoryFactoryInterface;
 use App\Layer\Domain\Service\Utils\FileUtilsInterface;
@@ -27,6 +28,7 @@ final readonly class SplitFileIntoChunksService
     public function __construct(
         private FileUtilsInterface $fileUtils,
         private StorageRepositoryFactoryInterface $storageRepositoryFactory,
+        private ConfigRepositoryInterface $configRepository,
     ) {}
 
     /**
@@ -34,8 +36,12 @@ final readonly class SplitFileIntoChunksService
      * @throws FileFopenException
      * @throws FileFreadException
      */
-    public function handle(string $filePath, string $savePath): Generator
+    public function handle(PathVO $filePath, PathVO $savePath): Generator
     {
+        $filePath = $filePath->isAbsolute() ? $filePath->getPath() : $this->fileUtils->pathJoin(
+            [$this->configRepository->getProjectDir(), $filePath->getPath()],
+            true
+        );
         $input = fopen($filePath, 'rb');
         if ($input === false) {
             throw new FileFopenException('Не удалось открыть архив для чтения');
@@ -45,8 +51,8 @@ final readonly class SplitFileIntoChunksService
 
         try {
             while (!feof($input)) {
-                $chunkTempPath = $this->fileUtils->createTempFile();
-                $output = fopen($chunkTempPath, 'wb');
+                $chunkTempFile = $this->fileUtils->createTempFile();
+                $output = fopen($chunkTempFile->getFile()->getPathname(), 'wb');
                 if ($output === false) {
                     throw new FileFopenException('Не удалось создать чанк архива');
                 }
@@ -69,22 +75,22 @@ final readonly class SplitFileIntoChunksService
                 }
 
                 if ($chunkSize === 0) {
-                    unlink($chunkTempPath);
+                    $chunkTempFile->unlinkIfTemporary();
                     break;
                 }
 
                 $chunkSavePath = $this->fileUtils->pathJoin([
-                    $savePath,
+                    $savePath->getPath(),
                     $this->fileUtils->generateNewFilename(sprintf('archive_part_%d', $chunkNumber)),
                 ]);
 
                 $this->storageRepositoryFactory->getLocalStorage()->save(
                     new SaveFileDTO(
-                        file: new SplFileInfo($chunkTempPath),
-                        savePath: $chunkSavePath,
+                        file: $chunkTempFile->getFile(),
+                        savePath: new PathVO($chunkSavePath),
                     )
                 );
-                unlink($chunkTempPath);
+                $chunkTempFile->unlinkIfTemporary();
 
                 $result = new DriveFileChunkVO(
                     path: new PathVO($chunkSavePath),

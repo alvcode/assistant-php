@@ -19,6 +19,7 @@ use App\Layer\Domain\Repository\DTO\Storage\SaveFileDTO;
 use App\Layer\Domain\Service\Factory\Storage\StorageRepositoryFactoryInterface;
 use App\Layer\Domain\Service\Utils\FileUtilsInterface;
 use App\Layer\Domain\ValueObject\FileSizeVO;
+use App\Layer\Domain\ValueObject\PathVO;
 
 final readonly class DriveChunkUploadUseCase
 {
@@ -55,7 +56,7 @@ final readonly class DriveChunkUploadUseCase
             $fileForSave = $this->fileUtils->encryptFile(
                 source: $file->getFile(),
                 key: $this->configRepository->getFileEncryptionKey()
-            );
+            )->getFile();
         } else {
             $fileForSave = $file->getFile();
         }
@@ -81,7 +82,7 @@ final readonly class DriveChunkUploadUseCase
         $this->storageRepositoryFactory->getRepository()->save(
             new SaveFileDTO(
                 file: $fileForSave,
-                savePath: $fullFilePath
+                savePath: new PathVO($fullFilePath)
             )
         );
 
@@ -90,7 +91,7 @@ final readonly class DriveChunkUploadUseCase
                 id: null,
                 driveFileId: $driveFileEntity->getId(),
                 path: $middleFilePath,
-                size: new FileSizeVO(size: $file->getFile()->getSize(), sizeType: FileSizeTypeEnum::Bytes),
+                size: new FileSizeVO(size: (float)$file->getFile()->getSize(), sizeType: FileSizeTypeEnum::Bytes),
                 chunkNumber: $in->chunkNumber
             )
         );

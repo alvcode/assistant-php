@@ -13,6 +13,7 @@ use App\Layer\Domain\Repository\DriveFileRepositoryInterface;
 use App\Layer\Domain\Repository\DriveStructRepositoryInterface;
 use App\Layer\Domain\Service\Factory\Storage\StorageRepositoryFactoryInterface;
 use App\Layer\Domain\Service\Utils\FileUtilsInterface;
+use App\Layer\Domain\ValueObject\PathVO;
 use App\Layer\Domain\ValueObject\SplFileInfoVO;
 use Exception;
 use SplFileInfo;
@@ -59,8 +60,8 @@ final readonly class DriveAssembleChunkedFileService
             static fn($left, $right): int => $left->getChunkNumber() <=> $right->getChunkNumber()
         );
 
-        $tempPath = $this->fileUtils->createTempFile();
-        $output = fopen($tempPath, 'wb');
+        $tempFile = $this->fileUtils->createTempFile();
+        $output = fopen($tempFile->getFile()->getPathname(), 'wb');
         if ($output === false) {
             throw new Exception('Ошибка открытия временного файла');
         }
@@ -72,7 +73,7 @@ final readonly class DriveAssembleChunkedFileService
                     $chunk->getPath()
                 ]);
 
-                $chunkFile = $this->storageRepositoryFactory->getRepository()->getFile($fullFilePath);
+                $chunkFile = $this->storageRepositoryFactory->getRepository()->getFile(new PathVO($fullFilePath));
 
                 if ($this->configRepository->useFileEncryption()) {
                     $chunkFileDecrypted = $this->fileUtils->decryptFile(
@@ -84,12 +85,13 @@ final readonly class DriveAssembleChunkedFileService
                 }
 
                 $this->appendFile($chunkFile->getFile(), $output);
+                $chunkFile->unlinkIfTemporary();
             }
         } finally {
             fclose($output);
         }
 
-        return new SplFileInfoVO(file: new SplFileInfo($tempPath), isTemporary: true);
+        return $tempFile;
     }
 
     /** @param resource $output
