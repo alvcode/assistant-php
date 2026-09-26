@@ -42,4 +42,5 @@ return [
     'error_drive_archive_job_not_found' => 'Задание на архивацию не найдено',
     'error_drive_archive_job_not_found_files' => 'Для создания архива нужен по крайней мере один файл',
     'error_drive_archive_not_completed_job' => 'Задание на архивацию не является завершенным',
+    'error_drive_archive_file_not_found' => 'Файл архива не найден',
 ];

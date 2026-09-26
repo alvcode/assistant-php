@@ -8,11 +8,14 @@ use App\Attribute\NeedAuth;
 use App\Entity\UserEntity;
 use App\Infrastructure\Lang;
 use App\Layer\Application\Exception\Drive\DriveStructNotFoundException;
+use App\Layer\Application\Exception\DriveArchive\DriveArchiveJobNotFoundException;
 use App\Layer\Application\UseCase\DriveArchive\DriveArchiveGetActiveJobUseCase;
+use App\Layer\Application\UseCase\DriveArchive\DriveArchiveGetChunksInfoUseCase;
 use App\Layer\Application\UseCase\DriveArchive\DriveArchiveRemoveUseCase;
 use App\Layer\Application\UseCase\DriveArchive\DriveArchiveRequestForCreationUseCase;
 use App\Layer\Domain\Exception\AbstractLogicException;
 use App\Request\DriveArchive\DriveArchiveCreateRequest;
+use App\Response\Drive\DriveChunksInfoResponse;
 use App\Response\DriveArchive\DriveArchiveJobResponse;
 use App\Security\BlockEvent\BlockEventService;
 use App\Security\BlockEvent\BlockEventTypeEnum;
@@ -94,5 +97,39 @@ final class DriveArchiveController extends AbstractController
         } catch (AbstractLogicException $e) {
             throw new UnprocessableEntityHttpException(Lang::t($e->getErrorKey()));
         }
+    }
+
+    #[Route(path: '/api/drive-archive/{id}/chunks-info', name: 'drive_archive.get_chunks_info', methods: ['GET'])]
+    #[NeedAuth]
+    public function chunksInfo(int $id, Request $request, DriveArchiveGetChunksInfoUseCase $useCase): JsonResponse
+    {
+        /** @var UserEntity $user */
+        $user = $this->getUser();
+
+        try {
+            $info = $useCase->handle($id, $user->id);
+
+            return new JsonResponse(
+                new DriveChunksInfoResponse(start_number: $info->startNumber, end_number: $info->endNumber),
+                Response::HTTP_OK
+            );
+        } catch (AbstractLogicException $e) {
+            if ($e instanceof DriveArchiveJobNotFoundException) {
+                $this->blockEventService->setEvent($request, BlockEventTypeEnum::BruteForce);
+            }
+            throw new UnprocessableEntityHttpException(Lang::t($e->getErrorKey()));
+        }
+    }
+
+    #[Route(
+        path: '/api/drive-archive/files/{id}/chunks/{chunkNumber}',
+        name: 'drive_archive.get_chunk_by_number',
+        methods: ['GET'])
+    ]
+    #[NeedAuth]
+    public function getChunkByNumber()
+    {
+        /** @var UserEntity $user */
+        $user = $this->getUser();
     }
 }

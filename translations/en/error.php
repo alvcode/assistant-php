@@ -42,4 +42,5 @@ return [
     'error_drive_archive_job_not_found' => 'Archiving task not found',
     'error_drive_archive_job_not_found_files' => 'At least one file is required to create an archive',
     'error_drive_archive_not_completed_job' => 'The archiving task did not complete',
+    'error_drive_archive_file_not_found' => 'Archive file not found',
 ];
