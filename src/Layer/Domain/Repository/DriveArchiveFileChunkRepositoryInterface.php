@@ -14,4 +14,6 @@ interface DriveArchiveFileChunkRepositoryInterface
     public function deleteByDriveArchiveFileId(int $driveArchiveFileId): void;
 
     public function getChunksInfo(int $driveArchiveFileId): DriveChunksInfoDTO;
+
+    public function getByFileIdAndChunkNumber(int $fileId, int $chunkNumber): ?DriveArchiveFileChunkEntity;
 }

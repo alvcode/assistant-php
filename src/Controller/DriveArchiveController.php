@@ -10,6 +10,7 @@ use App\Infrastructure\Lang;
 use App\Layer\Application\Exception\Drive\DriveStructNotFoundException;
 use App\Layer\Application\Exception\DriveArchive\DriveArchiveJobNotFoundException;
 use App\Layer\Application\UseCase\DriveArchive\DriveArchiveGetActiveJobUseCase;
+use App\Layer\Application\UseCase\DriveArchive\DriveArchiveGetChunkByNumberUseCase;
 use App\Layer\Application\UseCase\DriveArchive\DriveArchiveGetChunksInfoUseCase;
 use App\Layer\Application\UseCase\DriveArchive\DriveArchiveRemoveUseCase;
 use App\Layer\Application\UseCase\DriveArchive\DriveArchiveRequestForCreationUseCase;
@@ -21,9 +22,11 @@ use App\Security\BlockEvent\BlockEventService;
 use App\Security\BlockEvent\BlockEventTypeEnum;
 use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 
@@ -127,9 +130,26 @@ final class DriveArchiveController extends AbstractController
         methods: ['GET'])
     ]
     #[NeedAuth]
-    public function getChunkByNumber()
+    public function getChunkByNumber(
+        int $id,
+        int $chunkNumber,
+        DriveArchiveGetChunkByNumberUseCase $useCase
+    ): BinaryFileResponse
     {
         /** @var UserEntity $user */
         $user = $this->getUser();
+
+        try {
+            $fileDTO = $useCase->handle($id, $chunkNumber, $user->id);
+
+            $response = new BinaryFileResponse($fileDTO->getFile());
+            $response->setContentDisposition(
+                ResponseHeaderBag::DISPOSITION_ATTACHMENT,
+                $fileDTO->getOriginalName()
+            );
+            return $response;
+        } catch (AbstractLogicException $e) {
+            throw new UnprocessableEntityHttpException(Lang::t($e->getErrorKey()));
+        }
     }
 }

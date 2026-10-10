@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\Layer\Infrastructure\Repository;
 
+use App\Layer\Domain\Dict\Common\FileSizeTypeEnum;
 use App\Layer\Domain\Entity\DriveArchiveFileChunkEntity;
 use App\Layer\Domain\Repository\DriveArchiveFileChunkRepositoryInterface;
 use App\Layer\Domain\Repository\DTO\Drive\DriveChunksInfoDTO;
+use App\Layer\Domain\ValueObject\FileSizeVO;
+use App\Layer\Domain\ValueObject\PathVO;
 use Doctrine\ORM\EntityManagerInterface;
 
 final readonly class DriveArchiveFileChunkRepository implements DriveArchiveFileChunkRepositoryInterface
@@ -78,6 +81,32 @@ final readonly class DriveArchiveFileChunkRepository implements DriveArchiveFile
         return new DriveChunksInfoDTO(
             startNumber: $result['min_chunk_number'],
             endNumber: $result['max_chunk_number']
+        );
+    }
+
+    public function getByFileIdAndChunkNumber(int $fileId, int $chunkNumber): ?DriveArchiveFileChunkEntity
+    {
+        $query = "
+            select * from drive_archive_file_chunks where drive_archive_file_id = :file_id and chunk_number = :chunk_number
+        ";
+        $conn = $this->entityManager->getConnection();
+        $stmt = $conn->executeQuery($query, ['file_id' => $fileId, 'chunk_number' => $chunkNumber]);
+        $row = $stmt->fetchAssociative();
+        if (!$row) {
+            return null;
+        }
+        return $this->getEntityFromRaw($row);
+    }
+
+    /** @param array<string,mixed> $raw */
+    private function getEntityFromRaw(array $raw): DriveArchiveFileChunkEntity
+    {
+        return new DriveArchiveFileChunkEntity(
+            id: $raw['id'],
+            driveArchiveFileId: $raw['drive_archive_file_id'],
+            path: new PathVO($raw['path']),
+            size: new FileSizeVO($raw['size'], FileSizeTypeEnum::Bytes),
+            chunkNumber: $raw['chunk_number']
         );
     }
 }

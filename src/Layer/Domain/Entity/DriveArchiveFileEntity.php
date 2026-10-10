@@ -55,4 +55,14 @@ final class DriveArchiveFileEntity
     {
         $this->createdAt = $createdAt;
     }
+
+    public function getExtension(): string
+    {
+        return 'zip';
+    }
+
+    public function getFileName(): string
+    {
+        return sprintf("%s.%s", 'archive', $this->getExtension());
+    }
 }
