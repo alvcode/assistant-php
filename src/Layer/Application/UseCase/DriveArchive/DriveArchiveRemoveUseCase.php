@@ -8,7 +8,9 @@ use App\Layer\Application\Exception\DriveArchive\DriveArchiveJobNotFoundExceptio
 use App\Layer\Application\Exception\DriveArchive\DriveArchiveNotCompletedJobException;
 use App\Layer\Application\Exception\DriveArchive\DriveArchiveRemoveException;
 use App\Layer\Domain\Dict\Drive\DriveArchiveJobStatusEnum;
+use App\Layer\Domain\Repository\ClientNotificationRepositoryInterface;
 use App\Layer\Domain\Repository\DriveArchiveRepositoryInterface;
+use App\Layer\Domain\Service\Factory\ClientNotification\DriveArchiveClientNotificationFactory;
 use App\Layer\Domain\Service\Utils\FileUtilsInterface;
 use Exception;
 
@@ -17,6 +19,8 @@ final readonly class DriveArchiveRemoveUseCase
     public function __construct(
         private DriveArchiveRepositoryInterface $driveArchiveRepository,
         private FileUtilsInterface $fileUtils,
+        private DriveArchiveClientNotificationFactory $archiveClientNotificationFactory,
+        private ClientNotificationRepositoryInterface $clientNotificationRepository,
     ) {}
 
     /**
@@ -41,5 +45,9 @@ final readonly class DriveArchiveRemoveUseCase
 
         $driveArchiveJobEntity->setDeleted();
         $this->driveArchiveRepository->save($driveArchiveJobEntity);
+
+        $this->clientNotificationRepository->pushEvent(
+            $this->archiveClientNotificationFactory->getForDeleteArchive(userId: $userId, jobId: $driveArchiveJobId)
+        );
     }
 }

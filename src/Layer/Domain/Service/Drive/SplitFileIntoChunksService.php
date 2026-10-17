@@ -47,7 +47,7 @@ final readonly class SplitFileIntoChunksService
             throw new FileFopenException('Не удалось открыть архив для чтения');
         }
 
-        $chunkNumber = 1;
+        $chunkNumber = 0;
 
         try {
             while (!feof($input)) {

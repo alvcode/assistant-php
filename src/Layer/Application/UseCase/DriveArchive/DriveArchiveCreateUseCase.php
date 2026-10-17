@@ -7,10 +7,12 @@ namespace App\Layer\Application\UseCase\DriveArchive;
 use App\Layer\Application\Exception\DriveArchive\DriveArchiveJobNotFoundException;
 use App\Layer\Domain\Dict\Common\FileSizeTypeEnum;
 use App\Layer\Domain\Entity\DriveArchiveFileChunkEntity;
+use App\Layer\Domain\Repository\ClientNotificationRepositoryInterface;
 use App\Layer\Domain\Repository\DriveArchiveFileChunkRepositoryInterface;
 use App\Layer\Domain\Repository\DriveArchiveRepositoryInterface;
 use App\Layer\Domain\Service\Drive\CreationFolderStructService;
 use App\Layer\Domain\Service\Drive\SplitFileIntoChunksService;
+use App\Layer\Domain\Service\Factory\ClientNotification\DriveArchiveClientNotificationFactory;
 use App\Layer\Domain\Service\Factory\Drive\DriveArchiveFactory;
 use App\Layer\Domain\Service\Utils\FileUtilsInterface;
 use App\Layer\Domain\ValueObject\FileSizeVO;
@@ -25,6 +27,8 @@ final readonly class DriveArchiveCreateUseCase
         private DriveArchiveFileChunkRepositoryInterface $driveArchiveFileChunkRepository,
         private CreationFolderStructService $creationFolderStructService,
         private SplitFileIntoChunksService $splitFileIntoChunksService,
+        private DriveArchiveClientNotificationFactory $archiveClientNotificationFactory,
+        private ClientNotificationRepositoryInterface $clientNotificationRepository,
     ) {}
 
     /**
@@ -40,6 +44,13 @@ final readonly class DriveArchiveCreateUseCase
 
         $driveArchiveJobEntity->setProcessed();
         $this->driveArchiveRepository->save($driveArchiveJobEntity);
+
+        $this->clientNotificationRepository->pushEvent(
+            $this->archiveClientNotificationFactory->getForProcessedArchive(
+                userId: $driveArchiveJobEntity->getUserId(),
+                jobId: $driveArchiveJobEntity->getId()
+            )
+        );
 
         // Формируем реальную папку
         $workDirectoryPath = $this->driveArchiveRepository->getSaveStructsPath($driveArchiveJobEntity->getId());
@@ -120,5 +131,12 @@ final readonly class DriveArchiveCreateUseCase
         $driveArchiveJobEntity->setCompleted();
         $driveArchiveJobEntity->setFinished();
         $this->driveArchiveRepository->save($driveArchiveJobEntity);
+
+        $this->clientNotificationRepository->pushEvent(
+            $this->archiveClientNotificationFactory->getForCompletedArchive(
+                userId: $driveArchiveJobEntity->getUserId(),
+                jobId: $driveArchiveJobEntity->getId()
+            )
+        );
     }
 }

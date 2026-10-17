@@ -9,10 +9,12 @@ use App\Layer\Application\Exception\DriveArchive\DriveArchiveExistsActiveJobsExc
 use App\Layer\Application\Exception\DriveArchive\DriveArchiveJobNotFoundFilesException;
 use App\Layer\Domain\Dict\Drive\DriveArchiveJobStatusEnum;
 use App\Layer\Domain\Entity\DriveArchiveJobEntity;
+use App\Layer\Domain\Repository\ClientNotificationRepositoryInterface;
 use App\Layer\Domain\Repository\DriveArchiveRepositoryInterface;
 use App\Layer\Domain\Repository\DriveStructRepositoryInterface;
 use App\Layer\Domain\Repository\QueueRepositoryInterface;
 use App\Layer\Domain\Service\Drive\GetRecursiveFileStructsWithRealPath;
+use App\Layer\Domain\Service\Factory\ClientNotification\DriveArchiveClientNotificationFactory;
 use App\Layer\Domain\Service\Factory\Drive\DriveArchiveFactory;
 use App\Layer\Domain\ValueObject\PathVO;
 
@@ -24,6 +26,8 @@ final readonly class DriveArchiveRequestForCreationUseCase
         private DriveArchiveFactory $driveArchiveFactory,
         private QueueRepositoryInterface $queueRepository,
         private GetRecursiveFileStructsWithRealPath $getRecursiveFileStructsWithRealPath,
+        private DriveArchiveClientNotificationFactory $archiveClientNotificationFactory,
+        private ClientNotificationRepositoryInterface $clientNotificationRepository,
     ) {}
 
     /**
@@ -62,6 +66,13 @@ final readonly class DriveArchiveRequestForCreationUseCase
             $this->driveArchiveFactory->getNewDriveArchiveJob($userId, $structIds),
         );
         $this->queueRepository->pushDriveArchive($driveArchiveJobEntity->getId());
+
+        $this->clientNotificationRepository->pushEvent(
+            $this->archiveClientNotificationFactory->getForAddToQueueArchive(
+                userId: $userId,
+                jobId: $driveArchiveJobEntity->getId()
+            )
+        );
 
         return $driveArchiveJobEntity;
     }
