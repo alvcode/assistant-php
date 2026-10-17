@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Layer\Infrastructure\Repository;
 
+use App\Infrastructure\FormatDict;
 use App\Layer\Domain\Dict\Common\FileSizeTypeEnum;
 use App\Layer\Domain\Dict\Drive\DriveArchiveJobStatusEnum;
 use App\Layer\Domain\Entity\DriveArchiveFileEntity;
@@ -207,6 +208,36 @@ final readonly class DriveArchiveRepository implements DriveArchiveRepositoryInt
                 $driveArchiveJobId . '_chunks',
             ])
         );
+    }
+
+    /** @inheritDoc */
+    public function getJobsByStatusAndFinishedAt(
+        DriveArchiveJobStatusEnum $status,
+        \DateTimeImmutable $finishedAtStart,
+        \DateTimeImmutable $finishedAtEnd,
+    ): array
+    {
+        $query = "
+            select * from drive_archive_jobs daj
+            where
+            daj.status = :status and daj.finished_at >= :finished_at_start and daj.finished_at <= :finished_at_end
+        ";
+
+        $conn = $this->entityManager->getConnection();
+        $stmt = $conn->executeQuery(
+            $query,
+            [
+                'status' => $status->value,
+                'finished_at_start' => $finishedAtStart->format(FormatDict::DB_DATETIME),
+                'finished_at_end' => $finishedAtEnd->format(FormatDict::DB_DATETIME),
+            ]
+        );
+
+        $result = [];
+        foreach ($stmt->fetchAllAssociative() as $raw) {
+            $result[] = $this->getJobEntityFromRaw($raw);
+        }
+        return $result;
     }
 
     /** @param array<string,mixed> $raw */

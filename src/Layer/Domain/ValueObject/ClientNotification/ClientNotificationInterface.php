@@ -10,6 +10,7 @@ interface ClientNotificationInterface
 
     public function getEventKey(): string;
 
+    /** @return array<string,mixed>|null */
     public function getPayload(): ?array;
 
     public function getLifetimeSeconds(): int;

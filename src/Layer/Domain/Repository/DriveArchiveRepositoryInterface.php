@@ -7,6 +7,7 @@ namespace App\Layer\Domain\Repository;
 use App\Layer\Domain\Dict\Drive\DriveArchiveJobStatusEnum;
 use App\Layer\Domain\Entity\DriveArchiveFileEntity;
 use App\Layer\Domain\Entity\DriveArchiveJobEntity;
+use App\Layer\Domain\Service\Utils\DateTimeImmutable;
 use App\Layer\Domain\ValueObject\PathVO;
 
 interface DriveArchiveRepositoryInterface
@@ -32,4 +33,11 @@ interface DriveArchiveRepositoryInterface
     public function getSaveArchivePath(int $driveArchiveJobId): PathVO;
 
     public function getSaveChunksPath(int $driveArchiveJobId): PathVO;
+
+    /** @return DriveArchiveJobEntity[] */
+    public function getJobsByStatusAndFinishedAt(
+        DriveArchiveJobStatusEnum $status,
+        DateTimeImmutable $finishedAtStart,
+        DateTimeImmutable $finishedAtEnd,
+    ): array;
 }

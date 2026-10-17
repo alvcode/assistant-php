@@ -23,7 +23,8 @@ final readonly class CNArchiveStatusUpdateVO implements ClientNotificationInterf
         return 'archiveStatusUpdate';
     }
 
-    public function getPayload(): ?array
+    /** @inheritDoc */
+    public function getPayload(): array
     {
         return [
             'id' => $this->jobId,
