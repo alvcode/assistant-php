@@ -49,6 +49,7 @@ services:
             - ./:/var/www
         networks:
             - ast-network
+        user: "www-data"
         depends_on:
             - ast-db
 
