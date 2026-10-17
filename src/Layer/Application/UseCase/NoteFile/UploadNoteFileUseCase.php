@@ -15,6 +15,7 @@ use App\Layer\Domain\Repository\NoteFileRepositoryInterface;
 use App\Layer\Domain\Service\Factory\NoteFile\NoteFileFactory;
 use App\Layer\Domain\Service\Factory\Storage\StorageRepositoryFactoryInterface;
 use App\Layer\Domain\Service\Utils\FileUtilsInterface;
+use App\Layer\Domain\ValueObject\PathVO;
 
 final readonly class UploadNoteFileUseCase
 {
@@ -56,7 +57,7 @@ final readonly class UploadNoteFileUseCase
             $fileForSave = $this->fileUtils->encryptFile(
                 source: $file->getFile(),
                 key: $this->configRepository->getFileEncryptionKey()
-            );
+            )->getFile();
         } else {
             $fileForSave = $file->getFile();
         }
@@ -64,7 +65,7 @@ final readonly class UploadNoteFileUseCase
         $this->storageRepositoryFactory->getRepository()->save(
             new SaveFileDTO(
                 file: $fileForSave,
-                savePath: $fullFilePath
+                savePath: new PathVO($fullFilePath)
             )
         );
 

@@ -12,16 +12,6 @@ services:
         depends_on:
             - ast-app
 
-    ast-app:
-        build:
-            context: .
-            dockerfile: _docker/dev/fpm/Dockerfile
-        container_name: ast-app
-        volumes:
-            - ./:/var/www
-        networks:
-            - ast-network
-
     ast-db:
         image: postgres:18.3-bookworm
         container_name: ast-db
@@ -38,6 +28,29 @@ services:
         command: postgres -c config_file=/etc/postgresql/postgresql.conf
         networks:
             - ast-network
+
+    ast-app:
+        build:
+            context: .
+            dockerfile: _docker/dev/fpm/Dockerfile
+        container_name: ast-app
+        volumes:
+            - ./:/var/www
+        networks:
+            - ast-network
+
+    ast-messenger:
+        build:
+            context: .
+            dockerfile: _docker/dev/fpm/Dockerfile
+        container_name: ast-messenger
+        command: php bin/console messenger:consume async -vv
+        volumes:
+            - ./:/var/www
+        networks:
+            - ast-network
+        depends_on:
+            - ast-db
 
 networks:
     ast-network:

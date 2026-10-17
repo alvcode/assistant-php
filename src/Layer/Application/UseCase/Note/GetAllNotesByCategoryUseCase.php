@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Layer\Application\UseCase\Note;
 
 use App\Layer\Application\Exception\NoteCategory\NoteCategoryNotFoundException;
-use App\Layer\Domain\Entity\Aggregate\NoteListAggregate;
+use App\Layer\Domain\Entity\Aggregate\Note\NoteListAggregate;
 use App\Layer\Domain\Entity\NoteCategoryEntity;
 use App\Layer\Domain\Repository\NoteCategoryRepositoryInterface;
 use App\Layer\Domain\Repository\NoteRepositoryInterface;

@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Layer\Infrastructure\Repository;
 
 use App\Layer\Domain\Dict\Drive\DriveStructTypeEnum;
-use App\Layer\Domain\Entity\Aggregate\DriveRBOutdatedDeleteAggregate;
-use App\Layer\Domain\Entity\Aggregate\DriveRecycleBinAggregate;
+use App\Layer\Domain\Entity\Aggregate\Drive\DriveRBOutdatedDeleteAggregate;
+use App\Layer\Domain\Entity\Aggregate\Drive\DriveRecycleBinAggregate;
 use App\Layer\Domain\Entity\DriveRecycleBinEntity;
 use App\Layer\Domain\Repository\DriveRecycleBinRepositoryInterface;
 use App\Layer\Domain\ValueObject\PathVO;

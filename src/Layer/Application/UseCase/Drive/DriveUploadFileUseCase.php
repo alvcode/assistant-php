@@ -11,7 +11,7 @@ use App\Layer\Application\Exception\Drive\DriveFilesystemIsFullException;
 use App\Layer\Application\Service\TransactionManagerInterface;
 use App\Layer\Domain\Dict\Common\FileSizeTypeEnum;
 use App\Layer\Domain\Dict\Drive\DriveStructTypeEnum;
-use App\Layer\Domain\Entity\Aggregate\DriveFileSaveAggregate;
+use App\Layer\Domain\Entity\Aggregate\Drive\DriveFileSaveAggregate;
 use App\Layer\Domain\Exception\Storage\FailedStorageConfigurationException;
 use App\Layer\Domain\Exception\Utils\FailedEncryptionFileException;
 use App\Layer\Domain\Repository\ConfigRepositoryInterface;
@@ -23,6 +23,7 @@ use App\Layer\Domain\Service\Factory\Drive\DriveStructFactory;
 use App\Layer\Domain\Service\Factory\Storage\StorageRepositoryFactoryInterface;
 use App\Layer\Domain\Service\Utils\FileUtilsInterface;
 use App\Layer\Domain\ValueObject\FileSizeVO;
+use App\Layer\Domain\ValueObject\PathVO;
 
 final readonly class DriveUploadFileUseCase
 {
@@ -81,7 +82,7 @@ final readonly class DriveUploadFileUseCase
             $fileForSave = $this->fileUtils->encryptFile(
                 source: $file->getFile(),
                 key: $this->configRepository->getFileEncryptionKey()
-            );
+            )->getFile();
         } else {
             $fileForSave = $file->getFile();
         }
@@ -89,7 +90,7 @@ final readonly class DriveUploadFileUseCase
         $this->storageRepositoryFactory->getRepository()->save(
             new SaveFileDTO(
                 file: $fileForSave,
-                savePath: $fullFilePath
+                savePath: new PathVO($fullFilePath)
             )
         );
 
@@ -104,7 +105,7 @@ final readonly class DriveUploadFileUseCase
                         driveStructId: $driveStructEntity->getId(),
                         path: $middleFilePath,
                         ext: $file->getOriginalExtension(),
-                        size: new FileSizeVO($file->getFile()->getSize(), FileSizeTypeEnum::Bytes),
+                        size: new FileSizeVO((float)$file->getFile()->getSize(), FileSizeTypeEnum::Bytes),
                         isChunk: false,
                         sha256: $in->sha256
                     )

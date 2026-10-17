@@ -8,8 +8,10 @@ use App\Layer\Domain\Repository\ConfigRepositoryInterface;
 use App\Layer\Domain\Repository\DTO\Storage\SaveFileDTO;
 use App\Layer\Domain\Repository\StorageRepositoryInterface;
 use App\Layer\Domain\Service\Utils\FileUtilsInterface;
+use App\Layer\Domain\ValueObject\PathVO;
 use SplFileInfo;
 use Symfony\Component\Filesystem\Filesystem;
+use App\Layer\Domain\ValueObject\SplFileInfoVO;
 
 final readonly class LocalStorageRepository implements StorageRepositoryInterface
 {
@@ -21,33 +23,35 @@ final readonly class LocalStorageRepository implements StorageRepositoryInterfac
 
     public function save(SaveFileDTO $in): void
     {
+        $link = $in->getSavePath()->isAbsolute() ? $in->getSavePath()->getPath() : $this->fileUtils->pathJoin(
+            [$this->configRepository->getProjectDir(), $in->getSavePath()->getPath()],
+            true
+        );
         $this->filesystem->copy(
             $in->getFile()->getRealPath(),
-            $this->fileUtils->pathJoin(
-                [$this->configRepository->getProjectDir(), $in->getSavePath()],
-                true
-            ),
+            $link
         );
     }
 
-    public function getFile(string $path): SplFileInfo
+    public function getFile(PathVO $path): SplFileInfoVO
     {
-        return new SplFileInfo(
-            $this->fileUtils->pathJoin(
-                [$this->configRepository->getProjectDir(), $path],
-                true
-            ),
+        $link = $path->isAbsolute() ? $path->getPath() : $this->fileUtils->pathJoin(
+            [$this->configRepository->getProjectDir(), $path->getPath()],
+            true
+        );
+        return new SplFileInfoVO(
+            file: new SplFileInfo($link),
+            isTemporary: false
         );
     }
 
-    public function delete(string $path): void
+    public function delete(PathVO $path): void
     {
-        $this->filesystem->remove(
-            $this->fileUtils->pathJoin(
-                [$this->configRepository->getProjectDir(), $path],
-                true
-            )
+        $link = $path->isAbsolute() ? $path->getPath() : $this->fileUtils->pathJoin(
+            [$this->configRepository->getProjectDir(), $path->getPath()],
+            true
         );
+        $this->filesystem->remove($link);
     }
 
     /** @inheritDoc */
@@ -58,8 +62,12 @@ final readonly class LocalStorageRepository implements StorageRepositoryInterfac
         }
     }
 
-    public function isExists(string $path): bool
+    public function isExists(PathVO $path): bool
     {
-        return $this->filesystem->exists($path);
+        $link = $path->isAbsolute() ? $path->getPath() : $this->fileUtils->pathJoin(
+            [$this->configRepository->getProjectDir(), $path->getPath()],
+            true
+        );
+        return $this->filesystem->exists($link);
     }
 }

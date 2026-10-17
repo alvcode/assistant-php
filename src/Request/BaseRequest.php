@@ -38,6 +38,9 @@ class BaseRequest
         return empty($this->validation_errors);
     }
 
+    /**
+     * If the GET method is used, the request will be populated from query parameters; otherwise, from the request body.
+     */
     public function populateByRequest(Request $request): static
     {
         return $request->isMethod('GET')

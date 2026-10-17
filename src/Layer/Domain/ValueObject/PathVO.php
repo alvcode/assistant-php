@@ -10,6 +10,16 @@ final readonly class PathVO
         private string $path,
     ) {}
 
+    public function getPath(): string
+    {
+        return $this->path;
+    }
+
+    public function isAbsolute(): bool
+    {
+        return str_starts_with($this->path, '/');
+    }
+
     /** @return string[] */
     public function getAsArray(): array
     {

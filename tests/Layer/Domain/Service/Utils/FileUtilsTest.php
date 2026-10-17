@@ -59,23 +59,23 @@ final class FileUtilsTest extends KernelTestCase
         /** @var FileUtils $fileUtils */
         $fileUtils = self::getContainer()->get(FileUtils::class);
 
-        $tempPath = $fileUtils->createTempFile();
-        file_put_contents($tempPath, $content);
+        $tempFile = $fileUtils->createTempFile();
+        file_put_contents($tempFile->getFile()->getPathname(), $content);
 
-        $encryptedFile = $fileUtils->encryptFile(new \SplFileInfo($tempPath), 'key');
+        $encryptedFile = $fileUtils->encryptFile($tempFile->getFile(), 'key');
 
-        $this->assertFileExists($encryptedFile->getPathname());
+        $this->assertFileExists($encryptedFile->getFile()->getPathname());
 
         $this->assertNotEquals(
             $content,
-            file_get_contents($encryptedFile->getPathname())
+            file_get_contents($encryptedFile->getFile()->getPathname())
         );
 
-        $decryptedFile = $fileUtils->decryptFile($encryptedFile, 'key');
-        $this->assertFileExists($decryptedFile->getPathname());
+        $decryptedFile = $fileUtils->decryptFile($encryptedFile->getFile(), 'key');
+        $this->assertFileExists($decryptedFile->getFile()->getPathname());
         $this->assertEquals(
             $content,
-            file_get_contents($decryptedFile->getPathname())
+            file_get_contents($decryptedFile->getFile()->getPathname())
         );
     }
 

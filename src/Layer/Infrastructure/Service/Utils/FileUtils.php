@@ -9,14 +9,24 @@ use App\Layer\Domain\Exception\Utils\FailedDecryptionFileException;
 use App\Layer\Domain\Exception\Utils\FailedEncryptionFileException;
 use App\Layer\Domain\Service\Utils\FileUtilsInterface;
 use App\Layer\Domain\Service\Utils\HasherServiceInterface;
+use App\Layer\Domain\ValueObject\PathVO;
+use App\Layer\Domain\ValueObject\SplFileInfoVO;
+use App\Layer\Infrastructure\Repository\ConfigRepository;
 use Exception;
+use FilesystemIterator;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
 use SodiumException;
 use SplFileInfo;
+use Symfony\Component\Filesystem\Filesystem;
+use ZipArchive;
 
 final readonly class FileUtils implements FileUtilsInterface
 {
     public function __construct(
         private HasherServiceInterface $hasherService,
+        private Filesystem $filesystem,
+        private ConfigRepository $configRepository,
     ) {}
 
     public function generateNewFilename(string $extension): string
@@ -36,7 +46,7 @@ final readonly class FileUtils implements FileUtilsInterface
         return sprintf("%d/%d/", $dirLevel1+1, $dirLevel2+1);
     }
 
-    /** @param string[] $parts */
+    /** @inheritDoc */
     public function pathJoin(array $parts, bool $isAbsolute = false): string
     {
         $parts = array_map(
@@ -63,17 +73,17 @@ final readonly class FileUtils implements FileUtilsInterface
     public function encryptFile(
         SplFileInfo $source,
         string $key
-    ): SplFileInfo {
+    ): SplFileInfoVO {
         $key = sodium_crypto_generichash(
             $key,
             '',
             SODIUM_CRYPTO_SECRETSTREAM_XCHACHA20POLY1305_KEYBYTES
         );
 
-        $destinationPath = $this->createTempFile();
+        $destinationFile = $this->createTempFile();
 
         $input = fopen($source->getPathname(), 'rb');
-        $output = fopen($destinationPath, 'wb');
+        $output = fopen($destinationFile->getFile()->getPathname(), 'wb');
 
         if ($input === false || $output === false) {
             throw new FailedEncryptionFileException('Ошибка открытия файла');
@@ -114,7 +124,7 @@ final readonly class FileUtils implements FileUtilsInterface
             fclose($output);
         }
 
-        return new SplFileInfo($destinationPath);
+        return $destinationFile;
     }
 
     /**
@@ -125,17 +135,17 @@ final readonly class FileUtils implements FileUtilsInterface
     public function decryptFile(
         SplFileInfo $source,
         string $key
-    ): SplFileInfo {
+    ): SplFileInfoVO {
         $key = sodium_crypto_generichash(
             $key,
             '',
             SODIUM_CRYPTO_SECRETSTREAM_XCHACHA20POLY1305_KEYBYTES
         );
 
-        $destinationPath = $this->createTempFile();
+        $destinationFile = $this->createTempFile();
 
         $input = fopen($source->getPathname(), 'rb');
-        $output = fopen($destinationPath, 'wb');
+        $output = fopen($destinationFile->getFile()->getPathname(), 'wb');
 
         if ($input === false || $output === false) {
             throw new FailedDecryptionFileException('Ошибка открытия файла');
@@ -209,13 +219,13 @@ final readonly class FileUtils implements FileUtilsInterface
             fclose($input);
             fclose($output);
         }
-        return new SplFileInfo($destinationPath);
+        return $destinationFile;
     }
 
     /**
      * @inheritDoc
      */
-    public function createTempFile(): string
+    public function createTempFile(): SplFileInfoVO
     {
         $path = tempnam(sys_get_temp_dir(), 'file_utils_');
         register_shutdown_function(function() use ($path) {
@@ -226,6 +236,56 @@ final readonly class FileUtils implements FileUtilsInterface
         if ($path === false) {
             throw new FailedCreateTempFileException('Не удалось создать временный файл');
         }
-        return $path;
+        return new SplFileInfoVO(file: new SplFileInfo($path), isTemporary: true);
+    }
+
+    public function createArchive(PathVO $sourcePath, PathVO $destinationPath): void
+    {
+        $sourcePath = $sourcePath->isAbsolute() ? $sourcePath->getPath() : $this->pathJoin(
+            [$this->configRepository->getProjectDir(), $sourcePath->getPath()],
+            true
+        );
+        $destinationPath = $destinationPath->isAbsolute() ? $destinationPath->getPath() : $this->pathJoin(
+            [$this->configRepository->getProjectDir(), $destinationPath->getPath()],
+            true
+        );
+        $zip = new ZipArchive();
+        $zip->open($destinationPath, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+
+        $files = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($sourcePath, FilesystemIterator::SKIP_DOTS)
+        );
+
+        foreach ($files as $file) {
+            if ($file->isFile()) {
+                $localPath = substr(
+                    $file->getPathname(),
+                    strlen($sourcePath) + 1
+                );
+
+                $zip->addFile($file->getPathname(), $localPath);
+            }
+        }
+
+        $zip->close();
+    }
+
+    public function unlinkPath(PathVO $path): void
+    {
+        $link = $path->isAbsolute() ? $path->getPath() : $this->pathJoin(
+            [$this->configRepository->getProjectDir(), $path->getPath()],
+            true
+        );
+
+        $this->filesystem->remove($link);
+    }
+
+    public function isPathExists(PathVO $path): bool
+    {
+        $link = $path->isAbsolute() ? $path->getPath() : $this->pathJoin(
+            [$this->configRepository->getProjectDir(), $path->getPath()],
+            true
+        );
+        return $this->filesystem->exists($link);
     }
 }

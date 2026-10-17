@@ -1,4 +1,5 @@
-Создать папку "secrets" рядом с папкой проекта и скопировать туда .env.example 
+Создать папку "secrets" рядом с папкой проекта и скопировать туда 
+.env.example (один из вариантов, можно сделать любым другим способом) 
 изменив название на .env.prod и настроив под свои нужды
 ```
 - assistant-php
@@ -42,8 +43,13 @@ Set crontab
 #Deletes old backups, leaving the last 5
 40 5 * * * cd /var/www/assistant-php && make db-remove-old-backups
 
-#Cleans up stale records in the database
-0 4 25 * * cd /var/www/assistant-php && make cli-clean-db
+* * * * * cd /var/www/assistant-php && make cli-every-minute
+*/5 * * * * cd /var/www/assistant-php && make cli-every-five-minutes
+*/30 * * * * cd /var/www/assistant-php && make cli-every-thirty-minutes
+0 * * * * cd /var/www/assistant-php && make cli-every-hour
+0 4 * * * cd /var/www/assistant-php && make cli-every-day
+0 4 1 * * cd /var/www/assistant-php && make cli-every-month
+
 ```
 <br></br>
 

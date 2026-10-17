@@ -15,7 +15,9 @@ final readonly class DriveRenameStructUseCase
         private DriveStructRepositoryInterface $driveStructRepository,
     ) {}
 
-    /** @throws DriveStructNotFoundException */
+    /** @throws DriveStructNotFoundException
+     * @throws DriveNotSafeFilenameException
+     */
     public function handle(int $structId, string $newName, int $userId): void
     {
         $driveStructEntity = $this->driveStructRepository->getById($structId, false);

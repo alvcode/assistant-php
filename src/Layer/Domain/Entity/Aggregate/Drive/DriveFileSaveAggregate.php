@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Layer\Domain\Entity\Aggregate;
+namespace App\Layer\Domain\Entity\Aggregate\Drive;
 
 use App\Layer\Domain\Entity\DriveFileEntity;
 use App\Layer\Domain\Entity\DriveStructEntity;
@@ -11,7 +11,7 @@ final class DriveFileSaveAggregate
 {
     public function __construct(
         private DriveStructEntity $driveStruct,
-        private DriveFileEntity $driveFile, 
+        private DriveFileEntity $driveFile,
     ) {}
 
     public function getDriveStruct(): DriveStructEntity

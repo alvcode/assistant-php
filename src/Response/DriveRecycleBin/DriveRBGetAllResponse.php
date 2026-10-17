@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Response\DriveRecycleBin;
 
 use App\Infrastructure\FormatDict;
-use App\Layer\Domain\Entity\Aggregate\DriveRecycleBinAggregate;
+use App\Layer\Domain\Entity\Aggregate\Drive\DriveRecycleBinAggregate;
 
 final readonly class DriveRBGetAllResponse
 {

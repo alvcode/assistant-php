@@ -62,6 +62,11 @@ final readonly class ConfigRepository implements ConfigRepositoryInterface
         return $this->parameterBag->get('drive.savePath');
     }
 
+    public function getTempSavePath(): string
+    {
+        return $this->parameterBag->get('app.tempSavePath');
+    }
+
     /** @inheritDoc */
     public function getDriveUploadMaxSize(): int
     {

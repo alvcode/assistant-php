@@ -38,4 +38,10 @@ return [
     'error_file_too_large' => 'Файл слишком большой',
     'error_struct_is_not_chunk' => 'Структура не была загружена чанками',
     'error_drive_recycle_bin_not_found' => 'Запись корзины не найдена',
+    'error_drive_archive_exists_active_jobs' => 'Уже есть незавершенное задание на архивацию',
+    'error_drive_archive_job_not_found' => 'Задание на архивацию не найдено',
+    'error_drive_archive_job_not_found_files' => 'Для создания архива нужен по крайней мере один файл',
+    'error_drive_archive_not_completed_job' => 'Задание на архивацию не является завершенным',
+    'error_drive_archive_file_not_found' => 'Файл архива не найден',
+    'error_drive_archive_chunk_not_found' => 'Чанк архива не найден',
 ];

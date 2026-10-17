@@ -12,6 +12,7 @@ create-required:
 	sudo mkdir uploads
 	sudo chown -R www-data:www-data uploads
 	sudo chmod -R 755 uploads
+	docker exec -it ast-app php bin/console messenger:setup-transports
 
 # ========================================================= PROD ==========================================
 build-prod:
@@ -30,10 +31,43 @@ deploy:
 	make start-prod;
 	make clear-cache-prod;
 	make m;
+# ========================================================= Messenger ==========================================
+messenger-restart:
+	docker compose restart ast-messenger;
+
+messenger-failed:
+	docker exec -it ast-app bin/console messenger:failed:show;
+
+messenger-failed-remove:
+	docker exec -it ast-app bin/console messenger:failed:remove --all;
 
 # ========================================================= CLI ==========================================
 cli-clean-db:
 	docker exec -it ast-app bin/console service:clean-db;
+
+cli-clean-archive-jobs:
+	docker exec -it ast-app bin/console service:clean-archive-jobs
+
+cli-every-minute:
+	docker exec ast-app bin/console cron:every-minute
+
+cli-every-five-minutes:
+	docker exec ast-app bin/console cron:every-five-minutes
+
+cli-every-thirty-minutes:
+	docker exec ast-app bin/console cron:every-thirty-minutes
+
+cli-every-hour:
+	docker exec ast-app bin/console cron:every-hour
+
+cli-every-day:
+	docker exec ast-app bin/console cron:every-day;
+
+cli-every-month:
+	docker exec ast-app bin/console cron:every-month
+
+cli-test:
+	docker exec -it ast-app bin/console test;
 
 # ========================================================= migrations / entity ==========================================
 mc:
@@ -42,7 +76,7 @@ mc:
 m:
 	docker exec -it ast-app bin/console doctrine:migrations:migrate
 
-mr:
+mr: # откат последней миграции
 	docker exec -it ast-app bin/console doctrine:migrations:migrate prev
 
 md:

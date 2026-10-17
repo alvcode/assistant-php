@@ -3,6 +3,7 @@
 namespace App\Command\User;
 
 use App\Layer\Application\DTO\User\LoginAndPasswordDTO;
+use App\Layer\Application\Exception\User\UserNotFoundException;
 use App\Layer\Application\UseCase\User\UserResetPasswordWithoutCurrentUseCase;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -30,6 +31,9 @@ class UserResetPasswordCommand extends Command
         ->addArgument('password', InputArgument::REQUIRED, 'New user password');
     }
 
+    /**
+     * @throws UserNotFoundException
+     */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
