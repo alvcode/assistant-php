@@ -37,6 +37,8 @@ services:
             - ./:/var/www
         env_file:
             - ./../secrets/.env.prod
+        networks:
+            - ast-network
         restart: always
 
     ast-db:
