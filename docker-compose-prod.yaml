@@ -39,6 +39,7 @@ services:
             - ./../secrets/.env.prod
         networks:
             - ast-network
+        user: "www-data"
         restart: always
 
     ast-db:
