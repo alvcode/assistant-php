@@ -490,4 +490,11 @@ final class DriveController extends AbstractController
             throw new UnprocessableEntityHttpException(Lang::t($e->getErrorKey()));
         }
     }
+
+    #[Route(path: '/api/drive/files/{id}/share', name: 'drive.share_create', methods: ['POST'])]
+    #[NeedAuth]
+    public function share(int $id, Request $request)
+    {
+
+    }
 }

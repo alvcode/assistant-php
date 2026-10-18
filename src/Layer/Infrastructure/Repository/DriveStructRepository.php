@@ -316,6 +316,17 @@ final readonly class DriveStructRepository implements DriveStructRepositoryInter
         return (bool)$conn->executeQuery($query, $params)->fetchOne();
     }
 
+    public function isBelongToUser(int $structID, int $userID): bool
+    {
+        $query = "select EXISTS(select 1 from drive_structs ds where ds.id = :struct_id and ds.user_id = :user_id)";
+
+        $conn = $this->entityManager->getConnection();
+        return (bool) $conn->executeQuery(
+            $query,
+            ['struct_id' => $structID, 'user_id' => $userID],
+        )->fetchOne();
+    }
+
     /** @param array<string,mixed> $raw */
     private function getEntityFromRaw(array $raw): DriveStructEntity
     {

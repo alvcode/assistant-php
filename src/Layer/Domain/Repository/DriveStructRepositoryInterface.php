@@ -42,4 +42,6 @@ interface DriveStructRepositoryInterface
     public function getAllRecursiveBackward(int $structId, int $userId): array;
 
     public function checkExistsByName(int $userId, string $name, ?int $parentId, ?int $excludeId): bool;
+
+    public function isBelongToUser(int $structID, int $userID): bool;
 }
