@@ -32,6 +32,7 @@ use App\Layer\Application\UseCase\Drive\DriveRenameStructUseCase;
 use App\Layer\Application\UseCase\Drive\DriveRenMovStructUseCase;
 use App\Layer\Application\UseCase\Drive\DriveUpdateFileHashUseCase;
 use App\Layer\Application\UseCase\Drive\DriveUploadFileUseCase;
+use App\Layer\Application\UseCase\Drive\ShareDriveUseCase;
 use App\Layer\Domain\Dict\Common\FileSizeTypeEnum;
 use App\Layer\Domain\Exception\AbstractLogicException;
 use App\Layer\Domain\ValueObject\FileSizeVO;
@@ -46,6 +47,7 @@ use App\Request\Drive\DriveUploadFileRequest;
 use App\Request\Drive\DriveWithParentIDRequest;
 use App\Response\Drive\DriveChunksInfoResponse;
 use App\Response\Drive\DriveGetFreeSpaceResponse;
+use App\Response\Drive\DriveShareResponse;
 use App\Response\Drive\DriveStructIdResponse;
 use App\Response\Drive\DriveTreeResponse;
 use App\Security\BlockEvent\BlockEventService;
@@ -493,8 +495,22 @@ final class DriveController extends AbstractController
 
     #[Route(path: '/api/drive/files/{id}/share', name: 'drive.share_create', methods: ['POST'])]
     #[NeedAuth]
-    public function share(int $id, Request $request)
+    public function share(int $id, Request $request, ShareDriveUseCase $useCase): JsonResponse
     {
+        /** @var UserEntity $user */
+        $user = $this->getUser();
 
+        try {
+            $driveShareEntity = $useCase->create($id, $user->id);
+            return new JsonResponse(
+                DriveShareResponse::fromNoteShareEntity($driveShareEntity),
+                Response::HTTP_CREATED
+            );
+        } catch (AbstractLogicException $e) {
+            if ($e instanceof DriveStructNotFoundException) {
+                $this->blockEventService->setEvent($request, BlockEventTypeEnum::BruteForce);
+            }
+            throw new UnprocessableEntityHttpException(Lang::t($e->getErrorKey()));
+        }
     }
 }

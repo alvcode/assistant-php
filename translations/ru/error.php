@@ -44,4 +44,5 @@ return [
     'error_drive_archive_not_completed_job' => 'Задание на архивацию не является завершенным',
     'error_drive_archive_file_not_found' => 'Файл архива не найден',
     'error_drive_archive_chunk_not_found' => 'Чанк архива не найден',
+    'error_drive_share_exists' => 'Вы уже поделились этим файлом/папкой',
 ];

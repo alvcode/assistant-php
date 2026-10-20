@@ -8,7 +8,7 @@ use App\Layer\Domain\Entity\DriveShareEntity;
 
 interface DriveShareHashesRepositoryInterface
 {
-    public function existsByStructId(int $noteId): bool;
+    public function existsByStructId(int $structId): bool;
 
     public function getByStructId(int $structId): ?DriveShareEntity;
 

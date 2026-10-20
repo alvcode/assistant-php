@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Layer\Application\UseCase\Note;
 
-use App\Layer\Application\Exception\Note\NoteFailedToGenerateUniqueHashException;
+use App\Layer\Application\Exception\Common\FailedToGenerateUniqueHashException;
 use App\Layer\Application\Exception\Note\NoteNotFoundException;
 use App\Layer\Application\Exception\Note\NoteShareExistsException;
 use App\Layer\Application\Exception\Note\NoteShareNotFoundException;
@@ -24,7 +24,7 @@ final readonly class ShareNoteUseCase
     /**
      * @throws NoteNotFoundException
      * @throws NoteShareExistsException
-     * @throws NoteFailedToGenerateUniqueHashException
+     * @throws FailedToGenerateUniqueHashException
      */
     public function create(int $noteID, int $userID): NoteShareEntity
     {
@@ -46,7 +46,7 @@ final readonly class ShareNoteUseCase
         }
 
         if (!$hash) {
-            throw new NoteFailedToGenerateUniqueHashException('Не удалось сгенерировать уникальный хэш');
+            throw new FailedToGenerateUniqueHashException('Не удалось сгенерировать уникальный хэш');
         }
 
         return $this->noteShareHashesRepository->save(

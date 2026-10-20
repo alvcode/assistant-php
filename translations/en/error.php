@@ -44,4 +44,5 @@ return [
     'error_drive_archive_not_completed_job' => 'The archiving task did not complete',
     'error_drive_archive_file_not_found' => 'Archive file not found',
     'error_drive_archive_chunk_not_found' => 'Archive chunk not found',
+    'error_drive_share_exists' => 'You have already shared this file/folder',
 ];
