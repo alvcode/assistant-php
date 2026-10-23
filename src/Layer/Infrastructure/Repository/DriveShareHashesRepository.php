@@ -36,7 +36,7 @@ final readonly class DriveShareHashesRepository implements DriveShareHashesRepos
         }
         return new DriveShareEntity(
             id: $row['id'],
-            structId: $row['note_id'],
+            structId: $row['drive_struct_id'],
             hash: $row['hash'],
         );
     }

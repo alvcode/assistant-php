@@ -9,8 +9,8 @@ use App\Entity\UserEntity;
 use App\Infrastructure\Lang;
 use App\Layer\Application\DTO\Note\CreateNoteDTO;
 use App\Layer\Application\DTO\Note\UpdateNoteDTO;
+use App\Layer\Application\Exception\Common\ShareLinkNotFoundException;
 use App\Layer\Application\Exception\Note\NoteNotFoundException;
-use App\Layer\Application\Exception\Note\NoteShareNotFoundException;
 use App\Layer\Application\Exception\NoteCategory\NoteCategoryNotFoundException;
 use App\Layer\Application\Exception\NoteFile\NoteFileDoesntBelongToUserException;
 use App\Layer\Application\UseCase\Note\CreateNoteUseCase;
@@ -258,7 +258,7 @@ final class NotesController extends AbstractController
                 Response::HTTP_CREATED
             );
         } catch (AbstractLogicException $e) {
-            if ($e instanceof NoteNotFoundException || $e instanceof NoteShareNotFoundException) {
+            if ($e instanceof NoteNotFoundException || $e instanceof ShareLinkNotFoundException) {
                 $this->blockEventService->setEvent($request, BlockEventTypeEnum::BruteForce);
             }
             throw new UnprocessableEntityHttpException(Lang::t($e->getErrorKey()));
@@ -276,7 +276,7 @@ final class NotesController extends AbstractController
             $useCase->delete($id, $user->id);
             return new Response(null, Response::HTTP_CREATED);
         } catch (AbstractLogicException $e) {
-            if ($e instanceof NoteNotFoundException || $e instanceof NoteShareNotFoundException) {
+            if ($e instanceof NoteNotFoundException || $e instanceof ShareLinkNotFoundException) {
                 $this->blockEventService->setEvent($request, BlockEventTypeEnum::BruteForce);
             }
             throw new UnprocessableEntityHttpException(Lang::t($e->getErrorKey()));

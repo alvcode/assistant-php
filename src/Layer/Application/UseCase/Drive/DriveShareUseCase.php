@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Layer\Application\UseCase\Drive;
 
 use App\Layer\Application\Exception\Common\FailedToGenerateUniqueHashException;
+use App\Layer\Application\Exception\Common\ShareLinkNotFoundException;
 use App\Layer\Application\Exception\Drive\DriveShareExistsException;
 use App\Layer\Application\Exception\Drive\DriveStructNotFoundException;
 use App\Layer\Domain\Entity\DriveShareEntity;
@@ -12,7 +13,7 @@ use App\Layer\Domain\Repository\DriveShareHashesRepositoryInterface;
 use App\Layer\Domain\Repository\DriveStructRepositoryInterface;
 use App\Layer\Domain\Service\Utils\HasherServiceInterface;
 
-final readonly class ShareDriveUseCase
+final readonly class DriveShareUseCase
 {
     public function __construct(
         private DriveStructRepositoryInterface $driveStructRepository,
@@ -53,6 +54,30 @@ final readonly class ShareDriveUseCase
         return $this->shareHashesRepository->save(
             new DriveShareEntity(id: null, structId: $structID, hash: $hash)
         );
+    }
+
+    /**
+     * @throws ShareLinkNotFoundException
+     * @throws DriveStructNotFoundException
+     */
+    public function getOne(int $structID, int $userID): DriveShareEntity
+    {
+        $this->assertBelongToUser($structID, $userID);
+
+        $shareEntity = $this->shareHashesRepository->getByStructId($structID);
+        if (!$shareEntity) {
+            throw new ShareLinkNotFoundException('share-ссылка не найдена');
+        }
+        return $shareEntity;
+    }
+
+    /**
+     * @throws DriveStructNotFoundException
+     */
+    public function delete(int $structID, int $userID): void
+    {
+        $this->assertBelongToUser($structID, $userID);
+        $this->shareHashesRepository->deleteByStructId($structID);
     }
 
     /**

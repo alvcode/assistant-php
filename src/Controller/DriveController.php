@@ -13,6 +13,7 @@ use App\Layer\Application\DTO\Drive\DriveCreateDirectoryDTO;
 use App\Layer\Application\DTO\Drive\DriveRenMovDTO;
 use App\Layer\Application\DTO\Drive\DriveUploadChunkDTO;
 use App\Layer\Application\DTO\Drive\DriveUploadFileDTO;
+use App\Layer\Application\Exception\Common\ShareLinkNotFoundException;
 use App\Layer\Application\Exception\Drive\DriveFileNotFoundException;
 use App\Layer\Application\Exception\Drive\DriveNotSafeFilenameException;
 use App\Layer\Application\Exception\Drive\DriveParentIdNotFoundException;
@@ -32,7 +33,7 @@ use App\Layer\Application\UseCase\Drive\DriveRenameStructUseCase;
 use App\Layer\Application\UseCase\Drive\DriveRenMovStructUseCase;
 use App\Layer\Application\UseCase\Drive\DriveUpdateFileHashUseCase;
 use App\Layer\Application\UseCase\Drive\DriveUploadFileUseCase;
-use App\Layer\Application\UseCase\Drive\ShareDriveUseCase;
+use App\Layer\Application\UseCase\Drive\DriveShareUseCase;
 use App\Layer\Domain\Dict\Common\FileSizeTypeEnum;
 use App\Layer\Domain\Exception\AbstractLogicException;
 use App\Layer\Domain\ValueObject\FileSizeVO;
@@ -495,7 +496,7 @@ final class DriveController extends AbstractController
 
     #[Route(path: '/api/drive/files/{id}/share', name: 'drive.share_create', methods: ['POST'])]
     #[NeedAuth]
-    public function share(int $id, Request $request, ShareDriveUseCase $useCase): JsonResponse
+    public function share(int $id, Request $request, DriveShareUseCase $useCase): JsonResponse
     {
         /** @var UserEntity $user */
         $user = $this->getUser();
@@ -506,6 +507,45 @@ final class DriveController extends AbstractController
                 DriveShareResponse::fromNoteShareEntity($driveShareEntity),
                 Response::HTTP_CREATED
             );
+        } catch (AbstractLogicException $e) {
+            if ($e instanceof DriveStructNotFoundException) {
+                $this->blockEventService->setEvent($request, BlockEventTypeEnum::BruteForce);
+            }
+            throw new UnprocessableEntityHttpException(Lang::t($e->getErrorKey()));
+        }
+    }
+
+    #[Route(path: '/api/drive/files/{id}/share', name: 'drive.share_get', methods: ['GET'])]
+    #[NeedAuth]
+    public function getShare(int $id, Request $request, DriveShareUseCase $useCase): JsonResponse
+    {
+        /** @var UserEntity $user */
+        $user = $this->getUser();
+
+        try {
+            $noteShareEntity = $useCase->getOne($id, $user->id);
+            return new JsonResponse(
+                DriveShareResponse::fromNoteShareEntity($noteShareEntity),
+                Response::HTTP_CREATED
+            );
+        } catch (AbstractLogicException $e) {
+            if ($e instanceof DriveStructNotFoundException || $e instanceof ShareLinkNotFoundException) {
+                $this->blockEventService->setEvent($request, BlockEventTypeEnum::BruteForce);
+            }
+            throw new UnprocessableEntityHttpException(Lang::t($e->getErrorKey()));
+        }
+    }
+
+    #[Route(path: '/api/notes/{id}/share', name: 'drive.share_delete', methods: ['DELETE'])]
+    #[NeedAuth]
+    public function deleteShare(int $id, Request $request, DriveShareUseCase $useCase): Response
+    {
+        /** @var UserEntity $user */
+        $user = $this->getUser();
+
+        try {
+            $useCase->delete($id, $user->id);
+            return new Response(null, Response::HTTP_CREATED);
         } catch (AbstractLogicException $e) {
             if ($e instanceof DriveStructNotFoundException) {
                 $this->blockEventService->setEvent($request, BlockEventTypeEnum::BruteForce);

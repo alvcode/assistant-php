@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Layer\Application\UseCase\Note;
 
 use App\Layer\Application\Exception\Common\FailedToGenerateUniqueHashException;
+use App\Layer\Application\Exception\Common\ShareLinkNotFoundException;
 use App\Layer\Application\Exception\Note\NoteNotFoundException;
 use App\Layer\Application\Exception\Note\NoteShareExistsException;
-use App\Layer\Application\Exception\Note\NoteShareNotFoundException;
 use App\Layer\Domain\Entity\NoteShareEntity;
 use App\Layer\Domain\Repository\NoteRepositoryInterface;
 use App\Layer\Domain\Repository\NoteShareHashesRepositoryInterface;
@@ -56,7 +56,7 @@ final readonly class ShareNoteUseCase
 
     /**
      * @throws NoteNotFoundException
-     * @throws NoteShareNotFoundException
+     * @throws ShareLinkNotFoundException
      */
     public function getOne(int $noteID, int $userID): NoteShareEntity
     {
@@ -64,7 +64,7 @@ final readonly class ShareNoteUseCase
 
         $noteShareEntity = $this->noteShareHashesRepository->getByNoteID($noteID);
         if (!$noteShareEntity) {
-            throw new NoteShareNotFoundException('share-ссылка не найдена');
+            throw new ShareLinkNotFoundException('share-ссылка не найдена');
         }
         return $noteShareEntity;
     }
