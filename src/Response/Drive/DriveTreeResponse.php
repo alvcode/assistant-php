@@ -18,6 +18,7 @@ final class DriveTreeResponse
         public string $created_at,
         public string $updated_at,
         public bool $is_chunk,
+        public bool $shared,
         public ?string $sha256,
     ) {}
 
@@ -32,6 +33,7 @@ final class DriveTreeResponse
             created_at: $driveTreeDTO->createdAt->format(FormatDict::DATETIME_ISO_8601_UTC),
             updated_at: $driveTreeDTO->updatedAt->format(FormatDict::DATETIME_ISO_8601_UTC),
             is_chunk: $driveTreeDTO->isChunk,
+            shared: $driveTreeDTO->shared,
             sha256: $driveTreeDTO->sha256,
         );
     }

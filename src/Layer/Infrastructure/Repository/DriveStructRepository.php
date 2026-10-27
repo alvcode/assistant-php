@@ -31,7 +31,8 @@ final readonly class DriveStructRepository implements DriveStructRepositoryInter
                     ds.id, ds.user_id, ds.name, ds.type, ds.created_at, ds.updated_at,
                     coalesce(df.size, 0) as size,
                     coalesce(df.is_chunk, false) as is_chunk,
-                    df.sha256
+                    df.sha256,
+                    exists(select 1 from drive_share_hashes dsh where dsh.drive_struct_id = ds.id) as shared
                 from drive_structs ds
                 left join drive_files df on ds.id = df.drive_struct_id
                 left join drive_recycle_bin drb on drb.drive_struct_id = ds.id
@@ -58,6 +59,7 @@ final readonly class DriveStructRepository implements DriveStructRepositoryInter
                 createdAt: DateTimeImmutable::createUTCFromString($raw['created_at']),
                 updatedAt: DateTimeImmutable::createUTCFromString($raw['updated_at']),
                 isChunk: $raw['is_chunk'],
+                shared: $raw['shared'],
                 sha256: $raw['sha256']
             );
         }

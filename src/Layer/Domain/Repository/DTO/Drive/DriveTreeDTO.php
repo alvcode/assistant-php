@@ -17,6 +17,7 @@ final readonly class DriveTreeDTO
         public \DateTimeImmutable $createdAt,
         public \DateTimeImmutable $updatedAt,
         public bool $isChunk,
+        public bool $shared,
         public ?string $sha256,
     ) {}
 }
