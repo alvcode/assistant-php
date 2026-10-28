@@ -13,6 +13,6 @@ class TokenRequest extends BaseRequest
     #[Assert\Type('string')]
     #[Assert\NotBlank()]
     #[Assert\Length(min: UserTokenDictionary::TOKEN_LENGTH, max: UserTokenDictionary::TOKEN_LENGTH)]
-    #[Assert\Regex(pattern: '/^[^\s]+$/')]
+    #[Assert\Regex(pattern: self::REGEX_STRING_NO_WHITESPACE)]
     public mixed $token;
 }

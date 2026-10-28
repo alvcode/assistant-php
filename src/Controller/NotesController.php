@@ -22,6 +22,7 @@ use App\Layer\Application\UseCase\Note\PinNoteUseCase;
 use App\Layer\Application\UseCase\Note\ShareNoteUseCase;
 use App\Layer\Application\UseCase\Note\UpdateNoteUseCase;
 use App\Layer\Domain\Exception\AbstractLogicException;
+use App\Request\Common\ShareHashRequest;
 use App\Request\Notes\CreateNoteRequest;
 use App\Request\Notes\GetAllNotesRequest;
 use App\Request\Notes\UpdateNoteRequest;
@@ -284,8 +285,19 @@ final class NotesController extends AbstractController
     }
 
     #[Route(path: '/api/notes-share/{hash}/one', name: 'notes.get_one_by_hash', methods: ['GET'])]
-    public function getOneByHash(string $hash, Request $request, GetOneNoteByHashUseCase $useCase): JsonResponse
+    public function getOneByHash(
+        string $hash,
+        ShareHashRequest $requestModel,
+        Request $request,
+        GetOneNoteByHashUseCase $useCase
+    ): JsonResponse
     {
+        $requestModel->hash = $hash;
+        if (!$requestModel->validate()) {
+            $this->blockEventService->setEvent($request, BlockEventTypeEnum::Validation);
+            throw new UnprocessableEntityHttpException($requestModel->getFirstError());
+        }
+
         try {
             $noteEntity = $useCase->handle($hash);
 

@@ -8,6 +8,7 @@ use App\Layer\Application\Exception\Common\FailedToGenerateUniqueHashException;
 use App\Layer\Application\Exception\Common\ShareLinkNotFoundException;
 use App\Layer\Application\Exception\Drive\DriveShareExistsException;
 use App\Layer\Application\Exception\Drive\DriveStructNotFoundException;
+use App\Layer\Domain\Dict\Common\ShareDict;
 use App\Layer\Domain\Entity\DriveShareEntity;
 use App\Layer\Domain\Repository\DriveShareHashesRepositoryInterface;
 use App\Layer\Domain\Repository\DriveStructRepositoryInterface;
@@ -39,7 +40,7 @@ final readonly class DriveShareUseCase
 
         $hash = null;
         for ($i = 0; $i < 20; ++$i) {
-            $h = $this->hasherService->generateRandomStringWithoutSymbols(80);
+            $h = $this->hasherService->generateRandomStringWithoutSymbols(ShareDict::HASH_LENGTH);
             $existsByHash = $this->shareHashesRepository->existsByHash($h);
             if (!$existsByHash) {
                 $hash = $h;

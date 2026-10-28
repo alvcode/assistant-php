@@ -8,6 +8,7 @@ use App\Layer\Application\Exception\Common\FailedToGenerateUniqueHashException;
 use App\Layer\Application\Exception\Common\ShareLinkNotFoundException;
 use App\Layer\Application\Exception\Note\NoteNotFoundException;
 use App\Layer\Application\Exception\Note\NoteShareExistsException;
+use App\Layer\Domain\Dict\Common\ShareDict;
 use App\Layer\Domain\Entity\NoteShareEntity;
 use App\Layer\Domain\Repository\NoteRepositoryInterface;
 use App\Layer\Domain\Repository\NoteShareHashesRepositoryInterface;
@@ -37,7 +38,7 @@ final readonly class ShareNoteUseCase
 
         $hash = null;
         for ($i = 0; $i < 20; ++$i) {
-            $h = $this->hasherService->generateRandomStringWithoutSymbols(80);
+            $h = $this->hasherService->generateRandomStringWithoutSymbols(ShareDict::HASH_LENGTH);
             $existsByHash = $this->noteShareHashesRepository->existsByHash($h);
             if (!$existsByHash) {
                 $hash = $h;
