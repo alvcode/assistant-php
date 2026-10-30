@@ -14,6 +14,8 @@ interface DriveShareHashesRepositoryInterface
 
     public function existsByHash(string $hash): bool;
 
+    public function getByHash(string $hash): ?DriveShareEntity;
+
     public function save(DriveShareEntity $entity): DriveShareEntity;
 
     public function deleteByStructId(int $structId): void;

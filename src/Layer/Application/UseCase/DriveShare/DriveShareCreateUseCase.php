@@ -2,10 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Layer\Application\UseCase\Drive;
+namespace App\Layer\Application\UseCase\DriveShare;
 
 use App\Layer\Application\Exception\Common\FailedToGenerateUniqueHashException;
-use App\Layer\Application\Exception\Common\ShareLinkNotFoundException;
 use App\Layer\Application\Exception\Drive\DriveShareExistsException;
 use App\Layer\Application\Exception\Drive\DriveStructNotFoundException;
 use App\Layer\Domain\Dict\Common\ShareDict;
@@ -14,24 +13,25 @@ use App\Layer\Domain\Repository\DriveShareHashesRepositoryInterface;
 use App\Layer\Domain\Repository\DriveStructRepositoryInterface;
 use App\Layer\Domain\Service\Utils\HasherServiceInterface;
 
-final readonly class DriveShareUseCase
+final readonly class DriveShareCreateUseCase
 {
     public function __construct(
         private DriveStructRepositoryInterface $driveStructRepository,
         private DriveShareHashesRepositoryInterface $shareHashesRepository,
         private HasherServiceInterface $hasherService,
-    )
-    {
-    }
+    ) {}
 
     /**
      * @throws DriveStructNotFoundException
-     * @throws DriveShareExistsException
      * @throws FailedToGenerateUniqueHashException
+     * @throws DriveShareExistsException
      */
-    public function create(int $structID, int $userID): DriveShareEntity
+    public function handle(int $structID, int $userID): DriveShareEntity
     {
-        $this->assertBelongToUser($structID, $userID);
+        $noteBelongsUser = $this->driveStructRepository->isBelongToUser($structID, $userID);
+        if (!$noteBelongsUser) {
+            throw new DriveStructNotFoundException('Заметка не найдена');
+        }
 
         $existsShare = $this->shareHashesRepository->existsByStructId($structID);
         if ($existsShare) {
@@ -55,40 +55,5 @@ final readonly class DriveShareUseCase
         return $this->shareHashesRepository->save(
             new DriveShareEntity(id: null, structId: $structID, hash: $hash)
         );
-    }
-
-    /**
-     * @throws ShareLinkNotFoundException
-     * @throws DriveStructNotFoundException
-     */
-    public function getOne(int $structID, int $userID): DriveShareEntity
-    {
-        $this->assertBelongToUser($structID, $userID);
-
-        $shareEntity = $this->shareHashesRepository->getByStructId($structID);
-        if (!$shareEntity) {
-            throw new ShareLinkNotFoundException('share-ссылка не найдена');
-        }
-        return $shareEntity;
-    }
-
-    /**
-     * @throws DriveStructNotFoundException
-     */
-    public function delete(int $structID, int $userID): void
-    {
-        $this->assertBelongToUser($structID, $userID);
-        $this->shareHashesRepository->deleteByStructId($structID);
-    }
-
-    /**
-     * @throws DriveStructNotFoundException
-     */
-    private function assertBelongToUser(int $structID, int $userID): void
-    {
-        $noteBelongsUser = $this->driveStructRepository->isBelongToUser($structID, $userID);
-        if (!$noteBelongsUser) {
-            throw new DriveStructNotFoundException('Заметка не найдена');
-        }
     }
 }

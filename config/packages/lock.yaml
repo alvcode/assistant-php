@@ -1,0 +1,4 @@
+framework:
+    lock:
+        service_id: 'doctrine.dbal.default_connection'
+        advisory: true

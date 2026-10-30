@@ -34,11 +34,8 @@ final readonly class DriveShareHashesRepository implements DriveShareHashesRepos
         if (!$row) {
             return null;
         }
-        return new DriveShareEntity(
-            id: $row['id'],
-            structId: $row['drive_struct_id'],
-            hash: $row['hash'],
-        );
+
+        return $this->getEntityFromRaw($row);
     }
 
     public function existsByHash(string $hash): bool
@@ -49,6 +46,20 @@ final readonly class DriveShareHashesRepository implements DriveShareHashesRepos
             $query,
             ['hash' => $hash],
         )->fetchOne();
+    }
+
+    public function getByHash(string $hash): ?DriveShareEntity
+    {
+        $query = "select * from drive_share_hashes where hash = :hash";
+        $conn = $this->entityManager->getConnection();
+        $result = $conn->executeQuery($query, ['hash' => $hash]);
+
+        $row = $result->fetchAssociative();
+        if (!$row) {
+            return null;
+        }
+
+        return $this->getEntityFromRaw($row);
     }
 
     public function save(DriveShareEntity $entity): DriveShareEntity
@@ -87,5 +98,14 @@ final readonly class DriveShareHashesRepository implements DriveShareHashesRepos
         $query = "DELETE FROM drive_share_hashes WHERE drive_struct_id = :drive_struct_id";
         $conn = $this->entityManager->getConnection();
         $conn->executeQuery($query, ['drive_struct_id' => $structId]);
+    }
+
+    private function getEntityFromRaw(array $raw): DriveShareEntity
+    {
+        return new DriveShareEntity(
+            id: $raw['id'],
+            structId: $raw['drive_struct_id'],
+            hash: $raw['hash'],
+        );
     }
 }
