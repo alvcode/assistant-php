@@ -7,6 +7,8 @@ namespace App\Layer\Application\UseCase\DriveArchive;
 use App\Layer\Application\Exception\Drive\DriveStructNotFoundException;
 use App\Layer\Application\Exception\DriveArchive\DriveArchiveExistsActiveJobsException;
 use App\Layer\Application\Exception\DriveArchive\DriveArchiveJobNotFoundFilesException;
+use App\Layer\Application\Service\Mutex\MutexInterface;
+use App\Layer\Application\Service\Mutex\MutexScope;
 use App\Layer\Domain\Dict\Drive\DriveArchiveJobStatusEnum;
 use App\Layer\Domain\Entity\DriveArchiveJobEntity;
 use App\Layer\Domain\Repository\ClientNotificationRepositoryInterface;
@@ -28,6 +30,7 @@ final readonly class DriveArchiveRequestForCreationUseCase
         private GetRecursiveFileStructsWithRealPath $getRecursiveFileStructsWithRealPath,
         private DriveArchiveClientNotificationFactory $archiveClientNotificationFactory,
         private ClientNotificationRepositoryInterface $clientNotificationRepository,
+        private MutexInterface $mutex,
     ) {}
 
     /**
@@ -38,6 +41,11 @@ final readonly class DriveArchiveRequestForCreationUseCase
      */
     public function handle(int $userId, array $structIds): DriveArchiveJobEntity
     {
+        $lock = $this->mutex->createLock(MutexScope::DriveArchiveRequestForCreation->key($userId));
+
+        if (!$lock->acquire()) {
+
+        }
         $existsActiveJobs = $this->driveArchiveRepository->existsJobsByUserAndStatuses(
             userId: $userId,
             statuses: [

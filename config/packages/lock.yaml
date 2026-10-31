@@ -1,4 +1,4 @@
 framework:
-    lock:
-        service_id: 'doctrine.dbal.default_connection'
-        advisory: true
+    # Locking is configured manually in config/services.yaml to reuse the
+    # existing Doctrine connection for PostgreSQL advisory locks.
+    lock: false

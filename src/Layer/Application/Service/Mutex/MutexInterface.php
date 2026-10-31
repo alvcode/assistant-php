@@ -6,5 +6,5 @@ namespace App\Layer\Application\Service\Mutex;
 
 interface MutexInterface
 {
-    public function createLock(string $key): MutexLockInterface;
+    public function createLock(MutexKey $key): MutexLockInterface;
 }

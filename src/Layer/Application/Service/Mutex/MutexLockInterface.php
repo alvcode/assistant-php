@@ -8,7 +8,7 @@ interface MutexLockInterface
 {
     public function acquire(): bool;
 
-    public function acquireWithWaiting($timeoutSeconds): bool;
+    public function acquireWithWaiting(float $timeoutSeconds): bool;
 
     public function release(): void;
 }

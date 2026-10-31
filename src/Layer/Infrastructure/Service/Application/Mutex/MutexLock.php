@@ -16,16 +16,21 @@ final readonly class MutexLock implements MutexLockInterface
         return $this->sharedLock->acquire();
     }
 
-    public function acquireWithWaiting($timeoutSeconds): bool
+    public function acquireWithWaiting(float $timeoutSeconds): bool
     {
-        $now = time();
-        while (!$this->sharedLock->acquire(true)) {
-            if ((time() - $now) > $timeoutSeconds) {
+        $deadline = microtime(true) + max(0.0, $timeoutSeconds);
+
+        do {
+            if ($this->sharedLock->acquire()) {
+                return true;
+            }
+
+            if (microtime(true) >= $deadline) {
                 return false;
             }
-            sleep(1);
-        }
-        return true;
+
+            usleep(100_000);
+        } while (true);
     }
 
     public function release(): void

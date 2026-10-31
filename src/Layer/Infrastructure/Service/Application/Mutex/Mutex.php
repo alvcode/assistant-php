@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Layer\Infrastructure\Service\Application\Mutex;
 
 use App\Layer\Application\Service\Mutex\MutexInterface;
+use App\Layer\Application\Service\Mutex\MutexKey;
 use App\Layer\Application\Service\Mutex\MutexLockInterface;
 use Symfony\Component\Lock\LockFactory;
 
@@ -14,8 +15,8 @@ final readonly class Mutex implements MutexInterface
         private LockFactory $lockFactory,
     ) {}
 
-    public function createLock(string $key): MutexLockInterface
+    public function createLock(MutexKey $key): MutexLockInterface
     {
-        return new MutexLock($this->lockFactory->createLock($key));
+        return new MutexLock($this->lockFactory->createLock((string) $key));
     }
 }

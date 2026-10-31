@@ -29,13 +29,6 @@ class TestCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
 
-        try {
-            $io->info('yeeees. im here');
-        } catch (\Exception $e) {
-            $io->error($e->getMessage());
-            return Command::FAILURE;
-        }
-
         $io->success('The archive jobs has been cleared');
         return Command::SUCCESS;
     }
