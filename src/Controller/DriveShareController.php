@@ -11,6 +11,9 @@ use App\Layer\Application\Exception\Common\ShareLinkNotFoundException;
 use App\Layer\Application\Exception\Drive\DriveFileNotFoundException;
 use App\Layer\Application\Exception\Drive\DriveShareNotFoundException;
 use App\Layer\Application\Exception\Drive\DriveStructNotFoundException;
+use App\Layer\Application\UseCase\Drive\DriveGetChunkByNumberUseCase;
+use App\Layer\Application\UseCase\Drive\DriveGetChunksInfoUseCase;
+use App\Layer\Application\UseCase\Drive\DriveGetFileUseCase;
 use App\Layer\Application\UseCase\Drive\DriveGetStructFullSizeUseCase;
 use App\Layer\Application\UseCase\Drive\DriveGetTreeItemUseCase;
 use App\Layer\Application\UseCase\DriveShare\DriveShareCreateUseCase;
@@ -18,16 +21,20 @@ use App\Layer\Application\UseCase\DriveShare\DriveShareDeleteUseCase;
 use App\Layer\Application\UseCase\DriveShare\DriveShareGetShareUseCase;
 use App\Layer\Application\UseCase\DriveShare\DriveShareGetStructByHashUseCase;
 use App\Layer\Domain\Exception\AbstractLogicException;
+use App\Request\Common\IDRequest;
 use App\Request\Common\ShareHashRequest;
+use App\Response\Drive\DriveChunksInfoResponse;
 use App\Response\Drive\DriveGetItemFullSizeResponse;
 use App\Response\Drive\DriveShareResponse;
 use App\Response\Drive\DriveTreeResponse;
 use App\Security\BlockEvent\BlockEventService;
 use App\Security\BlockEvent\BlockEventTypeEnum;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 
@@ -100,13 +107,13 @@ final class DriveShareController extends AbstractController
     }
 
     #[Route(path: '/api/drive-share/{hash}/detail-item', name: 'drive_share.get_detail_item_by_hash', methods: ['GET'])]
-    public function getTreeItemByHash(
-        string $hash,
-        ShareHashRequest $requestModel,
-        Request $request,
+    public function getTreeItem(
+        string                           $hash,
+        ShareHashRequest                 $requestModel,
+        Request                          $request,
         DriveShareGetStructByHashUseCase $getStructByHashUseCase,
-        DriveGetTreeItemUseCase $getTreeItemUseCase,
-    ): Response
+        DriveGetTreeItemUseCase          $getTreeItemUseCase,
+    ): JsonResponse
     {
         $requestModel->hash = $hash;
         if (!$requestModel->validate()) {
@@ -136,12 +143,12 @@ final class DriveShareController extends AbstractController
 
     #[Route(path: '/api/drive-share/{hash}/full-size', name: 'drive_share.get_full_size_by_hash', methods: ['GET'])]
     public function getStructFullSize(
-        string $hash,
-        ShareHashRequest $requestModel,
-        Request $request,
+        string                           $hash,
+        ShareHashRequest                 $requestModel,
+        Request                          $request,
         DriveShareGetStructByHashUseCase $getStructByHashUseCase,
-        DriveGetStructFullSizeUseCase $getStructFullSizeUseCase,
-    ): Response
+        DriveGetStructFullSizeUseCase    $getStructFullSizeUseCase,
+    ): JsonResponse
     {
         $requestModel->hash = $hash;
         if (!$requestModel->validate()) {
@@ -162,6 +169,130 @@ final class DriveShareController extends AbstractController
             );
         } catch (AbstractLogicException $e) {
             if ($e instanceof DriveShareNotFoundException || $e instanceof DriveFileNotFoundException) {
+                $this->blockEventService->setEvent($request, BlockEventTypeEnum::BruteForce);
+            }
+            throw new UnprocessableEntityHttpException(Lang::t($e->getErrorKey()));
+        }
+    }
+
+    #[Route(path: '/api/drive-share/{hash}/chunks-info', name: 'drive_share.get_chunks_info_by_hash', methods: ['GET'])]
+    public function chunksInfo(
+        string $hash,
+        ShareHashRequest $requestModel,
+        Request $request,
+        DriveShareGetStructByHashUseCase $getStructByHashUseCase,
+        DriveGetChunksInfoUseCase $getChunksInfoUseCase
+    ): JsonResponse
+    {
+        $requestModel->hash = $hash;
+        if (!$requestModel->validate()) {
+            $this->blockEventService->setEvent($request, BlockEventTypeEnum::Validation);
+            throw new UnprocessableEntityHttpException($requestModel->getFirstError());
+        }
+
+        try {
+            $structEntity = $getStructByHashUseCase->handle($requestModel->hash);
+            $info = $getChunksInfoUseCase->handle(
+                structId: $structEntity->getId(),
+                userId: $structEntity->getUserID(),
+            );
+
+            return new JsonResponse(
+                new DriveChunksInfoResponse(start_number: $info->startNumber, end_number: $info->endNumber),
+                Response::HTTP_OK
+            );
+        } catch (AbstractLogicException $e) {
+            if (
+                $e instanceof DriveStructNotFoundException
+                || $e instanceof DriveShareNotFoundException
+                || $e instanceof DriveFileNotFoundException
+            ) {
+                $this->blockEventService->setEvent($request, BlockEventTypeEnum::BruteForce);
+            }
+            throw new UnprocessableEntityHttpException(Lang::t($e->getErrorKey()));
+        }
+    }
+
+    #[Route(
+        path: '/api/drive-share/{hash}/chunks/{chunkNumber}',
+        name: 'drive_share.get_chunk_by_number_by_hash',
+        methods: ['GET']
+    )]
+    public function getChunkByNumber(
+        string $hash,
+        int $chunkNumber,
+        ShareHashRequest $requestModelForHash,
+        IDRequest $requestModelForChunkNumber,
+        Request $request,
+        DriveShareGetStructByHashUseCase $getStructByHashUseCase,
+        DriveGetChunkByNumberUseCase $useCase
+    ): BinaryFileResponse
+    {
+        $requestModelForHash->hash = $hash;
+        if (!$requestModelForHash->validate()) {
+            $this->blockEventService->setEvent($request, BlockEventTypeEnum::Validation);
+            throw new UnprocessableEntityHttpException($requestModelForHash->getFirstError());
+        }
+
+        $requestModelForChunkNumber->id = $chunkNumber;
+        if (!$requestModelForChunkNumber->validate()) {
+            $this->blockEventService->setEvent($request, BlockEventTypeEnum::Validation);
+            throw new UnprocessableEntityHttpException($requestModelForChunkNumber->getFirstError());
+        }
+
+        try {
+            $structEntity = $getStructByHashUseCase->handle($requestModelForHash->hash);
+
+            $fileDTO = $useCase->handle(
+                structId: $structEntity->getId(),
+                chunkNumber: $chunkNumber,
+                userId: $structEntity->getUserId()
+            );
+            $response = new BinaryFileResponse($fileDTO->getFile());
+            $response->setContentDisposition(
+                ResponseHeaderBag::DISPOSITION_ATTACHMENT,
+                $fileDTO->getOriginalName()
+            );
+            return $response;
+        } catch (AbstractLogicException $e) {
+            if ($e instanceof DriveStructNotFoundException || $e instanceof DriveShareNotFoundException) {
+                $this->blockEventService->setEvent($request, BlockEventTypeEnum::BruteForce);
+            }
+            throw new UnprocessableEntityHttpException(Lang::t($e->getErrorKey()));
+        }
+    }
+
+    #[Route(path: '/api/drive-share/{hash}/download', name: 'drive_share.get_file_by_hash', methods: ['GET'])]
+    public function getFile(
+        string $hash,
+        ShareHashRequest $requestModelForHash,
+        Request $request,
+        DriveShareGetStructByHashUseCase $getStructByHashUseCase,
+        DriveGetFileUseCase $getFileUseCase
+    ): BinaryFileResponse
+    {
+        $requestModelForHash->hash = $hash;
+        if (!$requestModelForHash->validate()) {
+            $this->blockEventService->setEvent($request, BlockEventTypeEnum::Validation);
+            throw new UnprocessableEntityHttpException($requestModelForHash->getFirstError());
+        }
+
+        try {
+            $structEntity = $getStructByHashUseCase->handle($requestModelForHash->hash);
+
+            $fileDTO = $getFileUseCase->handle(
+                structId: $structEntity->getId(),
+                userId: $structEntity->getUserId()
+            );
+
+            $response = new BinaryFileResponse($fileDTO->getFile());
+            $response->setContentDisposition(
+                ResponseHeaderBag::DISPOSITION_ATTACHMENT,
+                $fileDTO->getOriginalName()
+            );
+            return $response;
+        } catch (AbstractLogicException $e) {
+            if ($e instanceof DriveFileNotFoundException || $e instanceof DriveShareNotFoundException) {
                 $this->blockEventService->setEvent($request, BlockEventTypeEnum::BruteForce);
             }
             throw new UnprocessableEntityHttpException(Lang::t($e->getErrorKey()));

@@ -10,6 +10,6 @@ class DriveShareNotFoundException extends AbstractLogicException
 {
     public function getErrorKey(): string
     {
-        return 'error_drive_share_not_found';
+        return 'error_share_link_not_found';
     }
 }
