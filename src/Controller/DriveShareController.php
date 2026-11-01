@@ -8,15 +8,20 @@ use App\Attribute\NeedAuth;
 use App\Entity\UserEntity;
 use App\Infrastructure\Lang;
 use App\Layer\Application\Exception\Common\ShareLinkNotFoundException;
+use App\Layer\Application\Exception\Drive\DriveFileNotFoundException;
 use App\Layer\Application\Exception\Drive\DriveShareNotFoundException;
 use App\Layer\Application\Exception\Drive\DriveStructNotFoundException;
+use App\Layer\Application\UseCase\Drive\DriveGetStructFullSizeUseCase;
+use App\Layer\Application\UseCase\Drive\DriveGetTreeItemUseCase;
 use App\Layer\Application\UseCase\DriveShare\DriveShareCreateUseCase;
 use App\Layer\Application\UseCase\DriveShare\DriveShareDeleteUseCase;
 use App\Layer\Application\UseCase\DriveShare\DriveShareGetShareUseCase;
 use App\Layer\Application\UseCase\DriveShare\DriveShareGetStructByHashUseCase;
 use App\Layer\Domain\Exception\AbstractLogicException;
 use App\Request\Common\ShareHashRequest;
+use App\Response\Drive\DriveGetItemFullSizeResponse;
 use App\Response\Drive\DriveShareResponse;
+use App\Response\Drive\DriveTreeResponse;
 use App\Security\BlockEvent\BlockEventService;
 use App\Security\BlockEvent\BlockEventTypeEnum;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -100,6 +105,7 @@ final class DriveShareController extends AbstractController
         ShareHashRequest $requestModel,
         Request $request,
         DriveShareGetStructByHashUseCase $getStructByHashUseCase,
+        DriveGetTreeItemUseCase $getTreeItemUseCase,
     ): Response
     {
         $requestModel->hash = $hash;
@@ -111,15 +117,54 @@ final class DriveShareController extends AbstractController
         try {
             $structEntity = $getStructByHashUseCase->handle($requestModel->hash);
 
-            var_dump($structEntity);
-            exit();
+            return new JsonResponse(
+                DriveTreeResponse::fromDriveTreeDTO(
+                    $getTreeItemUseCase->handle(
+                        structId: $structEntity->getId(),
+                        userId: $structEntity->getUserID(),
+                    )
+                ),
+                Response::HTTP_OK
+            );
         } catch (AbstractLogicException $e) {
-            if ($e instanceof DriveShareNotFoundException) {
+            if ($e instanceof DriveShareNotFoundException || $e instanceof DriveFileNotFoundException) {
                 $this->blockEventService->setEvent($request, BlockEventTypeEnum::BruteForce);
             }
+            throw new UnprocessableEntityHttpException(Lang::t($e->getErrorKey()));
+        }
+    }
+
+    #[Route(path: '/api/drive-share/{hash}/full-size', name: 'drive_share.get_full_size_by_hash', methods: ['GET'])]
+    public function getStructFullSize(
+        string $hash,
+        ShareHashRequest $requestModel,
+        Request $request,
+        DriveShareGetStructByHashUseCase $getStructByHashUseCase,
+        DriveGetStructFullSizeUseCase $getStructFullSizeUseCase,
+    ): Response
+    {
+        $requestModel->hash = $hash;
+        if (!$requestModel->validate()) {
+            $this->blockEventService->setEvent($request, BlockEventTypeEnum::Validation);
+            throw new UnprocessableEntityHttpException($requestModel->getFirstError());
         }
 
-        var_dump($hash);
-        exit();
+        try {
+            $structEntity = $getStructByHashUseCase->handle($requestModel->hash);
+            $fileSize = $getStructFullSizeUseCase->handle(
+                structId: $structEntity->getId(),
+                userId: $structEntity->getUserID()
+            );
+
+            return new JsonResponse(
+                DriveGetItemFullSizeResponse::fromFileSizeVO($fileSize),
+                Response::HTTP_OK
+            );
+        } catch (AbstractLogicException $e) {
+            if ($e instanceof DriveShareNotFoundException || $e instanceof DriveFileNotFoundException) {
+                $this->blockEventService->setEvent($request, BlockEventTypeEnum::BruteForce);
+            }
+            throw new UnprocessableEntityHttpException(Lang::t($e->getErrorKey()));
+        }
     }
 }

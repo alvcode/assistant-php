@@ -13,6 +13,8 @@ interface DriveStructRepositoryInterface
     /** @return DriveTreeDTO[] */
     public function getTreeByUserID(int $userID, ?int $parentID): array;
 
+    public function getTreeItemById(int $structId, int $userId): ?DriveTreeDTO;
+
     public function findRow(
         int $userId,
         string $name,

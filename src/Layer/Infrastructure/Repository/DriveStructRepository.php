@@ -36,9 +36,9 @@ final readonly class DriveStructRepository implements DriveStructRepositoryInter
                 from drive_structs ds
                 left join drive_files df on ds.id = df.drive_struct_id
                 left join drive_recycle_bin drb on drb.drive_struct_id = ds.id
-                where drb.id is null and user_id = :user_id and
+                where drb.id is null and ds.user_id = :user_id and
             ",
-            $parentID ? "parent_id = :parent_id" : "parent_id is null"
+            $parentID ? "ds.parent_id = :parent_id" : "ds.parent_id is null"
         );
         $params = ['user_id' => $userID];
         if ($parentID) {
@@ -50,20 +50,39 @@ final readonly class DriveStructRepository implements DriveStructRepositoryInter
 
         $result = [];
         foreach ($stmt->fetchAllAssociative() as $raw) {
-            $result[] = new DriveTreeDTO(
-                id: $raw['id'],
-                userId: $raw['user_id'],
-                name: $raw['name'],
-                type: DriveStructTypeEnum::tryFrom($raw['type']),
-                size: $raw['size'],
-                createdAt: DateTimeImmutable::createUTCFromString($raw['created_at']),
-                updatedAt: DateTimeImmutable::createUTCFromString($raw['updated_at']),
-                isChunk: $raw['is_chunk'],
-                shared: $raw['shared'],
-                sha256: $raw['sha256']
-            );
+            $result[] = $this->getDriveTreeItemFromRaw($raw);
         }
         return $result;
+    }
+
+    public function getTreeItemById(int $structId, int $userId): ?DriveTreeDTO
+    {
+        $query = "
+            select
+                ds.id, ds.user_id, ds.name, ds.type, ds.created_at, ds.updated_at,
+                coalesce(df.size, 0) as size,
+                coalesce(df.is_chunk, false) as is_chunk,
+                df.sha256,
+                exists(select 1 from drive_share_hashes dsh where dsh.drive_struct_id = ds.id) as shared
+            from drive_structs ds
+            left join drive_files df on ds.id = df.drive_struct_id
+            left join drive_recycle_bin drb on drb.drive_struct_id = ds.id
+            where ds.id = :struct_id and drb.id is null and user_id = :user_id
+        ";
+
+        $conn = $this->entityManager->getConnection();
+        $stmt = $conn->executeQuery(
+            $query,
+            [
+                'struct_id' => $structId,
+                'user_id' => $userId,
+            ]
+        );
+        $row = $stmt->fetchAssociative();
+        if (!$row) {
+            return null;
+        }
+        return $this->getDriveTreeItemFromRaw($row);
     }
 
     public function findRow(
@@ -340,6 +359,22 @@ final readonly class DriveStructRepository implements DriveStructRepositoryInter
             parentId: $raw['parent_id'],
             createdAt: DateTimeImmutable::createUTCFromString($raw['created_at']),
             updatedAt: DateTime::createUTCFromString($raw['updated_at']),
+        );
+    }
+
+    private function getDriveTreeItemFromRaw(array $raw): DriveTreeDTO
+    {
+        return new DriveTreeDTO(
+            id: $raw['id'],
+            userId: $raw['user_id'],
+            name: $raw['name'],
+            type: DriveStructTypeEnum::tryFrom($raw['type']),
+            size: $raw['size'],
+            createdAt: DateTimeImmutable::createUTCFromString($raw['created_at']),
+            updatedAt: DateTimeImmutable::createUTCFromString($raw['updated_at']),
+            isChunk: $raw['is_chunk'],
+            shared: $raw['shared'],
+            sha256: $raw['sha256']
         );
     }
 }

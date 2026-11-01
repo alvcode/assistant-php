@@ -42,6 +42,32 @@ final readonly class DriveFileRepository implements DriveFileRepositoryInterface
         return new FileSizeVO((float)$row['all_size'], FileSizeTypeEnum::Bytes);
     }
 
+    public function getTotalSizeByStructId(int $structId): FileSizeVO
+    {
+        $query = "
+            WITH RECURSIVE structs AS (
+                SELECT id
+                FROM drive_structs
+                WHERE id = :struct_id
+
+                UNION
+
+                SELECT ds.id
+                FROM drive_structs ds
+                INNER JOIN structs s ON ds.parent_id = s.id
+            )
+            SELECT coalesce(sum(df.size), 0) as all_size
+            FROM drive_files df
+            WHERE df.drive_struct_id IN (SELECT id FROM structs)
+        ";
+
+        $conn = $this->entityManager->getConnection();
+        $result = $conn->executeQuery($query, ['struct_id' => $structId]);
+        $row = $result->fetchAssociative();
+
+        return new FileSizeVO((float)($row['all_size'] ?? 0), FileSizeTypeEnum::Bytes);
+    }
+
     public function getLastId(): int
     {
         $query = "SELECT coalesce(max(id), 0) FROM drive_files";

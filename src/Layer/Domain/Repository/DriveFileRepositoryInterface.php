@@ -12,6 +12,8 @@ interface DriveFileRepositoryInterface
 {
     public function getUsedSpaceByUserID(int $userId): FileSizeVO;
 
+    public function getTotalSizeByStructId(int $structId): FileSizeVO;
+
     public function getLastId(): int;
 
     public function save(DriveFileEntity $entity): DriveFileEntity;
