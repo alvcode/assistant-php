@@ -7,6 +7,7 @@ namespace App\Layer\Application\UseCase\DriveArchive;
 use App\Layer\Application\Exception\Drive\DriveStructNotFoundException;
 use App\Layer\Application\Exception\DriveArchive\DriveArchiveExistsActiveJobsException;
 use App\Layer\Application\Exception\DriveArchive\DriveArchiveJobNotFoundFilesException;
+use App\Layer\Domain\Dict\Drive\DriveArchiveJobPlaceEnum;
 use App\Layer\Domain\Dict\Drive\DriveArchiveJobStatusEnum;
 use App\Layer\Domain\Entity\DriveArchiveJobEntity;
 use App\Layer\Domain\Repository\ClientNotificationRepositoryInterface;
@@ -36,7 +37,12 @@ final readonly class DriveArchiveRequestForCreationUseCase
      * @throws DriveArchiveExistsActiveJobsException
      * @throws DriveArchiveJobNotFoundFilesException
      */
-    public function handle(int $userId, array $structIds): DriveArchiveJobEntity
+    public function handle(
+        int $userId,
+        array $structIds,
+        DriveArchiveJobPlaceEnum $place,
+        bool $needCompareStructIds
+    ): DriveArchiveJobEntity
     {
         $existsActiveJobs = $this->driveArchiveRepository->existsJobsByUserAndStatuses(
             userId: $userId,

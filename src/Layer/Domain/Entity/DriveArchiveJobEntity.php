@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Layer\Domain\Entity;
 
+use App\Layer\Domain\Dict\Drive\DriveArchiveJobPlaceEnum;
 use App\Layer\Domain\Dict\Drive\DriveArchiveJobStatusEnum;
 use App\Layer\Domain\Service\Utils\DateTimeImmutable;
 
@@ -18,6 +19,7 @@ final class DriveArchiveJobEntity
         private ?string $errorDescription,
         private DateTimeImmutable $createdAt,
         private ?DateTimeImmutable $finishedAt,
+        private DriveArchiveJobPlaceEnum $place,
     ) {}
 
     public function getId(): ?int
@@ -105,5 +107,15 @@ final class DriveArchiveJobEntity
     public function setFinished(): void
     {
         $this->finishedAt = DateTimeImmutable::createNowUtc();
+    }
+
+    public function getPlace(): DriveArchiveJobPlaceEnum
+    {
+        return $this->place;
+    }
+
+    public function setPlace(DriveArchiveJobPlaceEnum $place): void
+    {
+        $this->place = $place;
     }
 }

@@ -6,6 +6,7 @@ namespace App\Layer\Infrastructure\Repository;
 
 use App\Infrastructure\FormatDict;
 use App\Layer\Domain\Dict\Common\FileSizeTypeEnum;
+use App\Layer\Domain\Dict\Drive\DriveArchiveJobPlaceEnum;
 use App\Layer\Domain\Dict\Drive\DriveArchiveJobStatusEnum;
 use App\Layer\Domain\Entity\DriveArchiveFileEntity;
 use App\Layer\Domain\Entity\DriveArchiveJobEntity;
@@ -34,19 +35,23 @@ final readonly class DriveArchiveRepository implements DriveArchiveRepositoryInt
             'error_description' => $entity->getErrorDescription(),
             'created_at' => $entity->getCreatedAt()->format('Y-m-d H:i:s'),
             'finished_at' => $entity->getFinishedAt()?->format('Y-m-d H:i:s'),
+            'place' => $entity->getPlace()->value,
         ];
 
         $isNew = is_null($entity->getId());
         if ($isNew) {
             $query = "
-                insert into drive_archive_jobs (user_id, struct_ids, status, error_description, created_at, finished_at)
-                values (:user_id, :struct_ids, :status, :error_description, :created_at, :finished_at) RETURNING id
+                insert into drive_archive_jobs
+                    (user_id, struct_ids, status, error_description, created_at, finished_at, place)
+                values
+                    (:user_id, :struct_ids, :status, :error_description, :created_at, :finished_at, :place)
+                RETURNING id
             ";
         } else {
             $query = "
                 update drive_archive_jobs
                 set user_id = :user_id, struct_ids = :struct_ids, status = :status, error_description = :error_description,
-                created_at = :created_at, finished_at = :finished_at
+                created_at = :created_at, finished_at = :finished_at, place = :place
                 where id = :id
             ";
             $params['id'] = $entity->getId();
@@ -76,23 +81,44 @@ final readonly class DriveArchiveRepository implements DriveArchiveRepositoryInt
     }
 
     /** @inheritDoc */
-    public function existsJobsByUserAndStatuses(int $userId, array $statuses): bool
+    public function existsJobsByUserAndStatuses(
+        int $userId,
+        array $statuses,
+        ?DriveArchiveJobPlaceEnum $place = null,
+        ?array $structIds = null,
+    ): bool
     {
+        $params = [
+            'user_id' => $userId,
+            'statuses' => array_map(static fn(DriveArchiveJobStatusEnum $status) => $status->value, $statuses)
+        ];
+
         $query = "
             select EXISTS(
                 select 1 from drive_archive_jobs daj
                 where
                 daj.user_id = :user_id and daj.status in (:statuses)
-            )
         ";
+
+        if (!is_null($place)) {
+            $query .= " and daj.place = :place";
+            $params['place'] = $place->value;
+        }
+
+        if (!is_null($structIds)) {
+            $query .= "
+                AND daj.struct_ids @> :struct_ids::jsonb
+                AND daj.struct_ids <@ :struct_ids::jsonb
+            ";
+            $params['struct_ids'] = json_encode(array_values($structIds), JSON_THROW_ON_ERROR);
+        }
+
+        $query .= ")";
 
         $conn = $this->entityManager->getConnection();
         return (bool)$conn->executeQuery(
             $query,
-            [
-                'user_id' => $userId,
-                'statuses' => array_map(static fn(DriveArchiveJobStatusEnum $status) => $status->value, $statuses)
-            ],
+            $params,
             ['statuses' => ArrayParameterType::INTEGER]
         )->fetchOne();
     }
@@ -251,6 +277,7 @@ final readonly class DriveArchiveRepository implements DriveArchiveRepositoryInt
             errorDescription: $raw['error_description'],
             createdAt: DateTimeImmutable::createUTCFromString($raw['created_at']),
             finishedAt: $raw['finished_at'] ? DateTimeImmutable::createUTCFromString($raw['finished_at']) : null,
+            place: DriveArchiveJobPlaceEnum::from($raw['place']),
         );
     }
 }
