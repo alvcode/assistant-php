@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Layer\Application\UseCase\DriveArchive;
 
+use App\Layer\Domain\Dict\Drive\DriveArchiveJobPlaceEnum;
 use App\Layer\Domain\Dict\Drive\DriveArchiveJobStatusEnum;
 use App\Layer\Domain\Entity\DriveArchiveJobEntity;
 use App\Layer\Domain\Repository\DriveArchiveRepositoryInterface;
@@ -14,7 +15,17 @@ final readonly class DriveArchiveGetActiveJobUseCase
         private DriveArchiveRepositoryInterface $driveArchiveRepository,
     ) {}
 
-    public function handle(int $userId): ?DriveArchiveJobEntity
+    /**
+     * @param int $userId
+     * @param DriveArchiveJobPlaceEnum $place
+     * @param int[]|null $structIdsForComparison
+     * @return DriveArchiveJobEntity|null
+     */
+    public function handle(
+        int $userId,
+        DriveArchiveJobPlaceEnum $place,
+        ?array $structIdsForComparison = null,
+    ): ?DriveArchiveJobEntity
     {
         return $this->driveArchiveRepository->getJobByUserAndStatuses(
             userId: $userId,
@@ -22,7 +33,9 @@ final readonly class DriveArchiveGetActiveJobUseCase
                 DriveArchiveJobStatusEnum::New,
                 DriveArchiveJobStatusEnum::Processed,
                 DriveArchiveJobStatusEnum::Completed,
-            ]
+            ],
+            place: $place,
+            structIds: $structIdsForComparison,
         );
     }
 }

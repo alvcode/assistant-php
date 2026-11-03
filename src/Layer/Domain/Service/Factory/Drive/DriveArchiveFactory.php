@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Layer\Domain\Service\Factory\Drive;
 
+use App\Layer\Domain\Dict\Drive\DriveArchiveJobPlaceEnum;
 use App\Layer\Domain\Dict\Drive\DriveArchiveJobStatusEnum;
 use App\Layer\Domain\Entity\DriveArchiveFileEntity;
 use App\Layer\Domain\Entity\DriveArchiveJobEntity;
@@ -17,6 +18,7 @@ final readonly class DriveArchiveFactory
     public function getNewDriveArchiveJob(
         int $userId,
         array $structIds,
+        DriveArchiveJobPlaceEnum $place,
     ): DriveArchiveJobEntity
     {
         return new DriveArchiveJobEntity(
@@ -27,6 +29,7 @@ final readonly class DriveArchiveFactory
             errorDescription: null,
             createdAt: DateTimeImmutable::createNowUtc(),
             finishedAt: null,
+            place: $place,
         );
     }
 
@@ -35,7 +38,7 @@ final readonly class DriveArchiveFactory
         return new DriveArchiveFileEntity(
             id: null,
             driveArchiveJobId: $driveArchiveJobId,
-            size: null, 
+            size: null,
             createdAt: DateTimeImmutable::createNowUtc(),
         );
     }

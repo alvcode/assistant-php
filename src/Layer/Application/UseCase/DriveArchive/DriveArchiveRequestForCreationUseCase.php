@@ -32,10 +32,15 @@ final readonly class DriveArchiveRequestForCreationUseCase
     ) {}
 
     /**
+     * @param int $userId
      * @param int[] $structIds
-     * @throws DriveStructNotFoundException
+     * @param DriveArchiveJobPlaceEnum $place
+     * @param bool $needCompareStructIds - если true, то при поиске уже активных заданий будет сравниваться список
+     *  структур, которые отправляются на архивацию
+     * @return DriveArchiveJobEntity
      * @throws DriveArchiveExistsActiveJobsException
      * @throws DriveArchiveJobNotFoundFilesException
+     * @throws DriveStructNotFoundException
      */
     public function handle(
         int $userId,
@@ -50,7 +55,9 @@ final readonly class DriveArchiveRequestForCreationUseCase
                 DriveArchiveJobStatusEnum::New,
                 DriveArchiveJobStatusEnum::Processed,
                 DriveArchiveJobStatusEnum::Completed,
-            ]
+            ],
+            place: $place,
+            structIds: $needCompareStructIds ? $structIds : null,
         );
         if ($existsActiveJobs) {
             throw new DriveArchiveExistsActiveJobsException('Уже есть активные задания на архивацию');
@@ -69,7 +76,7 @@ final readonly class DriveArchiveRequestForCreationUseCase
         }
 
         $driveArchiveJobEntity = $this->driveArchiveRepository->save(
-            $this->driveArchiveFactory->getNewDriveArchiveJob($userId, $structIds),
+            $this->driveArchiveFactory->getNewDriveArchiveJob($userId, $structIds, $place),
         );
         $this->queueRepository->pushDriveArchive($driveArchiveJobEntity->getId());
 

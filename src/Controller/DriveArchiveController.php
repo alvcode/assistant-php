@@ -14,6 +14,7 @@ use App\Layer\Application\UseCase\DriveArchive\DriveArchiveGetChunkByNumberUseCa
 use App\Layer\Application\UseCase\DriveArchive\DriveArchiveGetChunksInfoUseCase;
 use App\Layer\Application\UseCase\DriveArchive\DriveArchiveRemoveUseCase;
 use App\Layer\Application\UseCase\DriveArchive\DriveArchiveRequestForCreationUseCase;
+use App\Layer\Domain\Dict\Drive\DriveArchiveJobPlaceEnum;
 use App\Layer\Domain\Exception\AbstractLogicException;
 use App\Request\DriveArchive\DriveArchiveCreateRequest;
 use App\Response\Drive\DriveChunksInfoResponse;
@@ -56,7 +57,12 @@ final class DriveArchiveController extends AbstractController
         $user = $this->getUser();
 
         try {
-            $driveArchiveJobEntity = $useCase->handle($user->id, $requestModel->struct_ids);
+            $driveArchiveJobEntity = $useCase->handle(
+                userId: $user->id,
+                structIds: $requestModel->struct_ids,
+                place: DriveArchiveJobPlaceEnum::Common,
+                needCompareStructIds: false,
+            );
             return new JsonResponse(
                 DriveArchiveJobResponse::fromDriveArchiveJobEntity($driveArchiveJobEntity),
                 Response::HTTP_CREATED
@@ -77,7 +83,10 @@ final class DriveArchiveController extends AbstractController
         $user = $this->getUser();
 
         try {
-            $driveArchiveJobEntity = $useCase->handle($user->id);
+            $driveArchiveJobEntity = $useCase->handle(
+                userId: $user->id,
+                place: DriveArchiveJobPlaceEnum::Common,
+            );
             return new JsonResponse(
                 DriveArchiveJobResponse::fromDriveArchiveJobEntity($driveArchiveJobEntity),
                 Response::HTTP_CREATED

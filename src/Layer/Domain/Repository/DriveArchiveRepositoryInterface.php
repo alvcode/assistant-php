@@ -28,7 +28,12 @@ interface DriveArchiveRepositoryInterface
     ): bool;
 
     /** @param DriveArchiveJobStatusEnum[] $statuses */
-    public function getJobByUserAndStatuses(int $userId, array $statuses): ?DriveArchiveJobEntity;
+    public function getJobByUserAndStatuses(
+        int $userId,
+        array $statuses,
+        ?DriveArchiveJobPlaceEnum $place = null,
+        ?array $structIds = null,
+    ): ?DriveArchiveJobEntity;
 
     public function saveFileEntity(DriveArchiveFileEntity $entity): DriveArchiveFileEntity;
 

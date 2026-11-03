@@ -124,22 +124,43 @@ final readonly class DriveArchiveRepository implements DriveArchiveRepositoryInt
     }
 
     /** @inheritDoc */
-    public function getJobByUserAndStatuses(int $userId, array $statuses): ?DriveArchiveJobEntity
+    public function getJobByUserAndStatuses(
+        int $userId,
+        array $statuses,
+        ?DriveArchiveJobPlaceEnum $place = null,
+        ?array $structIds = null,
+    ): ?DriveArchiveJobEntity
     {
+        $params = [
+            'user_id' => $userId,
+            'statuses' => array_map(static fn(DriveArchiveJobStatusEnum $status) => $status->value, $statuses)
+        ];
+
         $query = "
             select * from drive_archive_jobs daj
             where
             daj.user_id = :user_id and daj.status in (:statuses)
-            limit 1
         ";
+
+        if (!is_null($place)) {
+            $query .= " and daj.place = :place";
+            $params['place'] = $place->value;
+        }
+
+        if (!is_null($structIds)) {
+            $query .= "
+                AND daj.struct_ids @> :struct_ids::jsonb
+                AND daj.struct_ids <@ :struct_ids::jsonb
+            ";
+            $params['struct_ids'] = json_encode(array_values($structIds), JSON_THROW_ON_ERROR);
+        }
+
+        $query .= " limit 1";
 
         $conn = $this->entityManager->getConnection();
         $stmt = $conn->executeQuery(
             $query,
-            [
-                'user_id' => $userId,
-                'statuses' => array_map(static fn(DriveArchiveJobStatusEnum $status) => $status->value, $statuses)
-            ],
+            $params,
             ['statuses' => ArrayParameterType::INTEGER]
         );
 
